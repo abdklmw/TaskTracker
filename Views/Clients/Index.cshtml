@@ -15,8 +15,10 @@
     <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
 }
 
+@await Html.PartialAsync("_CreateForm")
+
 <p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
+    <a id="create-new-btn" class="btn btn-primary">Create New</a>
 </p>
 
 <table class="table">
@@ -33,65 +35,31 @@
     <tbody>
         @foreach (var client in Model)
         {
-            <tr id="row-@client.ClientID" class="display-mode">
-                <td data-field="Name">@client.Name</td>
-                <td data-field="Email">@client.Email</td>
-                <td data-field="Phone">@client.Phone</td>
-                <td data-field="Address">@client.Address</td>
-                <td data-field="DefaultRate">$@client.DefaultRate.ToString("F2")</td>
-                <td>
-                    <button class="btn btn-primary edit-btn" data-client-id="@client.ClientID">Edit</button>
-                    <a asp-action="Delete" asp-route-id="@client.ClientID" class="btn btn-danger">Delete</a>
-                </td>
-            </tr>
-            <tr id="edit-row-@client.ClientID" class="edit-mode" style="display:none;">
-                <form id="edit-form-@client.ClientID" asp-action="Edit" asp-route-id="@client.ClientID" method="post">
-                    <input type="hidden" asp-for="@client.ClientID" name="ClientID" />
-                <td>
-                    <input asp-for="@client.Name" class="form-control" name="Name" />
-                    <span asp-validation-for="@client.Name" class="text-danger"></span>
-                </td>
-                <td>
-                    <input asp-for="@client.Email" class="form-control" name="Email" />
-                    <span asp-validation-for="@client.Email" class="text-danger"></span>
-                </td>
-                <td>
-                    <input asp-for="@client.Phone" class="form-control" name="Phone" />
-                    <span asp-validation-for="@client.Phone" class="text-danger"></span>
-                </td>
-                <td>
-                    <input asp-for="@client.Address" class="form-control" name="Address" />
-                    <span asp-validation-for="@client.Address" class="text-danger"></span>
-                </td>
-                <td>
-                    <input asp-for="@client.DefaultRate" class="form-control" type="number" step="0.01" name="DefaultRate" />
-                    <span asp-validation-for="@client.DefaultRate" class="text-danger"></span>
-                </td>
-                <td>
-                    <button type="submit" class="btn btn-success save-btn">Save</button>
-                    <button type="button" class="btn btn-secondary cancel-btn" data-client-id="@client.ClientID">Cancel</button>
-                </td>
-                </form>
-            </tr>
+            @await Html.PartialAsync("_DisplayRow", client)
+            @await Html.PartialAsync("_EditFormRow", client)
         }
     </tbody>
 </table>
 
 <style>
-    .edit-mode .form-control {
+    .edit-mode .form-control, #create-form .form-control {
         width: 100%;
         box-sizing: border-box;
         margin: 0;
         padding: 4px;
     }
 
-    .edit-mode .text-danger {
+    .edit-mode .text-danger, #create-form .text-danger {
         font-size: 0.8em;
         display: block;
     }
 
-    .edit-mode .btn {
+    .edit-mode .btn, #create-form .btn {
         margin-right: 5px;
+    }
+
+    .alert-success {
+        transition: opacity 1s ease-in-out;
     }
 </style>
 
@@ -110,7 +78,7 @@
             });
         });
 
-        // Handle Cancel button click
+        // Handle Cancel button click for edit
         document.querySelectorAll('.cancel-btn').forEach(button => {
             button.addEventListener('click', function () {
                 const clientId = this.getAttribute('data-client-id');
@@ -118,6 +86,31 @@
                 document.getElementById(`row-${clientId}`).style.display = 'table-row';
                 document.getElementById(`edit-row-${clientId}`).style.display = 'none';
             });
+        });
+
+        // Handle Create New button click
+        document.getElementById('create-new-btn').addEventListener('click', function () {
+            document.getElementById('create-form').style.display = 'block';
+            this.style.display = 'none';
+        });
+
+        // Handle Cancel button click for create
+        document.querySelector('.cancel-create-btn').addEventListener('click', function () {
+            document.getElementById('create-form').style.display = 'none';
+            document.getElementById('create-new-btn').style.display = 'inline-block';
+        });
+
+        // Fade out success alert after 15 seconds
+        document.addEventListener('DOMContentLoaded', function () {
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                setTimeout(() => {
+                    successAlert.style.opacity = '0';
+                    setTimeout(() => {
+                        successAlert.style.display = 'none';
+                    }, 1000); // Wait for fade-out animation (1s)
+                }, 5000); // Start fade-out after 15s
+            }
         });
     </script>
 }

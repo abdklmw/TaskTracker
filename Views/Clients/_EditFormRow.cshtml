@@ -1,0 +1,31 @@
+﻿@model TaskTracker.Models.Client
+
+<tr id="edit-row-@Model.ClientID" class="edit-mode" style="display:none;">
+    <form id="edit-form-@Model.ClientID" asp-action="Edit" asp-route-id="@Model.ClientID" method="post">
+        <input type="hidden" asp-for="@Model.ClientID" name="ClientID" />
+    <td>
+        <input asp-for="@Model.Name" class="form-control" name="Name" />
+        <span asp-validation-for="@Model.Name" class="text-danger"></span>
+    </td>
+    <td>
+        <input asp-for="@Model.Email" class="form-control" name="Email" />
+        <span asp-validation-for="@Model.Email" class="text-danger"></span>
+    </td>
+    <td>
+        <input asp-for="@Model.Phone" class="form-control" name="Phone" />
+        <span asp-validation-for="@Model.Phone" class="text-danger"></span>
+    </td>
+    <td>
+        <input asp-for="@Model.Address" class="form-control" name="Address" />
+        <span asp-validation-for="@Model.Address" class="text-danger"></span>
+    </td>
+    <td>
+        <input asp-for="@Model.DefaultRate" class="form-control" type="number" step="0.01" name="DefaultRate" />
+        <span asp-validation-for="@Model.DefaultRate" class="text-danger"></span>
+    </td>
+    <td>
+        <button type="submit" class="btn btn-success save-btn">Save</button>
+        <button type="button" class="btn btn-secondary cancel-btn" data-client-id="@Model.ClientID">Cancel</button>
+    </td>
+    </form>
+</tr>

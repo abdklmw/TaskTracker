@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
@@ -25,30 +23,6 @@ namespace TaskTracker.Controllers
             return View(await _context.Clients.ToListAsync());
         }
 
-        // GET: Clients/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var client = await _context.Clients
-                .FirstOrDefaultAsync(m => m.ClientID == id);
-            if (client == null)
-            {
-                return NotFound();
-            }
-
-            return View(client);
-        }
-
-        // GET: Clients/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
         // POST: Clients/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -58,25 +32,12 @@ namespace TaskTracker.Controllers
             {
                 _context.Add(client);
                 await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Client created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            return View(client);
-        }
-
-        // GET: Clients/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var client = await _context.Clients.FindAsync(id);
-            if (client == null)
-            {
-                return NotFound();
-            }
-            return View(client);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            TempData["ErrorMessage"] = string.Join("; ", errors);
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Clients/Edit/5

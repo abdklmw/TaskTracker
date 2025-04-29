@@ -1,0 +1,13 @@
+﻿@model TaskTracker.Models.Client
+
+<tr id="row-@Model.ClientID" class="display-mode">
+    <td data-field="Name">@Model.Name</td>
+    <td data-field="Email">@Model.Email</td>
+    <td data-field="Phone">@Model.Phone</td>
+    <td data-field="Address">@Model.Address</td>
+    <td data-field="DefaultRate">$@Model.DefaultRate.ToString("F2")</td>
+    <td>
+        <button class="btn btn-primary edit-btn" data-client-id="@Model.ClientID">Edit</button>
+        <a asp-action="Delete" asp-route-id="@Model.ClientID" class="btn btn-danger">Delete</a>
+    </td>
+</tr>
