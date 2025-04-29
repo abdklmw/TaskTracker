@@ -1,0 +1,123 @@
+﻿@model IEnumerable<TaskTracker.Models.Client>
+
+@{
+    ViewData["Title"] = "Clients";
+}
+
+<h1>Clients</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Name)</th>
+            <th>@Html.DisplayNameFor(model => model.Email)</th>
+            <th>@Html.DisplayNameFor(model => model.Phone)</th>
+            <th>@Html.DisplayNameFor(model => model.Address)</th>
+            <th>@Html.DisplayNameFor(model => model.DefaultRate)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var client in Model)
+        {
+            <tr id="row-@client.ClientID" class="display-mode">
+                <td data-field="Name">@client.Name</td>
+                <td data-field="Email">@client.Email</td>
+                <td data-field="Phone">@client.Phone</td>
+                <td data-field="Address">@client.Address</td>
+                <td data-field="DefaultRate">$@client.DefaultRate.ToString("F2")</td>
+                <td>
+                    <button class="btn btn-primary edit-btn" data-client-id="@client.ClientID">Edit</button>
+                    <a asp-action="Delete" asp-route-id="@client.ClientID" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+            <tr id="edit-row-@client.ClientID" class="edit-mode" style="display:none;">
+                <form id="edit-form-@client.ClientID" asp-action="Edit" asp-route-id="@client.ClientID" method="post">
+                    <input type="hidden" asp-for="@client.ClientID" name="ClientID" />
+                <td>
+                    <input asp-for="@client.Name" class="form-control" name="Name" />
+                    <span asp-validation-for="@client.Name" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="@client.Email" class="form-control" name="Email" />
+                    <span asp-validation-for="@client.Email" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="@client.Phone" class="form-control" name="Phone" />
+                    <span asp-validation-for="@client.Phone" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="@client.Address" class="form-control" name="Address" />
+                    <span asp-validation-for="@client.Address" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="@client.DefaultRate" class="form-control" type="number" step="0.01" name="DefaultRate" />
+                    <span asp-validation-for="@client.DefaultRate" class="text-danger"></span>
+                </td>
+                <td>
+                    <button type="submit" class="btn btn-success save-btn">Save</button>
+                    <button type="button" class="btn btn-secondary cancel-btn" data-client-id="@client.ClientID">Cancel</button>
+                </td>
+                </form>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .edit-mode .form-control {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 4px;
+    }
+
+    .edit-mode .text-danger {
+        font-size: 0.8em;
+        display: block;
+    }
+
+    .edit-mode .btn {
+        margin-right: 5px;
+    }
+</style>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Handle Edit button click
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const clientId = this.getAttribute('data-client-id');
+                // Toggle rows
+                document.getElementById(`row-${clientId}`).style.display = 'none';
+                document.getElementById(`edit-row-${clientId}`).style.display = 'table-row';
+            });
+        });
+
+        // Handle Cancel button click
+        document.querySelectorAll('.cancel-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const clientId = this.getAttribute('data-client-id');
+                // Revert to display mode
+                document.getElementById(`row-${clientId}`).style.display = 'table-row';
+                document.getElementById(`edit-row-${clientId}`).style.display = 'none';
+            });
+        });
+    </script>
+}
