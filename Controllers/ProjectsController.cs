@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
@@ -22,76 +20,30 @@ namespace TaskTracker.Controllers
         // GET: Projects
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.Projects.Include(p => p.Client);
-            return View(await appDbContext.ToListAsync());
-        }
-
-        // GET: Projects/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var project = await _context.Projects
-                .Include(p => p.Client)
-                .FirstOrDefaultAsync(m => m.ProjectID == id);
-            if (project == null)
-            {
-                return NotFound();
-            }
-
-            return View(project);
-        }
-
-        // GET: Projects/Create
-        public IActionResult Create()
-        {
-            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "ClientID");
-            return View();
+            return View(await _context.Projects.ToListAsync());
         }
 
         // POST: Projects/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProjectID,ClientID,Name,Description,StartDate,EndDate,Rate")] Project project)
+        public async Task<IActionResult> Create([Bind("Name,Description,Rate")] Project project)
         {
             if (ModelState.IsValid)
             {
                 _context.Add(project);
                 await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Project created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "ClientID", project.ClientID);
-            return View(project);
-        }
-
-        // GET: Projects/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var project = await _context.Projects.FindAsync(id);
-            if (project == null)
-            {
-                return NotFound();
-            }
-            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "ClientID", project.ClientID);
-            return View(project);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            TempData["ErrorMessage"] = string.Join("; ", errors);
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Projects/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProjectID,ClientID,Name,Description,StartDate,EndDate,Rate")] Project project)
+        public async Task<IActionResult> Edit(int id, [Bind("ProjectID,Name,Description,Rate")] Project project)
         {
             if (id != project.ProjectID)
             {
@@ -104,6 +56,7 @@ namespace TaskTracker.Controllers
                 {
                     _context.Update(project);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Project updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -118,8 +71,10 @@ namespace TaskTracker.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "ClientID", project.ClientID);
-            return View(project);
+
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            TempData["ErrorMessage"] = string.Join("; ", errors);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Projects/Delete/5
@@ -131,7 +86,6 @@ namespace TaskTracker.Controllers
             }
 
             var project = await _context.Projects
-                .Include(p => p.Client)
                 .FirstOrDefaultAsync(m => m.ProjectID == id);
             if (project == null)
             {

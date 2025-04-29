@@ -6,15 +6,10 @@ namespace TaskTracker.Models
     public class Project
     {
         public int ProjectID { get; set; }
-        public int ClientID { get; set; }
         public string Name { get; set; }
-        public string Description { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public Client Client { get; set; }
+        public string? Description { get; set; }
         [Column(TypeName = "decimal(18,2)"), DisplayName("Project Rate")]
-        public decimal Rate { get; set; }
-        public ICollection<TimeEntry> TimeEntries { get; set; }
-
+        public decimal? Rate { get; set; }
+        public ICollection<TimeEntry>? TimeEntries { get; set; }
     }
 }

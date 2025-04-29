@@ -1,0 +1,23 @@
+﻿@model TaskTracker.Models.Project
+
+<tr id="edit-row-@Model.ProjectID" class="edit-mode" style="display:none;">
+    <form id="edit-form-@Model.ProjectID" asp-action="Edit" asp-route-id="@Model.ProjectID" method="post">
+        <input type="hidden" asp-for="@Model.ProjectID" name="ProjectID" />
+    <td>
+        <input asp-for="@Model.Name" class="form-control" name="Name" />
+        <span asp-validation-for="@Model.Name" class="text-danger"></span>
+    </td>
+    <td>
+        <input asp-for="@Model.Description" class="form-control" name="Description" />
+        <span asp-validation-for="@Model.Description" class="text-danger"></span>
+    </td>
+    <td>
+        <input asp-for="@Model.Rate" class="form-control" type="number" step="0.01" name="Rate" />
+        <span asp-validation-for="@Model.Rate" class="text-danger"></span>
+    </td>
+    <td>
+        <button type="submit" class="btn btn-success save-btn">Save</button>
+        <button type="button" class="btn btn-secondary cancel-btn" data-project-id="@Model.ProjectID">Cancel</button>
+    </td>
+    </form>
+</tr>
