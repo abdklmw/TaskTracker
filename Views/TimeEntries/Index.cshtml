@@ -1,53 +1,72 @@
 ﻿@model IEnumerable<TaskTracker.Models.TimeEntry>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Time Entries";
 }
 
-<h1>Index</h1>
+<h1>Time Entries</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@await Html.PartialAsync("_CreateForm")
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>
+
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Date)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.HoursSpent)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Project)
-            </th>
+            <th>@Html.DisplayNameFor(model => model.Client)</th>
+            <th>@Html.DisplayNameFor(model => model.Project)</th>
+            <th>@Html.DisplayNameFor(model => model.StartDateTime)</th>
+            <th>@Html.DisplayNameFor(model => model.EndDateTime)</th>
+            <th>@Html.DisplayNameFor(model => model.HoursSpent)</th>
+            <th>@Html.DisplayNameFor(model => model.Description)</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Date)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.HoursSpent)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Project.ProjectID)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.TimeEntryID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.TimeEntryID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.TimeEntryID">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var timeEntry in Model)
+        {
+            @await Html.PartialAsync("_DisplayRow", timeEntry)
+            @await Html.PartialAsync("_EditFormRow", timeEntry)
+        }
     </tbody>
 </table>
+
+<style>
+    .edit-mode .form-control, #create-form .form-control {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 4px;
+    }
+
+    .edit-mode .text-danger, #create-form .text-danger {
+        font-size: 0.8em;
+        display: block;
+    }
+
+    .edit-mode .btn, #create-form .btn {
+        margin-right: 5px;
+    }
+
+    .alert-success {
+        transition: opacity 1s ease-in-out;
+    }
+</style>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
+}
