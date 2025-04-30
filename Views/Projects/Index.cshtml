@@ -46,13 +46,16 @@
         margin: 0;
         padding: 4px;
     }
+
     .edit-mode .text-danger, #create-form .text-danger {
         font-size: 0.8em;
         display: block;
     }
+
     .edit-mode .btn, #create-form .btn {
         margin-right: 5px;
     }
+
     .alert-success {
         transition: opacity 1s ease-in-out;
     }
@@ -62,48 +65,5 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script>
-        // Handle Edit button click
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                const projectId = this.getAttribute('data-project-id');
-                document.getElementById(`row-${projectId}`).style.display = 'none';
-                document.getElementById(`edit-row-${projectId}`).style.display = 'table-row';
-            });
-        });
-
-        // Handle Cancel button click for edit
-        document.querySelectorAll('.cancel-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                const projectId = this.getAttribute('data-project-id');
-                document.getElementById(`row-${projectId}`).style.display = 'table-row';
-                document.getElementById(`edit-row-${projectId}`).style.display = 'none';
-            });
-        });
-
-        // Handle Create New button click
-        document.getElementById('create-new-btn').addEventListener('click', function () {
-            document.getElementById('create-form').style.display = 'block';
-            this.style.display = 'none';
-        });
-
-        // Handle Cancel button click for create
-        document.querySelector('.cancel-create-btn').addEventListener('click', function () {
-            document.getElementById('create-form').style.display = 'none';
-            document.getElementById('create-new-btn').style.display = 'inline-block';
-        });
-
-        // Fade out success alert after 15 seconds
-        document.addEventListener('DOMContentLoaded', function () {
-            const successAlert = document.querySelector('.alert-success');
-            if (successAlert) {
-                setTimeout(() => {
-                    successAlert.style.opacity = '0';
-                    setTimeout(() => {
-                        successAlert.style.display = 'none';
-                    }, 1000);
-                }, 5000);
-            }
-        });
-    </script>
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
 }

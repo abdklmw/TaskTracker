@@ -67,50 +67,5 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script>
-        // Handle Edit button click
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                const clientId = this.getAttribute('data-client-id');
-                // Toggle rows
-                document.getElementById(`row-${clientId}`).style.display = 'none';
-                document.getElementById(`edit-row-${clientId}`).style.display = 'table-row';
-            });
-        });
-
-        // Handle Cancel button click for edit
-        document.querySelectorAll('.cancel-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                const clientId = this.getAttribute('data-client-id');
-                // Revert to display mode
-                document.getElementById(`row-${clientId}`).style.display = 'table-row';
-                document.getElementById(`edit-row-${clientId}`).style.display = 'none';
-            });
-        });
-
-        // Handle Create New button click
-        document.getElementById('create-new-btn').addEventListener('click', function () {
-            document.getElementById('create-form').style.display = 'block';
-            this.style.display = 'none';
-        });
-
-        // Handle Cancel button click for create
-        document.querySelector('.cancel-create-btn').addEventListener('click', function () {
-            document.getElementById('create-form').style.display = 'none';
-            document.getElementById('create-new-btn').style.display = 'inline-block';
-        });
-
-        // Fade out success alert after 15 seconds
-        document.addEventListener('DOMContentLoaded', function () {
-            const successAlert = document.querySelector('.alert-success');
-            if (successAlert) {
-                setTimeout(() => {
-                    successAlert.style.opacity = '0';
-                    setTimeout(() => {
-                        successAlert.style.display = 'none';
-                    }, 1000); // Wait for fade-out animation (1s)
-                }, 5000); // Start fade-out after 15s
-            }
-        });
-    </script>
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
 }
