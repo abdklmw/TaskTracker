@@ -1,15 +1,17 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Models;
+using TaskTracker.Data;
 
 namespace TaskTracker.Data
 {
-    public class AppDbContext : IdentityDbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
         {
         }
+
         public DbSet<Client> Clients { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<TimeEntry> TimeEntries { get; set; }
@@ -18,15 +20,13 @@ namespace TaskTracker.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Invoice>()
-            .Property(i => i.TotalAmount)
-            .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<InvoiceItem>()
-            .Property(ii => ii.Amount)
-            .HasColumnType("decimal(18,2)");
-
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<TimeEntry>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId);
         }
     }
 }
+

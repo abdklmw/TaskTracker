@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TaskTracker.Data;
 
 namespace TaskTracker.Models
 {
@@ -15,6 +16,10 @@ namespace TaskTracker.Models
         [Required]
         public int ClientID { get; set; }
         public Client Client { get; set; }
+
+        [Required]
+        public string UserId { get; set; }
+        public ApplicationUser User { get; set; }
 
         [Required]
         public DateTime StartDateTime { get; set; }

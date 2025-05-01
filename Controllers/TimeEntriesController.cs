@@ -6,33 +6,36 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace TaskTracker.Controllers
 {
     public class TimeEntriesController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TimeEntriesController(AppDbContext context)
+        public TimeEntriesController(AppDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: TimeEntries
         public async Task<IActionResult> Index(int? clientId, int? projectId)
         {
+            var userId = _userManager.GetUserId(User);
             var timeEntries = _context.TimeEntries
+                .Where(t => t.UserId == userId)
                 .Include(t => t.Project)
                 .Include(t => t.Client);
 
-            // Create SelectList with default option for ClientID
             var clientList = _context.Clients
                 .Select(c => new { c.ClientID, c.Name })
                 .ToList();
             clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
             ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", clientId ?? 0);
 
-            // Create SelectList with default option for ProjectID
             var projectList = _context.Projects
                 .Select(p => new { p.ProjectID, p.Name })
                 .ToList();
@@ -45,9 +48,8 @@ namespace TaskTracker.Controllers
         // POST: TimeEntries/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
+        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,UserId,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
         {
-            // Validate ClientID and ProjectID are not the default (0)
             if (timeEntry.ClientID == 0)
             {
                 ModelState.AddModelError("ClientID", "Please select a client.");
@@ -56,6 +58,8 @@ namespace TaskTracker.Controllers
             {
                 ModelState.AddModelError("ProjectID", "Please select a project.");
             }
+
+            timeEntry.UserId = _userManager.GetUserId(User);
 
             if (ModelState.IsValid)
             {
@@ -72,14 +76,19 @@ namespace TaskTracker.Controllers
         // POST: TimeEntries/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TimeEntryID,ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
+        public async Task<IActionResult> Edit(int id, [Bind("TimeEntryID,ClientID,ProjectID,UserId,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
         {
             if (id != timeEntry.TimeEntryID)
             {
                 return NotFound();
             }
 
-            // Validate ClientID and ProjectID are not the default (0)
+            var userId = _userManager.GetUserId(User);
+            if (timeEntry.UserId != userId)
+            {
+                return Forbid();
+            }
+
             if (timeEntry.ClientID == 0)
             {
                 ModelState.AddModelError("ClientID", "Please select a client.");
@@ -124,10 +133,11 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
 
+            var userId = _userManager.GetUserId(User);
             var timeEntry = await _context.TimeEntries
                 .Include(t => t.Project)
                 .Include(t => t.Client)
-                .FirstOrDefaultAsync(m => m.TimeEntryID == id);
+                .FirstOrDefaultAsync(m => m.TimeEntryID == id && m.UserId == userId);
             if (timeEntry == null)
             {
                 return NotFound();
@@ -141,19 +151,22 @@ namespace TaskTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var timeEntry = await _context.TimeEntries.FindAsync(id);
+            var userId = _userManager.GetUserId(User);
+            var timeEntry = await _context.TimeEntries
+                .FirstOrDefaultAsync(t => t.TimeEntryID == id && t.UserId == userId);
             if (timeEntry != null)
             {
                 _context.TimeEntries.Remove(timeEntry);
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool TimeEntryExists(int id)
         {
-            return _context.TimeEntries.Any(e => e.TimeEntryID == id);
+            var userId = _userManager.GetUserId(User);
+            return _context.TimeEntries.Any(e => e.TimeEntryID == id && e.UserId == userId);
         }
     }
 }
