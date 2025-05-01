@@ -1,13 +1,17 @@
-﻿@model TaskTracker.Models.Client
+﻿@model TaskTracker.Models.TimeEntry
 
-<tr id="display-row-@Model.ClientID" class="display-mode">
-    <td data-field="Name">@Model.Name</td>
-    <td data-field="Email">@Model.Email</td>
-    <td data-field="Phone">@Model.Phone</td>
-    <td data-field="Address">@Model.Address</td>
-    <td data-field="DefaultRate">$@Model.DefaultRate.ToString("F2")</td>
-    <td>
-        <button class="btn btn-primary edit-btn" data-id="@Model.ClientID">Edit</button>
-        <a asp-action="Delete" asp-route-id="@Model.ClientID" class="btn btn-danger">Delete</a>
-    </td>
-</tr>
+<div id="display-row-@Model.TimeEntryID" class="display-mode card mb-2">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2">@Model.Client.Name</div>
+            <div class="col-md-2">@Model.Project.Name</div>
+            <div class="col-md-2">@Model.StartDateTime.ToString("g")</div>
+            <div class="col-md-2">@(Model.EndDateTime.HasValue ? Model.EndDateTime.Value.ToString("g") : "")</div>
+            <div class="col-md-2">@(Model.HoursSpent.HasValue ? Model.HoursSpent.Value.ToString("F2") : "")</div>
+            <div class="col-md-2">
+                <button class="btn btn-primary edit-btn" data-id="@Model.TimeEntryID">Edit</button>
+                <a asp-action="Delete" asp-route-id="@Model.TimeEntryID" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>

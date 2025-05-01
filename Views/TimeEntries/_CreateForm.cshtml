@@ -1,39 +1,40 @@
 ﻿<div id="create-form" style="display:none; margin-bottom: 20px;">
-    <form asp-action="Create" method="post">
-        <table class="table table-bordered">
-            <tr>
-                <td>
-                    <select name="ClientID" class="form-control" asp-items="@ViewBag.ClientID"></select>
-                    <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().ClientID)" class="text-danger"></span>
-                </td>
-                <td>
-                    <select name="ProjectID" class="form-control" asp-items="@ViewBag.ProjectID"></select>
-                    <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().ProjectID)" class="text-danger"></span>
-                </td>
-                <td>
-                    <input name="StartDateTime" class="form-control start-datetime" type="datetime-local" />
-                    <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().StartDateTime)" class="text-danger"></span>
-                </td>
-                <td>
-                    <input name="EndDateTime" class="form-control end-datetime" type="datetime-local" />
-                    <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().EndDateTime)" class="text-danger"></span>
-                </td>
-                <td>
-                    <input name="HoursSpent" class="form-control hours-spent" type="number" step="0.01" placeholder="Hours Spent" />
-                    <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().HoursSpent)" class="text-danger"></span>
-                </td>
-                <td>
-                    <input type="hidden" name="UserId" value="@User.Identity.Name" />
-                    <button type="submit" class="btn btn-success create-btn">Create</button>
-                    <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="6">
-                    <textarea name="Description" class="form-control" rows="4" placeholder="Description"></textarea>
-                    <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().Description)" class="text-danger"></span>
-                </td>
-            </tr>
-        </table>
+    <form asp-action="Create" method="post" class="card p-4">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Client</label>
+                <select name="ClientID" class="form-control" asp-items="@ViewBag.ClientID"></select>
+                <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().ClientID)" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Project</label>
+                <select name="ProjectID" class="form-control" asp-items="@ViewBag.ProjectID"></select>
+                <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().ProjectID)" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Start DateTime</label>
+                <input name="StartDateTime" class="form-control start-datetime" type="datetime-local" />
+                <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().StartDateTime)" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">End DateTime</label>
+                <input name="EndDateTime" class="form-control end-datetime" type="datetime-local" />
+                <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().EndDateTime)" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Hours Spent</label>
+                <input name="HoursSpent" class="form-control hours-spent" type="number" step="0.01" placeholder="Hours Spent" />
+                <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().HoursSpent)" class="text-danger"></span>
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Description</label>
+                <textarea name="Description" class="form-control" rows="4" placeholder="Description"></textarea>
+                <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().Description)" class="text-danger"></span>
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-success create-btn">Create</button>
+                <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
+            </div>
+        </div>
     </form>
 </div>

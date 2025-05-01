@@ -48,8 +48,16 @@ namespace TaskTracker.Controllers
         // POST: TimeEntries/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,UserId,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
+        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
         {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            timeEntry.UserId = _userManager.GetUserId(User);
+            ModelState.Remove("UserId"); // Remove UserId from validation
+
             if (timeEntry.ClientID == 0)
             {
                 ModelState.AddModelError("ClientID", "Please select a client.");
@@ -59,8 +67,6 @@ namespace TaskTracker.Controllers
                 ModelState.AddModelError("ProjectID", "Please select a project.");
             }
 
-            timeEntry.UserId = _userManager.GetUserId(User);
-
             if (ModelState.IsValid)
             {
                 _context.Add(timeEntry);
@@ -68,15 +74,30 @@ namespace TaskTracker.Controllers
                 TempData["SuccessMessage"] = "Time entry created successfully.";
                 return RedirectToAction(nameof(Index));
             }
+
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
-            return RedirectToAction(nameof(Index));
+
+            // Repopulate dropdowns for the view
+            var clientList = _context.Clients
+                .Select(c => new { c.ClientID, c.Name })
+                .ToList();
+            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
+            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID);
+
+            var projectList = _context.Projects
+                .Select(p => new { p.ProjectID, p.Name })
+                .ToList();
+            projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
+            ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID);
+
+            return View("Index", await _context.TimeEntries.Where(t => t.UserId == timeEntry.UserId).Include(t => t.Project).Include(t => t.Client).ToListAsync());
         }
 
         // POST: TimeEntries/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TimeEntryID,ClientID,ProjectID,UserId,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
+        public async Task<IActionResult> Edit(int id, [Bind("TimeEntryID,ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
         {
             if (id != timeEntry.TimeEntryID)
             {
@@ -84,10 +105,8 @@ namespace TaskTracker.Controllers
             }
 
             var userId = _userManager.GetUserId(User);
-            if (timeEntry.UserId != userId)
-            {
-                return Forbid();
-            }
+            timeEntry.UserId = userId; // Set UserId to current user
+            ModelState.Remove("UserId"); // Remove UserId from validation
 
             if (timeEntry.ClientID == 0)
             {
@@ -122,7 +141,21 @@ namespace TaskTracker.Controllers
 
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
-            return RedirectToAction(nameof(Index));
+
+            // Repopulate dropdowns
+            var clientList = _context.Clients
+                .Select(c => new { c.ClientID, c.Name })
+                .ToList();
+            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
+            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID);
+
+            var projectList = _context.Projects
+                .Select(p => new { p.ProjectID, p.Name })
+                .ToList();
+            projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
+            ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID);
+
+            return View("Index", await _context.TimeEntries.Where(t => t.UserId == userId).Include(t => t.Project).Include(t => t.Client).ToListAsync());
         }
 
         // GET: TimeEntries/Delete/5

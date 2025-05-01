@@ -1,31 +1,44 @@
-﻿@model TaskTracker.Models.Client
+﻿@model TaskTracker.Models.TimeEntry
 
-<tr id="edit-row-@Model.ClientID" class="edit-mode" style="display:none;">
-    <form id="edit-form-@Model.ClientID" asp-action="Edit" asp-route-id="@Model.ClientID" method="post">
-        <input type="hidden" asp-for="@Model.ClientID" name="ClientID" />
-    <td>
-        <input asp-for="@Model.Name" class="form-control" name="Name" />
-        <span asp-validation-for="@Model.Name" class="text-danger"></span>
-    </td>
-    <td>
-        <input asp-for="@Model.Email" class="form-control" name="Email" />
-        <span asp-validation-for="@Model.Email" class="text-danger"></span>
-    </td>
-    <td>
-        <input asp-for="@Model.Phone" class="form-control" name="Phone" />
-        <span asp-validation-for="@Model.Phone" class="text-danger"></span>
-    </td>
-    <td>
-        <input asp-for="@Model.Address" class="form-control" name="Address" />
-        <span asp-validation-for="@Model.Address" class="text-danger"></span>
-    </td>
-    <td>
-        <input asp-for="@Model.DefaultRate" class="form-control" type="number" step="0.01" name="DefaultRate" />
-        <span asp-validation-for="@Model.DefaultRate" class="text-danger"></span>
-    </td>
-    <td>
-        <button type="submit" class="btn btn-success save-btn">Save</button>
-        <button type="button" class="btn btn-secondary cancel-btn" data-id="@Model.ClientID">Cancel</button>
-    </td>
+<div id="edit-row-@Model.TimeEntryID" class="edit-mode card mb-2" style="display:none;">
+    <form id="edit-form-@Model.TimeEntryID" asp-action="Edit" asp-route-id="@Model.TimeEntryID" method="post" class="card-body">
+        <input type="hidden" asp-for="@Model.TimeEntryID" name="TimeEntryID" />
+        <input type="hidden" asp-for="@Model.UserId" name="UserId" />
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Client</label>
+                <select asp-for="@Model.ClientID" name="ClientID" class="form-control" asp-items="@ViewBag.ClientID"></select>
+                <span asp-validation-for="@Model.ClientID" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Project</label>
+                <select asp-for="@Model.ProjectID" name="ProjectID" class="form-control" asp-items="@ViewBag.ProjectID"></select>
+                <span asp-validation-for="@Model.ProjectID" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Start DateTime</label>
+                <input asp-for="@Model.StartDateTime" class="form-control start-datetime" type="datetime-local" name="StartDateTime" />
+                <span asp-validation-for="@Model.StartDateTime" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">End DateTime</label>
+                <input asp-for="@Model.EndDateTime" class="form-control end-datetime" type="datetime-local" name="EndDateTime" />
+                <span asp-validation-for="@Model.EndDateTime" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Hours Spent</label>
+                <input asp-for="@Model.HoursSpent" class="form-control hours-spent" type="number" step="0.01" name="HoursSpent" />
+                <span asp-validation-for="@Model.HoursSpent" class="text-danger"></span>
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Description</label>
+                <textarea asp-for="@Model.Description" name="Description" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="@Model.Description" class="text-danger"></span>
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-success save-btn">Save</button>
+                <button type="button" class="btn btn-secondary cancel-btn" data-id="@Model.TimeEntryID">Cancel</button>
+            </div>
+        </div>
     </form>
-</tr>
+</div>

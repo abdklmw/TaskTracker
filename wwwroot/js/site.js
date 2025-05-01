@@ -22,7 +22,7 @@
         btn.addEventListener('click', function () {
             const id = this.getAttribute('data-id');
             document.getElementById(`display-row-${id}`).style.display = 'none';
-            document.getElementById(`edit-row-${id}`).style.display = 'table-row';
+            document.getElementById(`edit-row-${id}`).style.display = 'block';
         });
     });
 
@@ -31,7 +31,7 @@
         btn.addEventListener('click', function () {
             const id = this.getAttribute('data-id');
             document.getElementById(`edit-row-${id}`).style.display = 'none';
-            document.getElementById(`display-row-${id}`).style.display = 'table-row';
+            document.getElementById(`display-row-${id}`).style.display = 'block';
         });
     });
 

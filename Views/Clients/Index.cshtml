@@ -1,10 +1,10 @@
-﻿@model IEnumerable<TaskTracker.Models.Client>
+﻿@model IEnumerable<TaskTracker.Models.TimeEntry>
 
 @{
-    ViewData["Title"] = "Clients";
+    ViewData["Title"] = "Time Entries";
 }
 
-<h1>Clients</h1>
+<h1>Time Entries</h1>
 
 @if (TempData["SuccessMessage"] != null)
 {
@@ -18,28 +18,23 @@
 @await Html.PartialAsync("_CreateForm")
 
 <p>
-    <a id="create-new-btn" class="btn btn-primary">Create New</a>
+    <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.Name)</th>
-            <th>@Html.DisplayNameFor(model => model.Email)</th>
-            <th>@Html.DisplayNameFor(model => model.Phone)</th>
-            <th>@Html.DisplayNameFor(model => model.Address)</th>
-            <th>@Html.DisplayNameFor(model => model.DefaultRate)</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var client in Model)
-        {
-            @await Html.PartialAsync("_DisplayRow", client)
-            @await Html.PartialAsync("_EditFormRow", client)
-        }
-    </tbody>
-</table>
+<div class="row mb-2">
+    <div class="col-md-2"><strong>Client</strong></div>
+    <div class="col-md-2"><strong>Project</strong></div>
+    <div class="col-md-2"><strong>Start DateTime</strong></div>
+    <div class="col-md-2"><strong>End DateTime</strong></div>
+    <div class="col-md-2"><strong>Hours Spent</strong></div>
+    <div class="col-md-2"><strong>Actions</strong></div>
+</div>
+
+@foreach (var timeEntry in Model)
+{
+    @await Html.PartialAsync("_DisplayRow", timeEntry)
+    @await Html.PartialAsync("_EditFormRow", timeEntry)
+}
 
 <style>
     .edit-mode .form-control, #create-form .form-control {
