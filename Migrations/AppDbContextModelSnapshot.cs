@@ -265,18 +265,24 @@ namespace TaskTracker.Migrations
                     b.Property<int>("ClientID")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("InvoiceDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime?>("InvoiceSentDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("PaidDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("InvoiceID");
 
@@ -285,29 +291,70 @@ namespace TaskTracker.Migrations
                     b.ToTable("Invoices");
                 });
 
-            modelBuilder.Entity("TaskTracker.Models.InvoiceItem", b =>
+            modelBuilder.Entity("TaskTracker.Models.InvoiceProduct", b =>
                 {
-                    b.Property<int>("InvoiceItemID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvoiceItemID"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("InvoiceID")
                         .HasColumnType("int");
 
-                    b.HasKey("InvoiceItemID");
+                    b.Property<int>("ProductID")
+                        .HasColumnType("int");
 
-                    b.HasIndex("InvoiceID");
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
 
-                    b.ToTable("InvoiceItems");
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("InvoiceID", "ProductID");
+
+                    b.HasIndex("ProductID");
+
+                    b.ToTable("InvoiceProducts");
+                });
+
+            modelBuilder.Entity("TaskTracker.Models.InvoiceTimeEntry", b =>
+                {
+                    b.Property<int>("InvoiceID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeEntryID")
+                        .HasColumnType("int");
+
+                    b.HasKey("InvoiceID", "TimeEntryID");
+
+                    b.HasIndex("TimeEntryID");
+
+                    b.ToTable("InvoiceTimeEntries");
+                });
+
+            modelBuilder.Entity("TaskTracker.Models.Product", b =>
+                {
+                    b.Property<int>("ProductID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductID"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ProductID");
+
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("TaskTracker.Models.Project", b =>
@@ -444,15 +491,42 @@ namespace TaskTracker.Migrations
                     b.Navigation("Client");
                 });
 
-            modelBuilder.Entity("TaskTracker.Models.InvoiceItem", b =>
+            modelBuilder.Entity("TaskTracker.Models.InvoiceProduct", b =>
                 {
                     b.HasOne("TaskTracker.Models.Invoice", "Invoice")
-                        .WithMany("InvoiceItems")
+                        .WithMany("InvoiceProducts")
                         .HasForeignKey("InvoiceID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("TaskTracker.Models.Product", "Product")
+                        .WithMany("InvoiceProducts")
+                        .HasForeignKey("ProductID")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Invoice");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("TaskTracker.Models.InvoiceTimeEntry", b =>
+                {
+                    b.HasOne("TaskTracker.Models.Invoice", "Invoice")
+                        .WithMany("InvoiceTimeEntries")
+                        .HasForeignKey("InvoiceID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("TaskTracker.Models.TimeEntry", "TimeEntry")
+                        .WithMany()
+                        .HasForeignKey("TimeEntryID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+
+                    b.Navigation("TimeEntry");
                 });
 
             modelBuilder.Entity("TaskTracker.Models.Project", b =>
@@ -479,7 +553,7 @@ namespace TaskTracker.Migrations
                     b.HasOne("TaskTracker.Data.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Client");
@@ -496,7 +570,14 @@ namespace TaskTracker.Migrations
 
             modelBuilder.Entity("TaskTracker.Models.Invoice", b =>
                 {
-                    b.Navigation("InvoiceItems");
+                    b.Navigation("InvoiceProducts");
+
+                    b.Navigation("InvoiceTimeEntries");
+                });
+
+            modelBuilder.Entity("TaskTracker.Models.Product", b =>
+                {
+                    b.Navigation("InvoiceProducts");
                 });
 
             modelBuilder.Entity("TaskTracker.Models.Project", b =>

@@ -8,7 +8,7 @@
             <div class="col-md-2" data-field="Phone">@Model.Phone</div>
             <div class="col-md-2" data-field="Address">@Model.Address</div>
             <div class="col-md-2" data-field="DefaultRate">$@Model.DefaultRate.ToString("F2")</div>
-            <div class="col-md-2">
+            <div class="col-md-12">
                 <button class="btn btn-primary edit-btn" data-id="@Model.ClientID">Edit</button>
                 <a asp-action="Delete" asp-route-id="@Model.ClientID" class="btn btn-danger">Delete</a>
             </div>

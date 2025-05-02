@@ -1,19 +1,46 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TaskTracker.Models
 {
+    public enum InvoiceStatus
+    {
+        Draft,
+        Sent,
+        Paid,
+        Void
+    }
 
     public class Invoice
     {
         public int InvoiceID { get; set; }
+
+        [Required]
         public int ClientID { get; set; }
+
+        [Required]
+        [Column(TypeName = "date")]
         public DateTime InvoiceDate { get; set; }
-        public DateTime DueDate { get; set; }
+
+        [Column(TypeName = "date")]
+        public DateTime? InvoiceSentDate { get; set; }
+
+        [Column(TypeName = "date")]
+        public DateTime? PaidDate { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
-        public string Status { get; set; }
-        public Client Client { get; set; }
-        public ICollection<InvoiceItem> InvoiceItems { get; set; }
-    }
 
+        [Required]
+        public InvoiceStatus Status { get; set; }
+
+        [Required]
+        public string UserId { get; set; }
+
+        public virtual Client Client { get; set; }
+        public virtual ICollection<InvoiceTimeEntry> InvoiceTimeEntries { get; set; } = new List<InvoiceTimeEntry>();
+        public virtual ICollection<InvoiceProduct> InvoiceProducts { get; set; } = new List<InvoiceProduct>();
+    }
 }

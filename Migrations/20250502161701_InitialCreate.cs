@@ -58,13 +58,29 @@ namespace TaskTracker.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DefaultRate = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Clients", x => x.ClientID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Products",
+                columns: table => new
+                {
+                    ProductID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Products", x => x.ProductID);
                 });
 
             migrationBuilder.CreateTable(
@@ -180,10 +196,12 @@ namespace TaskTracker.Migrations
                     InvoiceID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ClientID = table.Column<int>(type: "int", nullable: false),
-                    InvoiceDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    InvoiceDate = table.Column<DateTime>(type: "date", nullable: false),
+                    InvoiceSentDate = table.Column<DateTime>(type: "date", nullable: true),
+                    PaidDate = table.Column<DateTime>(type: "date", nullable: true),
                     TotalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -202,12 +220,10 @@ namespace TaskTracker.Migrations
                 {
                     ProjectID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    ClientID = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Rate = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Rate = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    ClientID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -216,29 +232,31 @@ namespace TaskTracker.Migrations
                         name: "FK_Projects_Clients_ClientID",
                         column: x => x.ClientID,
                         principalTable: "Clients",
-                        principalColumn: "ClientID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "ClientID");
                 });
 
             migrationBuilder.CreateTable(
-                name: "InvoiceItems",
+                name: "InvoiceProducts",
                 columns: table => new
                 {
-                    InvoiceItemID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
                     InvoiceID = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    ProductID = table.Column<int>(type: "int", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_InvoiceItems", x => x.InvoiceItemID);
+                    table.PrimaryKey("PK_InvoiceProducts", x => new { x.InvoiceID, x.ProductID });
                     table.ForeignKey(
-                        name: "FK_InvoiceItems_Invoices_InvoiceID",
+                        name: "FK_InvoiceProducts_Invoices_InvoiceID",
                         column: x => x.InvoiceID,
                         principalTable: "Invoices",
-                        principalColumn: "InvoiceID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "InvoiceID");
+                    table.ForeignKey(
+                        name: "FK_InvoiceProducts_Products_ProductID",
+                        column: x => x.ProductID,
+                        principalTable: "Products",
+                        principalColumn: "ProductID");
                 });
 
             migrationBuilder.CreateTable(
@@ -248,19 +266,56 @@ namespace TaskTracker.Migrations
                     TimeEntryID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ProjectID = table.Column<int>(type: "int", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    HoursSpent = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    ClientID = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    StartDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDateTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    HoursSpent = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    InvoicedDate = table.Column<DateTime>(type: "date", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TimeEntries", x => x.TimeEntryID);
+                    table.ForeignKey(
+                        name: "FK_TimeEntries_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_TimeEntries_Clients_ClientID",
+                        column: x => x.ClientID,
+                        principalTable: "Clients",
+                        principalColumn: "ClientID",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_TimeEntries_Projects_ProjectID",
                         column: x => x.ProjectID,
                         principalTable: "Projects",
                         principalColumn: "ProjectID",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InvoiceTimeEntries",
+                columns: table => new
+                {
+                    InvoiceID = table.Column<int>(type: "int", nullable: false),
+                    TimeEntryID = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InvoiceTimeEntries", x => new { x.InvoiceID, x.TimeEntryID });
+                    table.ForeignKey(
+                        name: "FK_InvoiceTimeEntries_Invoices_InvoiceID",
+                        column: x => x.InvoiceID,
+                        principalTable: "Invoices",
+                        principalColumn: "InvoiceID");
+                    table.ForeignKey(
+                        name: "FK_InvoiceTimeEntries_TimeEntries_TimeEntryID",
+                        column: x => x.TimeEntryID,
+                        principalTable: "TimeEntries",
+                        principalColumn: "TimeEntryID");
                 });
 
             migrationBuilder.CreateIndex(
@@ -303,9 +358,9 @@ namespace TaskTracker.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InvoiceItems_InvoiceID",
-                table: "InvoiceItems",
-                column: "InvoiceID");
+                name: "IX_InvoiceProducts_ProductID",
+                table: "InvoiceProducts",
+                column: "ProductID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Invoices_ClientID",
@@ -313,14 +368,29 @@ namespace TaskTracker.Migrations
                 column: "ClientID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_InvoiceTimeEntries_TimeEntryID",
+                table: "InvoiceTimeEntries",
+                column: "TimeEntryID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Projects_ClientID",
                 table: "Projects",
+                column: "ClientID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TimeEntries_ClientID",
+                table: "TimeEntries",
                 column: "ClientID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TimeEntries_ProjectID",
                 table: "TimeEntries",
                 column: "ProjectID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TimeEntries_UserId",
+                table: "TimeEntries",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -342,19 +412,25 @@ namespace TaskTracker.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "InvoiceItems");
+                name: "InvoiceProducts");
 
             migrationBuilder.DropTable(
-                name: "TimeEntries");
+                name: "InvoiceTimeEntries");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
+                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Invoices");
+
+            migrationBuilder.DropTable(
+                name: "TimeEntries");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Projects");
