@@ -1,59 +1,66 @@
 ﻿@model IEnumerable<TaskTracker.Models.Invoice>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Invoices";
 }
 
-<h1>Index</h1>
+<h1>Invoices</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@await Html.PartialAsync("_CreateForm")
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.InvoiceDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DueDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TotalAmount)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Client)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.InvoiceDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DueDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TotalAmount)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Client.ClientID)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.InvoiceID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.InvoiceID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.InvoiceID">Delete</a>
-            </td>
-        </tr>
+
+<div class="row mb-2">
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.InvoiceDate)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.DueDate)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.TotalAmount)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Status)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Client)</strong></div>
+    <div class="col-md-2"><strong>Actions</strong></div>
+</div>
+
+@foreach (var item in Model)
+{
+    @await Html.PartialAsync("_DisplayRow", item)
+    @await Html.PartialAsync("_EditFormRow", item)
 }
-    </tbody>
-</table>
+
+<style>
+    .edit-mode .form-control, #create-form .form-control {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 4px;
+    }
+
+    .edit-mode .text-danger, #create-form .text-danger {
+        font-size: 0.8em;
+        display: block;
+    }
+
+    .edit-mode .btn, #create-form .btn {
+        margin-right: 5px;
+    }
+
+    .alert-success {
+        transition: opacity 1s ease-in-out;
+    }
+</style>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
+}

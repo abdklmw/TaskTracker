@@ -21,26 +21,21 @@
     <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.Client)</th>
-            <th>@Html.DisplayNameFor(model => model.Project)</th>
-            <th>@Html.DisplayNameFor(model => model.StartDateTime)</th>
-            <th>@Html.DisplayNameFor(model => model.EndDateTime)</th>
-            <th>@Html.DisplayNameFor(model => model.HoursSpent)</th>
-            <th>@Html.DisplayNameFor(model => model.Description)</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var timeEntry in Model)
-        {
-            @await Html.PartialAsync("_DisplayRow", timeEntry)
-            @await Html.PartialAsync("_EditFormRow", timeEntry)
-        }
-    </tbody>
-</table>
+<div class="row mb-2">
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Client)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Project)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.StartDateTime)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.EndDateTime)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.HoursSpent)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Description)</strong></div>
+    <div class="col-md-2"><strong>Actions</strong></div>
+</div>
+
+@foreach (var timeEntry in Model)
+{
+    @await Html.PartialAsync("_DisplayRow", timeEntry)
+    @await Html.PartialAsync("_EditFormRow", timeEntry)
+}
 
 <style>
     .edit-mode .form-control, #create-form .form-control {
