@@ -19,7 +19,7 @@
                     <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().EndDateTime)" class="text-danger"></span>
                 </td>
                 <td>
-                    <input name="HoursSpent" class="form-control hours-spent" type="number" step="1" placeholder="Hours Spent" />
+                    <input name="HoursSpent" class="form-control hours-spent" type="number" step="0.01" placeholder="Hours Spent" />
                     <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().HoursSpent)" class="text-danger"></span>
                 </td>
                 <td>
