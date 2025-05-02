@@ -30,5 +30,8 @@ namespace TaskTracker.Models
         public decimal? HoursSpent { get; set; }
 
         public string? Description { get; set; }
+
+        [Column(TypeName = "date")]
+        public DateTime? InvoicedDate { get; set; }
     }
 }
