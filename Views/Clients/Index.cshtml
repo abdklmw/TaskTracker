@@ -15,31 +15,26 @@
     <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
 }
 
-@await Html.PartialAsync("_CreateForm")
+@await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Client())
 
 <p>
-    <a id="create-new-btn" class="btn btn-primary">Create New</a>
+    <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.Name)</th>
-            <th>@Html.DisplayNameFor(model => model.Email)</th>
-            <th>@Html.DisplayNameFor(model => model.Phone)</th>
-            <th>@Html.DisplayNameFor(model => model.Address)</th>
-            <th>@Html.DisplayNameFor(model => model.DefaultRate)</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var client in Model)
-        {
-            @await Html.PartialAsync("_DisplayRow", client)
-            @await Html.PartialAsync("_EditFormRow", client)
-        }
-    </tbody>
-</table>
+<div class="row mb-2">
+    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Name)</strong></div>
+    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Email)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Phone)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Address)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.DefaultRate)</strong></div>
+    <div class="col-md-2"><strong>Actions</strong></div>
+</div>
+
+@foreach (var client in Model)
+{
+    @await Html.PartialAsync("_DisplayRow", client)
+    @await Html.PartialAsync("_EditFormRow", client)
+}
 
 <style>
     .edit-mode .form-control, #create-form .form-control {

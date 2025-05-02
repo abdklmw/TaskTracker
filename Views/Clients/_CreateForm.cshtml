@@ -1,32 +1,38 @@
-﻿<div id="create-form" style="display:none; margin-bottom: 20px;">
-    <form asp-action="Create" method="post">
-        <table class="table table-bordered">
-            <tr>
-                <td>
-                    <input name="Name" class="form-control" placeholder="Name" />
-                    <span asp-validation-for="@(new TaskTracker.Models.Client().Name)" class="text-danger"></span>
-                </td>
-                <td>
-                    <input name="Email" class="form-control" placeholder="Email" />
-                    <span asp-validation-for="@(new TaskTracker.Models.Client().Email)" class="text-danger"></span>
-                </td>
-                <td>
-                    <input name="Phone" class="form-control" placeholder="Phone" />
-                    <span asp-validation-for="@(new TaskTracker.Models.Client().Phone)" class="text-danger"></span>
-                </td>
-                <td>
-                    <input name="Address" class="form-control" placeholder="Address" />
-                    <span asp-validation-for="@(new TaskTracker.Models.Client().Address)" class="text-danger"></span>
-                </td>
-                <td>
-                    <input name="DefaultRate" class="form-control" type="number" step="0.01" placeholder="Default Rate" />
-                    <span asp-validation-for="@(new TaskTracker.Models.Client().DefaultRate)" class="text-danger"></span>
-                </td>
-                <td>
-                    <button type="submit" class="btn btn-success create-btn">Create</button>
-                    <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
-                </td>
-            </tr>
-        </table>
+﻿@model TaskTracker.Models.Client
+
+<div id="create-form" style="display:none; margin-bottom: 20px;">
+    <form asp-action="Create" method="post" class="card p-4">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label asp-for="Name" class="form-label">Name</label>
+                <input asp-for="Name" class="form-control" placeholder="Name" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Email" class="form-label">Email</label>
+                <input asp-for="Email" class="form-control" placeholder="Email" type="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Phone" class="form-label">Phone</label>
+                <input asp-for="Phone" class="form-control" placeholder="Phone" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Address" class="form-label">Address</label>
+                <input asp-for="Address" class="form-control" placeholder="Address" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="DefaultRate" class="form-label">Default Rate</label>
+                <input asp-for="DefaultRate" class="form-control" type="number" step="1" placeholder="Rate" />
+                <span asp-validation-for="DefaultRate" class="text-danger"></span>
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-success create-btn">Create</button>
+                <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
+            </div>
+        </div>
     </form>
 </div>

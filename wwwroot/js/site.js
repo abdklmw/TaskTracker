@@ -1,48 +1,33 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
     // Handle Create New button click
-    const createNewBtn = document.getElementById('create-new-btn');
-    if (createNewBtn) {
-        createNewBtn.addEventListener('click', function () {
-            document.getElementById('create-form').style.display = 'block';
-            this.style.display = 'none';
-        });
-    }
+    $('#create-new-btn').click(function () {
+        $('#create-form').css('display', 'block');
+        $('#create-new-btn').css('display', 'none');
+    });
 
     // Handle Cancel button click for create
-    const cancelCreateBtn = document.querySelector('.cancel-create-btn');
-    if (cancelCreateBtn) {
-        cancelCreateBtn.addEventListener('click', function () {
-            document.getElementById('create-form').style.display = 'none';
-            document.getElementById('create-new-btn').style.display = 'inline-block';
-        });
-    }
+    $('.cancel-create-btn').click(function () {
+        $('#create-form').css('display', 'none');
+        $('#create-new-btn').css('display', '');
+    });
 
-    // Handle Edit button click
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            document.getElementById(`display-row-${id}`).style.display = 'none';
-            document.getElementById(`edit-row-${id}`).style.display = 'table-row';
-        });
+    $('.edit-btn').click(function () {
+        let id = $(this).data('id');
+        $('#display-row-' + id).css('display', 'none');
+        $('#edit-row-' + id).css('display', 'block');
     });
 
     // Handle Cancel button click for edit
-    document.querySelectorAll('.cancel-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            document.getElementById(`edit-row-${id}`).style.display = 'none';
-            document.getElementById(`display-row-${id}`).style.display = 'table-row';
-        });
+    $('.cancel-btn').click(function () {
+        let id = $(this).data('id');
+        $('#edit-row-' + id).css('display', 'none');
+        $('#display-row-' + id).css('display', 'block');
     });
 
-    // Fade out success alerts after 15 seconds
-    setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert-success');
-        alerts.forEach(alert => {
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 1000);
-        });
-    }, 15000);
+    // Fade out success alerts after 3 seconds
+    $('.alert-success').delay(3000).fadeOut(1000, function () {
+        $(this).alert('close');
+    });
 
     // Calculate HoursSpent based on StartDateTime and EndDateTime
     function calculateHoursSpent(startInput, endInput, hoursInput) {
