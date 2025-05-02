@@ -1,5 +1,9 @@
-﻿<div id="create-form" style="display:none; margin-bottom: 20px;">
-    <form asp-action="Create" method="post">
+﻿@{
+    var displayStyle = ViewBag.VisibleCreateForm == true ? "" : "display:none;";
+    var divStyle = string.IsNullOrEmpty(displayStyle) ? "margin-bottom: 20px;" : $"{displayStyle} margin-bottom: 20px;";
+}
+<div id="create-form" style="@divStyle">
+    <form asp-controller="TimeEntries" asp-action="Create" method="post">
         <table class="table table-bordered">
             <tr>
                 <td>
@@ -23,7 +27,8 @@
                     <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().HoursSpent)" class="text-danger"></span>
                 </td>
                 <td>
-                    <input type="hidden" name="UserId" value="@User.Identity.Name" />
+                    <input type="hidden" name="UserId" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+                    <input type="hidden" name="ReturnTo" value="@ViewBag.ReturnTo" />
                     <button type="submit" class="btn btn-success create-btn">Create</button>
                     <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
                 </td>

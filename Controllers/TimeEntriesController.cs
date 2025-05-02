@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace TaskTracker.Controllers
 {
@@ -14,11 +15,13 @@ namespace TaskTracker.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<TimeEntriesController> _logger;
 
-        public TimeEntriesController(AppDbContext context, UserManager<ApplicationUser> userManager)
+        public TimeEntriesController(AppDbContext context, UserManager<ApplicationUser> userManager, ILogger<TimeEntriesController> logger)
         {
             _context = context;
             _userManager = userManager;
+            _logger = logger;
         }
 
         // GET: TimeEntries
@@ -42,22 +45,33 @@ namespace TaskTracker.Controllers
             projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
             ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", projectId ?? 0);
 
+            ViewBag.ReturnTo = "TimeEntries";
+
             return View(await timeEntries.ToListAsync());
         }
 
         // POST: TimeEntries/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
+        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description,UserId")] TimeEntry timeEntry, string ReturnTo)
         {
             if (!User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Login", "Account");
             }
 
-            timeEntry.UserId = _userManager.GetUserId(User);
+            // Ensure UserId matches the authenticated user
+            var userId = _userManager.GetUserId(User);
+            timeEntry.UserId = userId;
             ModelState.Remove("UserId"); // Remove UserId from validation
+            ModelState.Remove("Client"); // Remove navigation properties from validation
+            ModelState.Remove("Project");
+            ModelState.Remove("User");
 
+            // Log form data for debugging
+            _logger.LogInformation("Form data: ClientID={ClientID}, ProjectID={ProjectID}, UserId={UserId}", timeEntry.ClientID, timeEntry.ProjectID, timeEntry.UserId);
+
+            // Validate ClientID and ProjectID
             if (timeEntry.ClientID == 0)
             {
                 ModelState.AddModelError("ClientID", "Please select a client.");
@@ -72,13 +86,14 @@ namespace TaskTracker.Controllers
                 _context.Add(timeEntry);
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Time entry created successfully.";
-                return RedirectToAction(nameof(Index));
+                return ReturnTo == "Home" ? RedirectToAction("Index", "Home") : RedirectToAction(nameof(Index));
             }
 
+            // Log validation errors
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            TempData["ErrorMessage"] = string.Join("; ", errors);
+            _logger.LogError("Validation errors: {Errors}", string.Join("; ", errors));
 
-            // Repopulate dropdowns for the view
+            // Repopulate dropdowns for error case
             var clientList = _context.Clients
                 .Select(c => new { c.ClientID, c.Name })
                 .ToList();
@@ -91,7 +106,9 @@ namespace TaskTracker.Controllers
             projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
             ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID);
 
-            return View("Index", await _context.TimeEntries.Where(t => t.UserId == timeEntry.UserId).Include(t => t.Project).Include(t => t.Client).ToListAsync());
+            ViewBag.ReturnTo = ReturnTo;
+
+            return View("Index", await _context.TimeEntries.Where(t => t.UserId == userId).Include(t => t.Project).Include(t => t.Client).ToListAsync());
         }
 
         // POST: TimeEntries/Edit/5
@@ -105,8 +122,11 @@ namespace TaskTracker.Controllers
             }
 
             var userId = _userManager.GetUserId(User);
-            timeEntry.UserId = userId; // Set UserId to current user
-            ModelState.Remove("UserId"); // Remove UserId from validation
+            timeEntry.UserId = userId;
+            ModelState.Remove("UserId");
+            ModelState.Remove("Client");
+            ModelState.Remove("Project");
+            ModelState.Remove("User");
 
             if (timeEntry.ClientID == 0)
             {
@@ -142,7 +162,6 @@ namespace TaskTracker.Controllers
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
 
-            // Repopulate dropdowns
             var clientList = _context.Clients
                 .Select(c => new { c.ClientID, c.Name })
                 .ToList();
