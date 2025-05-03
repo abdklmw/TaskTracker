@@ -4,7 +4,6 @@
     <form id="edit-form-@Model.TimeEntryID" asp-action="Edit" asp-route-id="@Model.TimeEntryID" method="post">
         <input type="hidden" asp-for="@Model.TimeEntryID" name="TimeEntryID" />
         <input type="hidden" asp-for="@Model.UserId" name="UserId" />
-        <input type="hidden" id="TimezoneOffset-@Model.TimeEntryID" name="TimezoneOffset" value="" />
         <div class="card">
             <div class="card-body">
                 <div class="row g-3">

@@ -22,7 +22,6 @@
                             <p class="card-text"><strong>Started:</strong> @timeEntry.StartDateTime.ToString("yyyy-MM-dd HH:mm")</p>
                             <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
                                 <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
-                                <input type="hidden" class="timezone-offset" name="TimezoneOffset" value="" />
                                 <button type="submit" class="btn btn-danger">Stop Timer</button>
                             </form>
                         </div>

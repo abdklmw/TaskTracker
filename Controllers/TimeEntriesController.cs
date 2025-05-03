@@ -28,6 +28,19 @@ namespace TaskTracker.Controllers
         public async Task<IActionResult> Index(int? clientId, int? projectId)
         {
             var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogError("User not found for ID {UserId}", userId);
+                return NotFound();
+            }
+
+            if (!user.TimezoneOffset.HasValue)
+            {
+                _logger.LogInformation("No TimezoneOffset set for user {UserId}, redirecting to SetTimezone.", userId);
+                return RedirectToAction("SetTimezone", "Home");
+            }
+
             var timeEntries = _context.TimeEntries
                 .Where(t => t.UserId == userId)
                 .Include(t => t.Project)
@@ -53,7 +66,7 @@ namespace TaskTracker.Controllers
         // POST: TimeEntries/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description,UserId")] TimeEntry timeEntry, string ReturnTo, int? TimezoneOffset)
+        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description,UserId")] TimeEntry timeEntry, string ReturnTo)
         {
             if (!User.Identity.IsAuthenticated)
             {
@@ -67,13 +80,20 @@ namespace TaskTracker.Controllers
             ModelState.Remove("Project");
             ModelState.Remove("User");
 
-            // Get user's stored TimezoneOffset if form value is missing
             var user = await _userManager.FindByIdAsync(userId);
-            int effectiveOffset = TimezoneOffset ?? user?.TimezoneOffset ?? 0;
-            if (!TimezoneOffset.HasValue)
+            if (user == null)
             {
-                _logger.LogWarning("TimezoneOffset missing from form for user {UserId}, using stored offset {StoredOffset}", userId, effectiveOffset);
+                _logger.LogError("User not found for ID {UserId}", userId);
+                return NotFound();
             }
+
+            if (!user.TimezoneOffset.HasValue)
+            {
+                _logger.LogInformation("No TimezoneOffset set for user {UserId}, redirecting to SetTimezone.", userId);
+                return RedirectToAction("SetTimezone", "Home");
+            }
+
+            int effectiveOffset = user.TimezoneOffset.Value;
 
             // Convert local times to UTC using effectiveOffset
             if (timeEntry.StartDateTime != default)
@@ -85,15 +105,8 @@ namespace TaskTracker.Controllers
                 timeEntry.EndDateTime = DateTimeOffset.Parse(timeEntry.EndDateTime.Value.ToString()).ToOffset(TimeSpan.FromMinutes(-effectiveOffset)).UtcDateTime;
             }
 
-            // Update user's TimezoneOffset if provided and different
-            if (TimezoneOffset.HasValue && user != null && user.TimezoneOffset != TimezoneOffset)
-            {
-                user.TimezoneOffset = TimezoneOffset.Value;
-                await _userManager.UpdateAsync(user);
-            }
-
-            _logger.LogInformation("Form data: ClientID={ClientID}, ProjectID={ProjectID}, UserId={UserId}, StartDateTime={StartDateTime}, EndDateTime={EndDateTime}, TimezoneOffset={TimezoneOffset}, EffectiveOffset={EffectiveOffset}",
-                timeEntry.ClientID, timeEntry.ProjectID, timeEntry.UserId, timeEntry.StartDateTime, timeEntry.EndDateTime, TimezoneOffset, effectiveOffset);
+            _logger.LogInformation("Form data: ClientID={ClientID}, ProjectID={ProjectID}, UserId={UserId}, StartDateTime={StartDateTime}, EndDateTime={EndDateTime}, EffectiveOffset={EffectiveOffset}",
+                timeEntry.ClientID, timeEntry.ProjectID, timeEntry.UserId, timeEntry.StartDateTime, timeEntry.EndDateTime, effectiveOffset);
 
             if (timeEntry.ClientID == 0)
             {
@@ -135,7 +148,7 @@ namespace TaskTracker.Controllers
         // POST: TimeEntries/StopTimer
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> StopTimer(int TimeEntryID, int? TimezoneOffset)
+        public async Task<IActionResult> StopTimer(int TimeEntryID)
         {
             if (!User.Identity.IsAuthenticated)
             {
@@ -143,6 +156,19 @@ namespace TaskTracker.Controllers
             }
 
             var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogError("User not found for ID {UserId}", userId);
+                return NotFound();
+            }
+
+            if (!user.TimezoneOffset.HasValue)
+            {
+                _logger.LogInformation("No TimezoneOffset set for user {UserId}, redirecting to SetTimezone.", userId);
+                return RedirectToAction("SetTimezone", "Home");
+            }
+
             var timeEntry = await _context.TimeEntries
                 .FirstOrDefaultAsync(t => t.TimeEntryID == TimeEntryID && t.UserId == userId && t.EndDateTime == null);
 
@@ -152,20 +178,7 @@ namespace TaskTracker.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // Get user's stored TimezoneOffset if form value is missing
-            var user = await _userManager.FindByIdAsync(userId);
-            int effectiveOffset = TimezoneOffset ?? user?.TimezoneOffset ?? 0;
-            if (!TimezoneOffset.HasValue)
-            {
-                _logger.LogWarning("TimezoneOffset missing from form for user {UserId}, using stored offset {StoredOffset}", userId, effectiveOffset);
-            }
-
-            // Update user's TimezoneOffset if provided and different
-            if (TimezoneOffset.HasValue && user != null && user.TimezoneOffset != TimezoneOffset)
-            {
-                user.TimezoneOffset = TimezoneOffset.Value;
-                await _userManager.UpdateAsync(user);
-            }
+            int effectiveOffset = user.TimezoneOffset.Value;
 
             // Set EndDateTime to local time rounded up to next quarter hour, converted to UTC
             var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromMinutes(effectiveOffset)).DateTime;
@@ -191,7 +204,7 @@ namespace TaskTracker.Controllers
         // POST: TimeEntries/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TimeEntryID,ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry, int? TimezoneOffset)
+        public async Task<IActionResult> Edit(int id, [Bind("TimeEntryID,ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
         {
             if (id != timeEntry.TimeEntryID)
             {
@@ -205,13 +218,20 @@ namespace TaskTracker.Controllers
             ModelState.Remove("Project");
             ModelState.Remove("User");
 
-            // Get user's stored TimezoneOffset if form value is missing
             var user = await _userManager.FindByIdAsync(userId);
-            int effectiveOffset = TimezoneOffset ?? user?.TimezoneOffset ?? 0;
-            if (!TimezoneOffset.HasValue)
+            if (user == null)
             {
-                _logger.LogWarning("TimezoneOffset missing from form for user {UserId}, using stored offset {StoredOffset}", userId, effectiveOffset);
+                _logger.LogError("User not found for ID {UserId}", userId);
+                return NotFound();
             }
+
+            if (!user.TimezoneOffset.HasValue)
+            {
+                _logger.LogInformation("No TimezoneOffset set for user {UserId}, redirecting to SetTimezone.", userId);
+                return RedirectToAction("SetTimezone", "Home");
+            }
+
+            int effectiveOffset = user.TimezoneOffset.Value;
 
             // Convert local times to UTC using effectiveOffset
             if (timeEntry.StartDateTime != default)
@@ -221,13 +241,6 @@ namespace TaskTracker.Controllers
             if (timeEntry.EndDateTime.HasValue)
             {
                 timeEntry.EndDateTime = DateTimeOffset.Parse(timeEntry.EndDateTime.Value.ToString()).ToOffset(TimeSpan.FromMinutes(-effectiveOffset)).UtcDateTime;
-            }
-
-            // Update user's TimezoneOffset if provided and different
-            if (TimezoneOffset.HasValue && user != null && user.TimezoneOffset != TimezoneOffset)
-            {
-                user.TimezoneOffset = TimezoneOffset.Value;
-                await _userManager.UpdateAsync(user);
             }
 
             if (timeEntry.ClientID == 0)
@@ -288,6 +301,19 @@ namespace TaskTracker.Controllers
             }
 
             var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogError("User not found for ID {UserId}", userId);
+                return NotFound();
+            }
+
+            if (!user.TimezoneOffset.HasValue)
+            {
+                _logger.LogInformation("No TimezoneOffset set for user {UserId}, redirecting to SetTimezone.", userId);
+                return RedirectToAction("SetTimezone", "Home");
+            }
+
             var timeEntry = await _context.TimeEntries
                 .Include(t => t.Project)
                 .Include(t => t.Client)
@@ -306,6 +332,19 @@ namespace TaskTracker.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogError("User not found for ID {UserId}", userId);
+                return NotFound();
+            }
+
+            if (!user.TimezoneOffset.HasValue)
+            {
+                _logger.LogInformation("No TimezoneOffset set for user {UserId}, redirecting to SetTimezone.", userId);
+                return RedirectToAction("SetTimezone", "Home");
+            }
+
             var timeEntry = await _context.TimeEntries
                 .FirstOrDefaultAsync(t => t.TimeEntryID == id && t.UserId == userId);
             if (timeEntry != null)
