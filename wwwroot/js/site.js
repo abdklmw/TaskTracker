@@ -66,4 +66,16 @@
             endInput.addEventListener('input', () => calculateHoursSpent(startInput, endInput, hoursInput));
         }
     });
+
+    // Get offset time from UTC and set it to all hidden input fields with class timezone-offset
+    const offsetInputs = document.querySelectorAll('.timezone-offset');
+    if (offsetInputs.length > 0) {
+        const offset = -new Date().getTimezoneOffset();
+        offsetInputs.forEach(input => {
+            input.value = offset;
+        });
+        console.log('TimezoneOffset set to:', offset);
+    } else {
+        console.warn('No timezone-offset inputs found');
+    }
 });
