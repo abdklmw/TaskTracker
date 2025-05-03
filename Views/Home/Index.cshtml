@@ -1,11 +1,39 @@
-﻿@{
+﻿@model List<TaskTracker.Models.TimeEntry>
+@{
     ViewData["Title"] = "Home Page";
 }
 
 @if (User.Identity.IsAuthenticated)
 {
-    <h1>New Task</h1>
+    <h2>New Task</h2>
     <partial name="~/Views/TimeEntries/_CreateForm.cshtml" />
+
+    <h2>Running timer(s)</h2>
+    @if (Model != null && Model.Any())
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var timeEntry in Model)
+            {
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@timeEntry.Client?.Name</h5>
+                            <p class="card-text"><strong>Project:</strong> @timeEntry.Project?.Name</p>
+                            <p class="card-text"><strong>Started:</strong> @timeEntry.StartDateTime.ToString("yyyy-MM-dd HH:mm")</p>
+                            <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
+                                <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
+                                <button type="submit" class="btn btn-danger">Stop Timer</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>No running timers.</p>
+    }
 }
 else
 {

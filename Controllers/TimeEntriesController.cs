@@ -60,18 +60,15 @@ namespace TaskTracker.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // Ensure UserId matches the authenticated user
             var userId = _userManager.GetUserId(User);
             timeEntry.UserId = userId;
-            ModelState.Remove("UserId"); // Remove UserId from validation
-            ModelState.Remove("Client"); // Remove navigation properties from validation
+            ModelState.Remove("UserId");
+            ModelState.Remove("Client");
             ModelState.Remove("Project");
             ModelState.Remove("User");
 
-            // Log form data for debugging
             _logger.LogInformation("Form data: ClientID={ClientID}, ProjectID={ProjectID}, UserId={UserId}", timeEntry.ClientID, timeEntry.ProjectID, timeEntry.UserId);
 
-            // Validate ClientID and ProjectID
             if (timeEntry.ClientID == 0)
             {
                 ModelState.AddModelError("ClientID", "Please select a client.");
@@ -89,11 +86,9 @@ namespace TaskTracker.Controllers
                 return ReturnTo == "Home" ? RedirectToAction("Index", "Home") : RedirectToAction(nameof(Index));
             }
 
-            // Log validation errors
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             _logger.LogError("Validation errors: {Errors}", string.Join("; ", errors));
 
-            // Repopulate dropdowns for error case
             var clientList = _context.Clients
                 .Select(c => new { c.ClientID, c.Name })
                 .ToList();
@@ -109,6 +104,47 @@ namespace TaskTracker.Controllers
             ViewBag.ReturnTo = ReturnTo;
 
             return View("Index", await _context.TimeEntries.Where(t => t.UserId == userId).Include(t => t.Project).Include(t => t.Client).ToListAsync());
+        }
+
+        // POST: TimeEntries/StopTimer
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StopTimer(int TimeEntryID)
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var userId = _userManager.GetUserId(User);
+            var timeEntry = await _context.TimeEntries
+                .FirstOrDefaultAsync(t => t.TimeEntryID == TimeEntryID && t.UserId == userId && t.EndDateTime == null);
+
+            if (timeEntry == null)
+            {
+                TempData["ErrorMessage"] = "Time entry not found or already stopped.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            // Set EndDateTime to current time rounded up to next quarter hour
+            var now = DateTime.UtcNow;
+            var minutes = now.Minute;
+            var nextQuarterHour = minutes % 15 == 0 ? now : now.AddMinutes(15 - (minutes % 15)).AddSeconds(-now.Second).AddMilliseconds(-now.Millisecond);
+            timeEntry.EndDateTime = nextQuarterHour;
+
+            try
+            {
+                _context.Update(timeEntry);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Timer stopped successfully.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error stopping timer for TimeEntryID={TimeEntryID}", TimeEntryID);
+                TempData["ErrorMessage"] = "Error stopping timer.";
+            }
+
+            return RedirectToAction("Index", "Home");
         }
 
         // POST: TimeEntries/Edit/5
