@@ -17,13 +17,20 @@
                 <div class="col">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">@timeEntry.Client?.Name</h5>
-                            <p class="card-text"><strong>Project:</strong> @timeEntry.Project?.Name</p>
-                            <p class="card-text"><strong>Started:</strong> @timeEntry.StartDateTime.ToString("yyyy-MM-dd HH:mm")</p>
-                            <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
-                                <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
-                                <button type="submit" class="btn btn-danger">Stop Timer</button>
-                            </form>
+                            <div class="row">
+                                <div class="col-8">
+                                    <h5 class="card-title">@timeEntry.Client?.Name</h5>
+                                    <p class="card-text"><strong>Project:</strong> @timeEntry.Project?.Name</p>
+                                    <p class="card-text"><strong>Started:</strong> @timeEntry.StartDateTime.ToString("yyyy-MM-dd HH:mm")</p>
+                                    <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
+                                        <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
+                                        <button type="submit" class="btn btn-danger">Stop Timer</button>
+                                    </form>
+                                </div>
+                                <div class="col-4">
+                                    <p class="card-text"><strong>Hours spent:</strong> <span class="hours-spent" data-time-entry-id="@timeEntry.TimeEntryID" data-start-utc="@timeEntry.StartDateTime.ToString("o")"></span></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -47,4 +54,8 @@ else
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        // Pass TimezoneOffset to JavaScript
+        const userTimezoneOffset = @ViewBag.TimezoneOffset;
+    </script>
 }

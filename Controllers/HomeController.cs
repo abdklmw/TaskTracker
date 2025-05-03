@@ -51,6 +51,7 @@ namespace TaskTracker.Controllers
                 else
                 {
                     _logger.LogInformation("TimezoneOffset already set for user {UserId}: {TimezoneOffset}", userId, user.TimezoneOffset);
+                    ViewBag.TimezoneOffset = user.TimezoneOffset.Value; // Pass TimezoneOffset to view
                 }
 
                 // Populate ClientID dropdown

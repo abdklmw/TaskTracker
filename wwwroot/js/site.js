@@ -66,4 +66,30 @@
             endInput.addEventListener('input', () => calculateHoursSpent(startInput, endInput, hoursInput));
         }
     });
+
+    // Update hours spent for running timers
+    function updateHoursSpent() {
+        const hoursSpentElements = document.querySelectorAll('.hours-spent');
+        hoursSpentElements.forEach(element => {
+            const startUtc = new Date(element.dataset.startUtc);
+            const timeEntryId = element.dataset.timeEntryId;
+            if (!isNaN(startUtc)) {
+                // Convert UTC start time to local time using user's TimezoneOffset (in minutes)
+                const startLocalMs = startUtc.getTime() + (userTimezoneOffset * 60 * 1000);
+                const nowLocalMs = Date.now();
+                const diffMs = nowLocalMs - startLocalMs;
+                const hours = diffMs / (1000 * 60 * 60); // Convert to hours
+                // Round up to nearest quarter hour (0.25)
+                const roundedHours = Math.ceil(hours * 4) / 4;
+                element.textContent = roundedHours.toFixed(2);
+            } else {
+                console.warn(`Invalid start time for time entry ${timeEntryId}`);
+                element.textContent = 'N/A';
+            }
+        });
+    }
+
+    // Initial update and refresh every minute
+    updateHoursSpent();
+    setInterval(updateHoursSpent, 60 * 1000); // Update every minute
 });
