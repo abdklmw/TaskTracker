@@ -1,69 +1,144 @@
 ﻿@model IEnumerable<TaskTracker.Models.TimeEntry>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
 @{
     ViewData["Title"] = "Time Entries";
+    var timezoneOffset = ViewBag.TimezoneOffset;
 }
 
 <h1>Time Entries</h1>
 
+<div class="row mb-3">
+    <div class="col-12 col-md-6 col-lg-4">
+        <button type="button" id="create-new-btn" class="btn btn-primary">Create New</button>
+    </div>
+</div>
+
 @if (TempData["SuccessMessage"] != null)
 {
-        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
+
 @if (TempData["ErrorMessage"] != null)
 {
-        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 
 @await Html.PartialAsync("_CreateForm")
 
-<p>
-    <button id="create-new-btn" class="btn btn-primary">Create New</button>
-</p>
+<h2>Running timer(s)</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Client</th>
+            <th>Project</th>
+            <th>Started</th>
+            <th>Hours Spent</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Where(t => t.EndDateTime == null))
+        {
+            <tr id="display-row-@item.TimeEntryID">
+                <td>@item.Client?.Name</td>
+                <td>@item.Project?.Name</td>
+                <td>@item.StartDateTime.AddMinutes(timezoneOffset).ToString("yyyy-MM-dd hh:mm tt")</td>
+                <td class="hours-spent" data-time-entry-id="@item.TimeEntryID" data-start-utc="@item.StartDateTime.ToString("o")">N/A</td>
+                <td>@item.Description</td>
+                <td>
+                    <form asp-action="StopTimer" method="post">
+                        <input type="hidden" name="TimeEntryID" value="@item.TimeEntryID" />
+                        <button type="submit" class="btn btn-danger">Stop Timer</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 
-<div class="row mb-2">
-    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Client)</strong></div>
-    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Project)</strong></div>
-    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.StartDateTime)</strong></div>
-    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.EndDateTime)</strong></div>
-    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.HoursSpent)</strong></div>
-    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Description)</strong></div>
-    <div class="col-md-2"><strong>Actions</strong></div>
-</div>
-
-@foreach (var timeEntry in Model)
-{
-    @await Html.PartialAsync("_DisplayRow", timeEntry)
-    @await Html.PartialAsync("_EditFormRow", timeEntry)
-}
-
-<style>
-    .edit-mode .form-control, #create-form .form-control {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 4px;
-    }
-
-    .edit-mode .text-danger, #create-form .text-danger {
-        font-size: 0.8em;
-        display: block;
-    }
-
-    .edit-mode .btn, #create-form .btn {
-        margin-right: 5px;
-    }
-
-    .alert-success {
-        transition: opacity 1s ease-in-out;
-    }
-</style>
+<h2>Completed time entries</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Client</th>
+            <th>Project</th>
+            <th>Started</th>
+            <th>Ended</th>
+            <th>Hours Spent</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Where(t => t.EndDateTime != null))
+        {
+            <tr id="display-row-@item.TimeEntryID">
+                <td>@item.Client?.Name</td>
+                <td>@item.Project?.Name</td>
+                <td>@item.StartDateTime.AddMinutes(timezoneOffset).ToString("yyyy-MM-dd hh:mm tt")</td>
+                <td>@item.EndDateTime?.AddMinutes(timezoneOffset).ToString("yyyy-MM-dd hh:mm tt")</td>
+                <td>@item.HoursSpent?.ToString("F2")</td>
+                <td>@item.Description</td>
+                <td>
+                    <button type="button" class="btn btn-primary edit-btn" data-id="@item.TimeEntryID">Edit</button>
+                    <a asp-action="Delete" asp-route-id="@item.TimeEntryID" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+            <tr id="edit-row-@item.TimeEntryID" class="edit-mode" style="display:none;">
+                <td colspan="7">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" name="TimeEntryID" value="@item.TimeEntryID" />
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label">Client</label>
+                                <select name="ClientID" class="form-control" asp-items="@ViewBag.ClientID" required>
+                                    <option value="@item.ClientID" selected>@item.Client?.Name</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label">Project</label>
+                                <select name="ProjectID" class="form-control" asp-items="@ViewBag.ProjectID" required>
+                                    <option value="@item.ProjectID" selected>@item.Project?.Name</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label">Start Date/Time</label>
+                                <input name="StartDateTime" class="form-control" type="datetime-local" value="@item.StartDateTime.AddMinutes(timezoneOffset).ToString("yyyy-MM-ddTHH:mm")" required />
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label">End Date/Time</label>
+                                <input name="EndDateTime" class="form-control" type="datetime-local" value="@(item.EndDateTime?.AddMinutes(timezoneOffset).ToString("yyyy-MM-ddTHH:mm"))" />
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label">Hours Spent</label>
+                                <input name="HoursSpent" class="form-control" type="number" step="0.01" value="@item.HoursSpent?.ToString("F2")" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description</label>
+                                <textarea name="Description" class="form-control" rows="4">@item.Description</textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success">Save</button>
+                                <button type="button" class="btn btn-secondary cancel-btn" data-id="@item.TimeEntryID">Cancel</button>
+                            </div>
+                        </div>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-        <script>
-            const userTimezoneOffset = @(ViewBag.TimezoneOffset ?? 0);
-        </script>
-        <script src="~/js/site.min.js" asp-append-version="true"></script>
+    <script>
+        var userTimezoneOffset = @timezoneOffset;
+    </script>
 }

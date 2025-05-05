@@ -8,6 +8,7 @@ using TaskTracker.Models;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using Microsoft.Extensions.Logging; // Added for LoggerExtensions
 
 namespace TaskTracker.Controllers
 {
@@ -31,27 +32,37 @@ namespace TaskTracker.Controllers
                 var userId = _userManager.GetUserId(User);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    _logger.LogError("User ID could not be retrieved for authenticated user.");
+                    LoggerExtensions.LogError(_logger, "User ID could not be retrieved for authenticated user.");
                     return RedirectToAction("Login", "Account");
                 }
 
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    _logger.LogError("User not found for ID {UserId}", userId);
+                    LoggerExtensions.LogError(_logger, "User not found for ID {UserId}", userId);
                     return NotFound();
                 }
 
-                // Check if user has a TimezoneOffset set
-                if (!user.TimezoneOffset.HasValue)
+                // Check if user has a TimeZoneId set
+                if (string.IsNullOrEmpty(user.TimeZoneId))
                 {
-                    _logger.LogInformation("No TimezoneOffset set for user {UserId}, redirecting to SetTimezone.", userId);
+                    LoggerExtensions.LogInformation(_logger, "No TimeZoneId set for user {UserId}, redirecting to SetTimezone.", userId);
                     return RedirectToAction(nameof(SetTimezone));
                 }
-                else
+
+                // Calculate dynamic offset from user's TimeZoneId, accounting for DST
+                try
                 {
-                    _logger.LogInformation("TimezoneOffset already set for user {UserId}: {TimezoneOffset}", userId, user.TimezoneOffset);
-                    ViewBag.TimezoneOffset = user.TimezoneOffset.Value; // Pass TimezoneOffset to view
+                    var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+                    var nowUtc = DateTimeOffset.UtcNow.UtcDateTime;
+                    var offset = userTimeZone.GetUtcOffset(nowUtc);
+                    ViewBag.TimezoneOffset = (int)offset.TotalMinutes;
+                    LoggerExtensions.LogInformation(_logger, "Dynamic TimezoneOffset for Home Index: {TimezoneOffset} minutes, DST Active: {IsDst}, TimeZoneId: {TimeZoneId}", ViewBag.TimezoneOffset, userTimeZone.IsDaylightSavingTime(nowUtc), user.TimeZoneId);
+                }
+                catch (TimeZoneNotFoundException ex)
+                {
+                    LoggerExtensions.LogError(_logger, "Invalid TimeZoneId {TimeZoneId} for user {UserId}: {Error}", user.TimeZoneId, userId, ex.Message);
+                    ViewBag.TimezoneOffset = 0; // Fallback to UTC
                 }
 
                 // Populate ClientID dropdown
@@ -87,68 +98,74 @@ namespace TaskTracker.Controllers
 
         public IActionResult SetTimezone()
         {
-            // Populate timezone dropdown with common timezones and their offsets
-            var timezones = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "-720", Text = "(UTC-12:00) International Date Line West" },
-                new SelectListItem { Value = "-660", Text = "(UTC-11:00) Coordinated Universal Time-11" },
-                new SelectListItem { Value = "-600", Text = "(UTC-10:00) Hawaii" },
-                new SelectListItem { Value = "-540", Text = "(UTC-09:00) Alaska" },
-                new SelectListItem { Value = "-480", Text = "(UTC-08:00) Pacific Time (US & Canada)" },
-                new SelectListItem { Value = "-420", Text = "(UTC-07:00) Mountain Time (US & Canada)" },
-                new SelectListItem { Value = "-360", Text = "(UTC-06:00) Central Time (US & Canada)" },
-                new SelectListItem { Value = "-300", Text = "(UTC-05:00) Eastern Time (US & Canada)" },
-                new SelectListItem { Value = "-240", Text = "(UTC-04:00) Atlantic Time (Canada)" },
-                new SelectListItem { Value = "-180", Text = "(UTC-03:00) Brasilia" },
-                new SelectListItem { Value = "-120", Text = "(UTC-02:00) Coordinated Universal Time-02" },
-                new SelectListItem { Value = "-60", Text = "(UTC-01:00) Azores" },
-                new SelectListItem { Value = "0", Text = "(UTC+00:00) London, Dublin, Lisbon" },
-                new SelectListItem { Value = "60", Text = "(UTC+01:00) Amsterdam, Berlin, Rome, Paris" },
-                new SelectListItem { Value = "120", Text = "(UTC+02:00) Athens, Helsinki, Jerusalem" },
-                new SelectListItem { Value = "180", Text = "(UTC+03:00) Moscow, St. Petersburg, Nairobi" },
-                new SelectListItem { Value = "240", Text = "(UTC+04:00) Abu Dhabi, Muscat" },
-                new SelectListItem { Value = "300", Text = "(UTC+05:00) Islamabad, Karachi" },
-                new SelectListItem { Value = "360", Text = "(UTC+06:00) Astana, Dhaka" },
-                new SelectListItem { Value = "420", Text = "(UTC+07:00) Bangkok, Hanoi, Jakarta" },
-                new SelectListItem { Value = "480", Text = "(UTC+08:00) Beijing, Hong Kong, Singapore" },
-                new SelectListItem { Value = "540", Text = "(UTC+09:00) Tokyo, Seoul, Osaka" },
-                new SelectListItem { Value = "600", Text = "(UTC+10:00) Sydney, Melbourne" },
-                new SelectListItem { Value = "660", Text = "(UTC+11:00) Solomon Islands, New Caledonia" },
-                new SelectListItem { Value = "720", Text = "(UTC+12:00) Auckland, Wellington" }
-            };
+            // Populate timezone dropdown with system timezones
+            var timezones = TimeZoneInfo.GetSystemTimeZones()
+                .Select(tz => new SelectListItem
+                {
+                    Value = tz.Id,
+                    Text = $"{tz.DisplayName} (UTC{tz.BaseUtcOffset.Hours:+00;-00}:{tz.BaseUtcOffset.Minutes:00})"
+                })
+                .OrderBy(tz => tz.Text)
+                .ToList();
             ViewBag.Timezones = new SelectList(timezones, "Value", "Text");
-            return View();
+            return View(new SetTimezoneViewModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveTimezone(int TimezoneOffset)
+        public async Task<IActionResult> SaveTimezone(SetTimezoneViewModel model)
         {
             if (!User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Login", "Account");
             }
 
+            if (!ModelState.IsValid)
+            {
+                // Repopulate timezone dropdown
+                var timezones = TimeZoneInfo.GetSystemTimeZones()
+                    .Select(tz => new SelectListItem
+                    {
+                        Value = tz.Id,
+                        Text = $"{tz.DisplayName} (UTC{tz.BaseUtcOffset.Hours:+00;-00}:{tz.BaseUtcOffset.Minutes:00})"
+                    })
+                    .OrderBy(tz => tz.Text)
+                    .ToList();
+                ViewBag.Timezones = new SelectList(timezones, "Value", "Text", model.TimeZoneId);
+                return View("SetTimezone", model);
+            }
+
             var userId = _userManager.GetUserId(User);
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                _logger.LogError("User not found for ID {UserId}", userId);
+                LoggerExtensions.LogError(_logger, "User not found for ID {UserId}", userId);
                 return NotFound();
             }
 
-            user.TimezoneOffset = TimezoneOffset;
+            user.TimeZoneId = model.TimeZoneId;
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                _logger.LogInformation("TimezoneOffset updated for user {UserId}: {TimezoneOffset}", userId, TimezoneOffset);
+                LoggerExtensions.LogInformation(_logger, "TimeZoneId updated for user {UserId}: {TimeZoneId}", userId, model.TimeZoneId);
                 TempData["SuccessMessage"] = "Timezone updated successfully.";
             }
             else
             {
                 var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                _logger.LogError("Failed to update timezone for user {UserId}: {Errors}", userId, errors);
+                LoggerExtensions.LogError(_logger, "Failed to update timezone for user {UserId}: {Errors}", userId, errors);
                 TempData["ErrorMessage"] = "Failed to update timezone: " + errors;
+                // Repopulate timezone dropdown
+                var timezones = TimeZoneInfo.GetSystemTimeZones()
+                    .Select(tz => new SelectListItem
+                    {
+                        Value = tz.Id,
+                        Text = $"{tz.DisplayName} (UTC{tz.BaseUtcOffset.Hours:+00;-00}:{tz.BaseUtcOffset.Minutes:00})"
+                    })
+                    .OrderBy(tz => tz.Text)
+                    .ToList();
+                ViewBag.Timezones = new SelectList(timezones, "Value", "Text", model.TimeZoneId);
+                return View("SetTimezone", model);
             }
 
             return RedirectToAction(nameof(Index));

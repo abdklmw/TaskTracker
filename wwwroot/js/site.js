@@ -94,7 +94,7 @@
             const startUtc = new Date(element.dataset.startUtc);
             const timeEntryId = element.dataset.timeEntryId;
             if (!isNaN(startUtc)) {
-                // Convert UTC start time to local time using user's TimezoneOffset (in minutes)
+                // Convert UTC start time to local time using dynamic userTimezoneOffset
                 const startLocalMs = startUtc.getTime() + (userTimezoneOffset * 60 * 1000);
                 const nowLocalMs = Date.now();
                 const diffMs = nowLocalMs - startLocalMs;

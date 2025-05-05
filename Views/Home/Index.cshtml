@@ -1,61 +1,73 @@
-﻿@model List<TaskTracker.Models.TimeEntry>
+﻿@model IEnumerable<TaskTracker.Models.TimeEntry>
+
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
+    var timezoneOffset = ViewBag.TimezoneOffset;
 }
 
-@if (User.Identity.IsAuthenticated)
-{
-    <h2>New Task</h2>
-    <partial name="~/Views/TimeEntries/_CreateForm.cshtml" />
+<h1>Task Tracker</h1>
 
-    <h2>Running timer(s)</h2>
-    @if (Model != null && Model.Any())
-    {
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            @foreach (var timeEntry in Model)
-            {
-                var startLocal = timeEntry.StartDateTime.AddMinutes(ViewBag.TimezoneOffset ?? 0);
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-8">
-                                    <h5 class="card-title">@timeEntry.Client?.Name</h5>
-                                    <p class="card-text"><strong>Project:</strong> @timeEntry.Project?.Name</p>
-                                    <p class="card-text"><strong>Started:</strong> @startLocal.ToString("yyyy-MM-dd hh:mm tt")</p>
-                                    <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
-                                        <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
-                                        <button type="submit" class="btn btn-danger">Stop Timer</button>
-                                    </form>
-                                </div>
-                                <div class="col-4">
-                                    <p class="card-text"><strong>Hours spent:</strong> <span class="hours-spent" data-time-entry-id="@timeEntry.TimeEntryID" data-start-utc="@timeEntry.StartDateTime.ToString("o")"></span></p>
-                                </div>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row mb-3">
+    <div class="col-12 col-md-6 col-lg-4">
+        <button type="button" id="create-new-btn" class="btn btn-primary">Create New</button>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/TimeEntries/_CreateForm.cshtml")
+
+<h2>Running timer(s)</h2>
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var timeEntry in Model)
+        {
+            var startLocal = timeEntry.StartDateTime.AddMinutes(ViewBag.TimezoneOffset ?? 0);
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h5 class="card-title">@timeEntry.Client?.Name</h5>
+                                <p class="card-text"><strong>Project:</strong> @timeEntry.Project?.Name</p>
+                                <p class="card-text"><strong>Started:</strong> @startLocal.ToString("yyyy-MM-dd hh:mm tt")</p>
+                                <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
+                                    <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
+                                    <button type="submit" class="btn btn-danger">Stop Timer</button>
+                                </form>
+                            </div>
+                            <div class="col-4">
+                                <p class="card-text"><strong>Hours spent:</strong> <span class="hours-spent" data-time-entry-id="@timeEntry.TimeEntryID" data-start-utc="@timeEntry.StartDateTime.ToString("o")"></span></p>
                             </div>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p>No running timers.</p>
-    }
+            </div>
+        }
+    </div>
 }
 else
 {
-    <div class="text-center">
-        <h1 class="display-4">Welcome</h1>
-        <p>Sign in to record tasks.</p>
-    </div>
+    <p>No running timers.</p>
 }
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
     <script>
-        const userTimezoneOffset = @ViewBag.TimezoneOffset;
+        var userTimezoneOffset = @timezoneOffset;
     </script>
 }

@@ -4,6 +4,6 @@ namespace TaskTracker.Data
 {
     public class ApplicationUser : IdentityUser
     {
-        public int? TimezoneOffset { get; set; } // Offset in minutes (e.g., -300 for EDT)
+        public string? TimeZoneId { get; set; } // Timezone identifier (e.g., "Central Standard Time")
     }
 }
