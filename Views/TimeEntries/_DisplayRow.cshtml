@@ -1,12 +1,17 @@
 ﻿@model TaskTracker.Models.TimeEntry
+@{
+    int timezoneOffset = (int)ViewBag.TimezoneOffset;
+    var startLocal = Model.StartDateTime.AddMinutes(timezoneOffset);
+    var endLocal = Model.EndDateTime.HasValue ? Model.EndDateTime.Value.AddMinutes(timezoneOffset) : (DateTime?)null;
+}
 
 <div id="display-row-@Model.TimeEntryID" class="display-mode card mb-2">
     <div class="card-body">
         <div class="row">
             <div class="col-md-2" data-field="Client">@Model.Client.Name</div>
             <div class="col-md-2" data-field="Project">@Model.Project.Name</div>
-            <div class="col-md-2" data-field="StartDateTime">@Model.StartDateTime.ToString("g")</div>
-            <div class="col-md-2" data-field="EndDateTime">@(Model.EndDateTime.HasValue ? Model.EndDateTime.Value.ToString("g") : "")</div>
+            <div class="col-md-2" data-field="StartDateTime">@startLocal.ToString("g")</div>
+            <div class="col-md-2" data-field="EndDateTime">@(endLocal.HasValue ? endLocal.Value.ToString("g") : "")</div>
             <div class="col-md-2" data-field="HoursSpent">@(Model.HoursSpent.HasValue ? Model.HoursSpent.Value.ToString("F2") : "")</div>
             <div class="col-md-2" data-field="Description">@Model.Description</div>
             <div class="col-md-2">

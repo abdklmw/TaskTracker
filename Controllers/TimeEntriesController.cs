@@ -24,7 +24,6 @@ namespace TaskTracker.Controllers
             _logger = logger;
         }
 
-        // GET: TimeEntries
         public async Task<IActionResult> Index(int? clientId, int? projectId)
         {
             var userId = _userManager.GetUserId(User);
@@ -40,6 +39,8 @@ namespace TaskTracker.Controllers
                 _logger.LogInformation("No TimezoneOffset set for user {UserId}, redirecting to SetTimezone.", userId);
                 return RedirectToAction("SetTimezone", "Home");
             }
+
+            ViewBag.TimezoneOffset = user.TimezoneOffset.Value;
 
             var timeEntries = _context.TimeEntries
                 .Where(t => t.UserId == userId)
@@ -63,7 +64,6 @@ namespace TaskTracker.Controllers
             return View(await timeEntries.ToListAsync());
         }
 
-        // POST: TimeEntries/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description,UserId")] TimeEntry timeEntry, string ReturnTo)
@@ -94,8 +94,8 @@ namespace TaskTracker.Controllers
             }
 
             int effectiveOffset = user.TimezoneOffset.Value;
+            ViewBag.TimezoneOffset = effectiveOffset;
 
-            // Convert local times to UTC using effectiveOffset
             if (timeEntry.StartDateTime != default)
             {
                 timeEntry.StartDateTime = DateTimeOffset.Parse(timeEntry.StartDateTime.ToString()).ToOffset(TimeSpan.FromMinutes(-effectiveOffset)).UtcDateTime;
@@ -145,7 +145,6 @@ namespace TaskTracker.Controllers
             return View("Index", await _context.TimeEntries.Where(t => t.UserId == userId).Include(t => t.Project).Include(t => t.Client).ToListAsync());
         }
 
-        // POST: TimeEntries/StopTimer
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StopTimer(int TimeEntryID)
@@ -180,7 +179,6 @@ namespace TaskTracker.Controllers
 
             int effectiveOffset = user.TimezoneOffset.Value;
 
-            // Set EndDateTime to local time rounded up to next quarter hour, converted to UTC
             var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromMinutes(effectiveOffset)).DateTime;
             var minutes = now.Minute;
             var nextQuarterHour = minutes % 15 == 0 ? now : now.AddMinutes(15 - (minutes % 15)).AddSeconds(-now.Second).AddMilliseconds(-now.Millisecond);
@@ -201,7 +199,6 @@ namespace TaskTracker.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // POST: TimeEntries/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("TimeEntryID,ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description")] TimeEntry timeEntry)
@@ -232,8 +229,8 @@ namespace TaskTracker.Controllers
             }
 
             int effectiveOffset = user.TimezoneOffset.Value;
+            ViewBag.TimezoneOffset = effectiveOffset;
 
-            // Convert local times to UTC using effectiveOffset
             if (timeEntry.StartDateTime != default)
             {
                 timeEntry.StartDateTime = DateTimeOffset.Parse(timeEntry.StartDateTime.ToString()).ToOffset(TimeSpan.FromMinutes(-effectiveOffset)).UtcDateTime;
@@ -289,10 +286,11 @@ namespace TaskTracker.Controllers
             projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
             ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID);
 
+            ViewBag.ReturnTo = "TimeEntries";
+
             return View("Index", await _context.TimeEntries.Where(t => t.UserId == userId).Include(t => t.Project).Include(t => t.Client).ToListAsync());
         }
 
-        // GET: TimeEntries/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -323,10 +321,11 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
 
+            ViewBag.TimezoneOffset = user.TimezoneOffset.Value;
+
             return View(timeEntry);
         }
 
-        // POST: TimeEntries/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

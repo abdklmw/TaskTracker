@@ -1,4 +1,13 @@
 ﻿@model TaskTracker.Models.TimeEntry
+@{
+    int timezoneOffset = (int)ViewBag.TimezoneOffset;
+    var startLocal = Model.StartDateTime.AddMinutes(timezoneOffset);
+    var endLocal = Model.EndDateTime;
+    if (endLocal.HasValue)
+    {
+        endLocal = endLocal.Value.AddMinutes(timezoneOffset);
+    }
+}
 
 <div id="edit-row-@Model.TimeEntryID" class="edit-mode mb-3" style="display:none;">
     <form id="edit-form-@Model.TimeEntryID" asp-action="Edit" asp-route-id="@Model.TimeEntryID" method="post">
@@ -19,12 +28,12 @@
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <label class="form-label">Start Date/Time</label>
-                        <input asp-for="@Model.StartDateTime" class="form-control start-datetime" type="datetime-local" name="StartDateTime" />
+                        <input asp-for="@startLocal" class="form-control start-datetime" type="datetime-local" name="StartDateTime" />
                         <span asp-validation-for="@Model.StartDateTime" class="text-danger"></span>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <label class="form-label">End Date/Time</label>
-                        <input asp-for="@Model.EndDateTime" class="form-control end-datetime" type="datetime-local" name="EndDateTime" />
+                        <input asp-for="@endLocal" class="form-control end-datetime" type="datetime-local" name="EndDateTime" />
                         <span asp-validation-for="@Model.EndDateTime" class="text-danger"></span>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">

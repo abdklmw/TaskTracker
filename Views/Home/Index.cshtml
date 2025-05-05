@@ -14,6 +14,7 @@
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             @foreach (var timeEntry in Model)
             {
+                var startLocal = timeEntry.StartDateTime.AddMinutes(ViewBag.TimezoneOffset ?? 0);
                 <div class="col">
                     <div class="card h-100">
                         <div class="card-body">
@@ -21,7 +22,7 @@
                                 <div class="col-8">
                                     <h5 class="card-title">@timeEntry.Client?.Name</h5>
                                     <p class="card-text"><strong>Project:</strong> @timeEntry.Project?.Name</p>
-                                    <p class="card-text"><strong>Started:</strong> @timeEntry.StartDateTime.ToString("yyyy-MM-dd HH:mm")</p>
+                                    <p class="card-text"><strong>Started:</strong> @startLocal.ToString("yyyy-MM-dd HH:mm")</p>
                                     <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
                                         <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
                                         <button type="submit" class="btn btn-danger">Stop Timer</button>
@@ -55,7 +56,6 @@ else
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
-        // Pass TimezoneOffset to JavaScript
         const userTimezoneOffset = @ViewBag.TimezoneOffset;
     </script>
 }

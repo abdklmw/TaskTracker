@@ -1,5 +1,4 @@
 ﻿@model IEnumerable<TaskTracker.Models.TimeEntry>
-
 @{
     ViewData["Title"] = "Time Entries";
 }
@@ -8,11 +7,11 @@
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
 }
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
 }
 
 @await Html.PartialAsync("_CreateForm")
@@ -63,5 +62,8 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="~/js/site.min.js" asp-append-version="true"></script>
+        <script>
+            const userTimezoneOffset = @(ViewBag.TimezoneOffset ?? 0);
+        </script>
+        <script src="~/js/site.min.js" asp-append-version="true"></script>
 }
