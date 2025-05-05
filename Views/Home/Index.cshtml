@@ -22,7 +22,7 @@
                                 <div class="col-8">
                                     <h5 class="card-title">@timeEntry.Client?.Name</h5>
                                     <p class="card-text"><strong>Project:</strong> @timeEntry.Project?.Name</p>
-                                    <p class="card-text"><strong>Started:</strong> @startLocal.ToString("yyyy-MM-dd HH:mm")</p>
+                                    <p class="card-text"><strong>Started:</strong> @startLocal.ToString("yyyy-MM-dd hh:mm tt")</p>
                                     <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
                                         <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
                                         <button type="submit" class="btn btn-danger">Stop Timer</button>

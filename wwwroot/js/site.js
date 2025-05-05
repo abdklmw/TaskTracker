@@ -11,6 +11,7 @@
         $('#create-new-btn').css('display', '');
     });
 
+    // Handle Edit button click
     $('.edit-btn').click(function () {
         let id = $(this).data('id');
         $('#display-row-' + id).css('display', 'none');
@@ -64,6 +65,25 @@
         if (startInput && endInput && hoursInput) {
             startInput.addEventListener('input', () => calculateHoursSpent(startInput, endInput, hoursInput));
             endInput.addEventListener('input', () => calculateHoursSpent(startInput, endInput, hoursInput));
+        }
+    });
+
+    // Handle Start Timer button click
+    $('.start-timer-btn').click(function (e) {
+        e.preventDefault(); // Prevent default button behavior
+        const form = document.getElementById('create-time-entry-form');
+        const startInput = document.querySelector('#create-form input[name="StartDateTime"]');
+        const actionInput = document.getElementById('form-action');
+        try {
+            if (startInput) {
+                startInput.removeAttribute('required'); // Bypass StartDateTime validation
+            }
+            if (actionInput) {
+                actionInput.value = 'StartTimer'; // Set action for controller
+            }
+            form.submit(); // Submit the form
+        } catch (error) {
+            console.error('Error submitting Start Timer form:', error);
         }
     });
 

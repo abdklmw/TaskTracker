@@ -66,10 +66,11 @@ namespace TaskTracker.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description,UserId")] TimeEntry timeEntry, string ReturnTo)
+        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,StartDateTime,EndDateTime,HoursSpent,Description,UserId")] TimeEntry timeEntry, string ReturnTo, string action)
         {
             if (!User.Identity.IsAuthenticated)
             {
+                _logger.LogWarning("Unauthorized access attempt to Create action.");
                 return RedirectToAction("Login", "Account");
             }
 
@@ -96,17 +97,35 @@ namespace TaskTracker.Controllers
             int effectiveOffset = user.TimezoneOffset.Value;
             ViewBag.TimezoneOffset = effectiveOffset;
 
-            if (timeEntry.StartDateTime != default)
+            if (action == "StartTimer")
             {
-                timeEntry.StartDateTime = DateTimeOffset.Parse(timeEntry.StartDateTime.ToString()).ToOffset(TimeSpan.FromMinutes(-effectiveOffset)).UtcDateTime;
+                // Set StartDateTime to current UTC time, rounded back to nearest quarter hour
+                var nowUtc = DateTimeOffset.UtcNow.UtcDateTime;
+                var minutes = nowUtc.Minute;
+                var remainder = minutes % 15;
+                var roundedMinutes = minutes - remainder;
+                timeEntry.StartDateTime = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, nowUtc.Hour, roundedMinutes, 0, 0, DateTimeKind.Utc);
+                timeEntry.EndDateTime = null; // Running timer
+                timeEntry.HoursSpent = null; // No hours yet
+                ModelState.Remove("StartDateTime");
+                ModelState.Remove("EndDateTime");
+                ModelState.Remove("HoursSpent");
             }
-            if (timeEntry.EndDateTime.HasValue)
+            else
             {
-                timeEntry.EndDateTime = DateTimeOffset.Parse(timeEntry.EndDateTime.Value.ToString()).ToOffset(TimeSpan.FromMinutes(-effectiveOffset)).UtcDateTime;
+                // Regular create: Convert local times to UTC
+                if (timeEntry.StartDateTime != default)
+                {
+                    timeEntry.StartDateTime = DateTimeOffset.Parse(timeEntry.StartDateTime.ToString()).ToOffset(TimeSpan.FromMinutes(-effectiveOffset)).UtcDateTime;
+                }
+                if (timeEntry.EndDateTime.HasValue)
+                {
+                    timeEntry.EndDateTime = DateTimeOffset.Parse(timeEntry.EndDateTime.Value.ToString()).ToOffset(TimeSpan.FromMinutes(-effectiveOffset)).UtcDateTime;
+                }
             }
 
-            _logger.LogInformation("Form data: ClientID={ClientID}, ProjectID={ProjectID}, UserId={UserId}, StartDateTime={StartDateTime}, EndDateTime={EndDateTime}, EffectiveOffset={EffectiveOffset}",
-                timeEntry.ClientID, timeEntry.ProjectID, timeEntry.UserId, timeEntry.StartDateTime, timeEntry.EndDateTime, effectiveOffset);
+            _logger.LogInformation("Form data: Action={Action}, ClientID={ClientID}, ProjectID={ProjectID}, UserId={UserId}, StartDateTime={StartDateTime}, EndDateTime={EndDateTime}, EffectiveOffset={EffectiveOffset}",
+                action, timeEntry.ClientID, timeEntry.ProjectID, timeEntry.UserId, timeEntry.StartDateTime, timeEntry.EndDateTime, effectiveOffset);
 
             if (timeEntry.ClientID == 0)
             {
@@ -119,14 +138,23 @@ namespace TaskTracker.Controllers
 
             if (ModelState.IsValid)
             {
-                _context.Add(timeEntry);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Time entry created successfully.";
-                return ReturnTo == "Home" ? RedirectToAction("Index", "Home") : RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(timeEntry);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Time entry created successfully: TimeEntryID={TimeEntryID}", timeEntry.TimeEntryID);
+                    TempData["SuccessMessage"] = "Time entry created successfully.";
+                    return ReturnTo == "Home" ? RedirectToAction("Index", "Home") : RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error saving time entry: ClientID={ClientID}, ProjectID={ProjectID}", timeEntry.ClientID, timeEntry.ProjectID);
+                    ModelState.AddModelError("", "An error occurred while saving the time entry.");
+                }
             }
 
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            _logger.LogError("Validation errors: {Errors}", string.Join("; ", errors));
+            _logger.LogWarning("Validation errors in Create: {Errors}", string.Join("; ", errors));
 
             var clientList = _context.Clients
                 .Select(c => new { c.ClientID, c.Name })
@@ -142,7 +170,7 @@ namespace TaskTracker.Controllers
 
             ViewBag.ReturnTo = ReturnTo;
 
-            return View("Index", await _context.TimeEntries.Where(t => t.UserId == userId).Include(t => t.Project).Include(t => t.Client).ToListAsync());
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpPost]
@@ -151,6 +179,7 @@ namespace TaskTracker.Controllers
         {
             if (!User.Identity.IsAuthenticated)
             {
+                _logger.LogWarning("Unauthorized access attempt to StopTimer action.");
                 return RedirectToAction("Login", "Account");
             }
 
@@ -173,6 +202,7 @@ namespace TaskTracker.Controllers
 
             if (timeEntry == null)
             {
+                _logger.LogWarning("Time entry not found or already stopped: TimeEntryID={TimeEntryID}", TimeEntryID);
                 TempData["ErrorMessage"] = "Time entry not found or already stopped.";
                 return RedirectToAction("Index", "Home");
             }
@@ -188,6 +218,7 @@ namespace TaskTracker.Controllers
             {
                 _context.Update(timeEntry);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Timer stopped successfully: TimeEntryID={TimeEntryID}", TimeEntryID);
                 TempData["SuccessMessage"] = "Timer stopped successfully.";
             }
             catch (Exception ex)
@@ -205,6 +236,7 @@ namespace TaskTracker.Controllers
         {
             if (id != timeEntry.TimeEntryID)
             {
+                _logger.LogWarning("Mismatch between ID {Id} and TimeEntryID {TimeEntryID}", id, timeEntry.TimeEntryID);
                 return NotFound();
             }
 
@@ -255,12 +287,14 @@ namespace TaskTracker.Controllers
                 {
                     _context.Update(timeEntry);
                     await _context.SaveChangesAsync();
+                    _logger.LogInformation("Time entry updated successfully: TimeEntryID={TimeEntryID}", timeEntry.TimeEntryID);
                     TempData["SuccessMessage"] = "Time entry updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!TimeEntryExists(timeEntry.TimeEntryID))
                     {
+                        _logger.LogWarning("Time entry not found for TimeEntryID={TimeEntryID}", timeEntry.TimeEntryID);
                         return NotFound();
                     }
                     else
@@ -272,6 +306,7 @@ namespace TaskTracker.Controllers
             }
 
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            _logger.LogWarning("Validation errors in Edit: {Errors}", string.Join("; ", errors));
             TempData["ErrorMessage"] = string.Join("; ", errors);
 
             var clientList = _context.Clients
@@ -295,6 +330,7 @@ namespace TaskTracker.Controllers
         {
             if (id == null)
             {
+                _logger.LogWarning("Delete called with null ID");
                 return NotFound();
             }
 
@@ -318,6 +354,7 @@ namespace TaskTracker.Controllers
                 .FirstOrDefaultAsync(m => m.TimeEntryID == id && m.UserId == userId);
             if (timeEntry == null)
             {
+                _logger.LogWarning("Time entry not found for TimeEntryID={TimeEntryID}", id);
                 return NotFound();
             }
 
@@ -350,6 +387,7 @@ namespace TaskTracker.Controllers
             {
                 _context.TimeEntries.Remove(timeEntry);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Time entry deleted successfully: TimeEntryID={TimeEntryID}", id);
             }
 
             return RedirectToAction(nameof(Index));

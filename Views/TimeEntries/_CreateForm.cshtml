@@ -3,7 +3,7 @@
     var divStyle = string.IsNullOrEmpty(displayStyle) ? "margin-bottom: 20px;" : $"{displayStyle} margin-bottom: 20px;";
 }
 <div id="create-form" style="@divStyle">
-    <form asp-controller="TimeEntries" asp-action="Create" method="post">
+    <form id="create-time-entry-form" asp-controller="TimeEntries" asp-action="Create" method="post">
         <div class="row g-3">
             <div class="col-12 col-md-6 col-lg-4">
                 <label class="form-label">Client</label>
@@ -38,7 +38,9 @@
             <div class="col-12">
                 <input type="hidden" name="UserId" value="@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.Identity.Name)" />
                 <input type="hidden" name="ReturnTo" value="@ViewBag.ReturnTo" />
-                <button type="submit" class="btn btn-success create-btn">Create</button>
+                <input type="hidden" name="action" id="form-action" value="" />
+                <button type="submit" class="btn btn-success create-btn" name="action" value="Create">Create</button>
+                <button type="button" class="btn btn-primary start-timer-btn">Start Timer</button>
                 <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
             </div>
         </div>
