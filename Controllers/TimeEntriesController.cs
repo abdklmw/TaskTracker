@@ -101,11 +101,11 @@ namespace TaskTracker.Controllers
             viewModel.ProjectList = new SelectList(projectList, "ProjectID", "Name", 0);
             ViewBag.ProjectID = viewModel.ProjectList;
 
-            // Apply record limit or pagination
+            // Apply pagination
+            viewModel.CurrentPage = page < 1 ? 1 : page;
             if (recordLimit == -1) // ALL
             {
                 const int pageSize = 200;
-                viewModel.CurrentPage = page < 1 ? 1 : page;
                 viewModel.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
                 viewModel.TimeEntries = await completedTimeEntriesQuery
                     .Skip((viewModel.CurrentPage - 1) * pageSize)
@@ -114,9 +114,9 @@ namespace TaskTracker.Controllers
             }
             else
             {
-                viewModel.CurrentPage = 1; // No pagination for fixed limits
-                viewModel.TotalPages = 1;
+                viewModel.TotalPages = (int)Math.Ceiling((double)totalRecords / recordLimit);
                 viewModel.TimeEntries = await completedTimeEntriesQuery
+                    .Skip((viewModel.CurrentPage - 1) * recordLimit)
                     .Take(recordLimit)
                     .ToListAsync();
             }
