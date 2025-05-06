@@ -39,8 +39,8 @@
                 <input type="hidden" name="UserId" value="@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.Identity.Name)" />
                 <input type="hidden" name="ReturnTo" value="@ViewBag.ReturnTo" />
                 <input type="hidden" name="action" id="form-action" value="" />
-                <button type="submit" class="btn btn-success create-btn" name="action" value="Create">Create</button>
-                <button type="button" class="btn btn-primary start-timer-btn">Start Timer</button>
+                <button type="submit" class="btn btn-success create-btn" name="action" value="Create" disabled>Create</button>
+                <button type="button" class="btn btn-primary start-timer-btn" disabled>Start Timer</button>
                 <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
             </div>
         </div>

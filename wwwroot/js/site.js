@@ -112,4 +112,47 @@
     // Initial update and refresh every minute
     updateHoursSpent();
     setInterval(updateHoursSpent, 60 * 1000); // Update every minute
+
+    // Enable/disable Create and Start Timer buttons based on form input
+    function validateCreateForm() {
+        const form = document.getElementById('create-time-entry-form');
+        const clientSelect = form.querySelector('select[name="ClientID"]');
+        const projectSelect = form.querySelector('select[name="ProjectID"]');
+        const startInput = form.querySelector('input[name="StartDateTime"]');
+        const endInput = form.querySelector('input[name="EndDateTime"]');
+        const hoursInput = form.querySelector('input[name="HoursSpent"]');
+        const descriptionInput = form.querySelector('textarea[name="Description"]');
+        const createButton = form.querySelector('.create-btn');
+        const startTimerButton = form.querySelector('.start-timer-btn');
+
+        // Validate Create button: all fields must be filled
+        const isCreateValid =
+            clientSelect.value && clientSelect.value !== '0' &&
+            projectSelect.value && projectSelect.value !== '0' &&
+            startInput.value &&
+            endInput.value &&
+            hoursInput.value &&
+            descriptionInput.value.trim();
+
+        createButton.disabled = !isCreateValid;
+
+        // Validate Start Timer button: ClientID, ProjectID, and Description required
+        const isStartTimerValid =
+            clientSelect.value && clientSelect.value !== '0' &&
+            projectSelect.value && projectSelect.value !== '0' &&
+            descriptionInput.value.trim();
+
+        startTimerButton.disabled = !isStartTimerValid;
+    }
+
+    // Attach input listeners to create form
+    const createForm = document.getElementById('create-time-entry-form');
+    if (createForm) {
+        const inputs = createForm.querySelectorAll('select, input, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('input', validateCreateForm);
+        });
+        // Initial validation
+        validateCreateForm();
+    }
 });
