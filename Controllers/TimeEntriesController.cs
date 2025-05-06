@@ -68,7 +68,7 @@ namespace TaskTracker.Controllers
             projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
             ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", 0);
 
-            ViewBag.VisibleCreateForm = true;
+            ViewBag.VisibleCreateForm = false;
             ViewBag.ReturnTo = "TimeEntries";
 
             return View(timeEntries);
