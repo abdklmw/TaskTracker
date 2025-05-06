@@ -24,7 +24,7 @@ namespace TaskTracker.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int recordLimit = 10, int page = 1)
         {
             var userId = _userManager.GetUserId(User);
             var user = await _userManager.FindByIdAsync(userId);
@@ -35,43 +35,97 @@ namespace TaskTracker.Controllers
             }
 
             // Calculate dynamic offset from user's TimeZoneId
+            int timezoneOffset;
             try
             {
                 var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
                 var nowUtc = DateTimeOffset.UtcNow.UtcDateTime;
-                var offset = userTimeZone.GetUtcOffset(nowUtc);
-                ViewBag.TimezoneOffset = (int)offset.TotalMinutes;
-                LoggerExtensions.LogInformation(_logger, "Dynamic TimezoneOffset for TimeEntries Index: {TimezoneOffset} minutes, DST Active: {IsDst}, TimeZoneId: {TimeZoneId}", ViewBag.TimezoneOffset, userTimeZone.IsDaylightSavingTime(nowUtc), user.TimeZoneId);
+                timezoneOffset = (int)userTimeZone.GetUtcOffset(nowUtc).TotalMinutes;
+                LoggerExtensions.LogInformation(_logger, "Dynamic TimezoneOffset for TimeEntries Index: {TimezoneOffset} minutes, DST Active: {IsDst}, TimeZoneId: {TimeZoneId}", timezoneOffset, userTimeZone.IsDaylightSavingTime(nowUtc), user.TimeZoneId);
             }
             catch (TimeZoneNotFoundException ex)
             {
                 LoggerExtensions.LogError(_logger, "Invalid TimeZoneId {TimeZoneId} for user {UserId}: {Error}", user.TimeZoneId, userId, ex.Message);
-                ViewBag.TimezoneOffset = 0; // Fallback to UTC
+                timezoneOffset = 0; // Fallback to UTC
             }
 
-            var timeEntries = await _context.TimeEntries
-                .Where(t => t.UserId == userId)
+            // Get completed time entries (EndDateTime != null)
+            var completedTimeEntriesQuery = _context.TimeEntries
+                .Where(t => t.UserId == userId && t.EndDateTime != null)
                 .Include(t => t.Client)
                 .Include(t => t.Project)
-                .ToListAsync();
+                .OrderByDescending(t => t.StartDateTime); // Sort by StartDateTime descending
 
-            // Populate dropdowns for create form
+            var totalRecords = await completedTimeEntriesQuery.CountAsync();
+            var viewModel = new TimeEntriesIndexViewModel
+            {
+                TimezoneOffset = timezoneOffset,
+                ReturnTo = "TimeEntries",
+                VisibleCreateForm = false,
+                TotalRecords = totalRecords
+            };
+
+            // Validate recordLimit
+            var validLimits = new[] { 5, 10, 20, 50, 100, 200, -1 }; // -1 represents ALL
+            if (!validLimits.Contains(recordLimit))
+            {
+                recordLimit = 10; // Default to 10 if invalid
+            }
+            viewModel.RecordLimit = recordLimit;
+
+            // Populate dropdown options
+            var limitOptions = new[]
+            {
+                new { Value = 5, Text = "5" },
+                new { Value = 10, Text = "10" },
+                new { Value = 20, Text = "20" },
+                new { Value = 50, Text = "50" },
+                new { Value = 100, Text = "100" },
+                new { Value = 200, Text = "200" },
+                new { Value = -1, Text = "ALL" }
+            };
+            viewModel.RecordLimitOptions = new SelectList(limitOptions, "Value", "Text", recordLimit);
+
+            // Populate create form dropdowns
             var clientList = _context.Clients
                 .Select(c => new { c.ClientID, c.Name })
                 .ToList();
             clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", 0);
+            viewModel.ClientList = new SelectList(clientList, "ClientID", "Name", 0);
+            ViewBag.ClientID = viewModel.ClientList;
 
             var projectList = _context.Projects
                 .Select(p => new { p.ProjectID, p.Name })
                 .ToList();
             projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
-            ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", 0);
+            viewModel.ProjectList = new SelectList(projectList, "ProjectID", "Name", 0);
+            ViewBag.ProjectID = viewModel.ProjectList;
 
-            ViewBag.VisibleCreateForm = false;
-            ViewBag.ReturnTo = "TimeEntries";
+            // Apply record limit or pagination
+            if (recordLimit == -1) // ALL
+            {
+                const int pageSize = 200;
+                viewModel.CurrentPage = page < 1 ? 1 : page;
+                viewModel.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+                viewModel.TimeEntries = await completedTimeEntriesQuery
+                    .Skip((viewModel.CurrentPage - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+            }
+            else
+            {
+                viewModel.CurrentPage = 1; // No pagination for fixed limits
+                viewModel.TotalPages = 1;
+                viewModel.TimeEntries = await completedTimeEntriesQuery
+                    .Take(recordLimit)
+                    .ToListAsync();
+            }
 
-            return View(timeEntries);
+            ViewBag.VisibleCreateForm = false; // Set form to hidden by default
+            ViewBag.ReturnTo = "TimeEntries"; // Set form redirect target
+            ViewBag.TimezoneOffset = timezoneOffset;
+
+            return View(viewModel);
         }
 
         [HttpPost]
@@ -106,10 +160,10 @@ namespace TaskTracker.Controllers
             if (action == "StartTimer")
             {
                 // Set StartDateTime to current UTC time, rounded to the most recent quarter hour
-                var nowUtc = DateTime.UtcNow;
-                var minutes = nowUtc.Minute;
-                var quarterHours = (int)Math.Floor(minutes / 15.0) * 15; // Round down to nearest 15-minute interval
-                timeEntry.StartDateTime = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, nowUtc.Hour, quarterHours, 0, DateTimeKind.Utc);
+                var currentUtc = DateTime.UtcNow; // Renamed to avoid conflict
+                var minutes = currentUtc.Minute;
+                var quarterHours = (int)Math.Floor(minutes / 15.0) * 15;
+                timeEntry.StartDateTime = new DateTime(currentUtc.Year, currentUtc.Month, currentUtc.Day, currentUtc.Hour, quarterHours, 0, DateTimeKind.Utc);
                 timeEntry.EndDateTime = null;
                 timeEntry.HoursSpent = null;
 
@@ -139,28 +193,59 @@ namespace TaskTracker.Controllers
                     await _context.SaveChangesAsync();
                     LoggerExtensions.LogInformation(_logger, "Time entry created for user {UserId}, TimeEntryID: {TimeEntryID}", userId, timeEntry.TimeEntryID);
                     TempData["SuccessMessage"] = "Time entry created successfully.";
-                    return RedirectToAction(nameof(Index), ViewBag.ReturnTo == "Home" ? "Home" : "TimeEntries");
+                    var returnTo = ViewBag.ReturnTo as string ?? "TimeEntries";
+                    return RedirectToAction(nameof(Index), returnTo == "Home" ? "Home" : "TimeEntries");
                 }
             }
 
-            // Repopulate dropdowns and return to view
+            // Repopulate view model for error case
             var clientList = _context.Clients
                 .Select(c => new { c.ClientID, c.Name })
                 .ToList();
             clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID);
-
             var projectList = _context.Projects
                 .Select(p => new { p.ProjectID, p.Name })
                 .ToList();
             projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
-            ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID);
 
-            ViewBag.TimezoneOffset = timezoneOffset;
+            var viewModel = new TimeEntriesIndexViewModel
+            {
+                TimeEntries = await _context.TimeEntries
+                    .Where(t => t.UserId == userId && t.EndDateTime != null)
+                    .Include(t => t.Client)
+                    .Include(t => t.Project)
+                    .OrderByDescending(t => t.StartDateTime)
+                    .Take(10) // Default limit for error case
+                    .ToListAsync(),
+                RecordLimit = 10,
+                RecordLimitOptions = new SelectList(new[]
+                {
+                    new { Value = 5, Text = "5" },
+                    new { Value = 10, Text = "10" },
+                    new { Value = 20, Text = "20" },
+                    new { Value = 50, Text = "50" },
+                    new { Value = 100, Text = "100" },
+                    new { Value = 200, Text = "200" },
+                    new { Value = -1, Text = "ALL" }
+                }, "Value", "Text", 10),
+                ClientList = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID),
+                ProjectList = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID),
+                TimezoneOffset = timezoneOffset,
+                VisibleCreateForm = true,
+                ReturnTo = ViewBag.ReturnTo ?? "TimeEntries",
+                CurrentPage = 1,
+                TotalPages = 1,
+                TotalRecords = await _context.TimeEntries.CountAsync(t => t.UserId == userId && t.EndDateTime != null)
+            };
+
+            // Set ViewBag for _CreateForm.cshtml
+            ViewBag.ClientID = viewModel.ClientList;
+            ViewBag.ProjectID = viewModel.ProjectList;
             ViewBag.VisibleCreateForm = true;
             ViewBag.ReturnTo = ViewBag.ReturnTo ?? "TimeEntries";
+            ViewBag.TimezoneOffset = timezoneOffset;
 
-            return View("Index", await _context.TimeEntries.Where(t => t.UserId == userId).Include(t => t.Client).Include(t => t.Project).ToListAsync());
+            return View("Index", viewModel);
         }
 
         [HttpPost]
@@ -170,10 +255,10 @@ namespace TaskTracker.Controllers
             var userId = _userManager.GetUserId(User);
             timeEntry.UserId = userId;
             // Set StartDateTime to current UTC time, rounded to the most recent quarter hour
-            var nowUtc = DateTime.UtcNow;
-            var minutes = nowUtc.Minute;
-            var quarterHours = (int)Math.Floor(minutes / 15.0) * 15; // Round down to nearest 15-minute interval
-            timeEntry.StartDateTime = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, nowUtc.Hour, quarterHours, 0, DateTimeKind.Utc);
+            var currentUtc = DateTime.UtcNow; // Renamed to avoid conflict
+            var minutes = currentUtc.Minute;
+            var quarterHours = (int)Math.Floor(minutes / 15.0) * 15;
+            timeEntry.StartDateTime = new DateTime(currentUtc.Year, currentUtc.Month, currentUtc.Day, currentUtc.Hour, quarterHours, 0, DateTimeKind.Utc);
             timeEntry.EndDateTime = null;
             timeEntry.HoursSpent = null;
 
@@ -191,34 +276,67 @@ namespace TaskTracker.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Repopulate dropdowns
+            // Repopulate view model for error case
+            var user = await _userManager.FindByIdAsync(userId);
+            int timezoneOffset;
+            try
+            {
+                var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+                var nowUtc = DateTimeOffset.UtcNow.UtcDateTime;
+                timezoneOffset = (int)userTimeZone.GetUtcOffset(nowUtc).TotalMinutes;
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                timezoneOffset = 0;
+            }
+
             var clientList = _context.Clients
                 .Select(c => new { c.ClientID, c.Name })
                 .ToList();
             clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID);
-
             var projectList = _context.Projects
                 .Select(p => new { p.ProjectID, p.Name })
                 .ToList();
             projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
-            ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID);
 
-            // Calculate dynamic offset for view
-            var user = await _userManager.FindByIdAsync(userId);
-            try
+            var viewModel = new TimeEntriesIndexViewModel
             {
-                var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
-                var nowUtcAlso = DateTimeOffset.UtcNow.UtcDateTime;
-                ViewBag.TimezoneOffset = (int)userTimeZone.GetUtcOffset(nowUtcAlso).TotalMinutes;
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                ViewBag.TimezoneOffset = 0; // Fallback to UTC
-            }
+                TimeEntries = await _context.TimeEntries
+                    .Where(t => t.UserId == userId && t.EndDateTime != null)
+                    .Include(t => t.Client)
+                    .Include(t => t.Project)
+                    .OrderByDescending(t => t.StartDateTime)
+                    .Take(10)
+                    .ToListAsync(),
+                RecordLimit = 10,
+                RecordLimitOptions = new SelectList(new[]
+                {
+                    new { Value = 5, Text = "5" },
+                    new { Value = 10, Text = "10" },
+                    new { Value = 20, Text = "20" },
+                    new { Value = 50, Text = "50" },
+                    new { Value = 100, Text = "100" },
+                    new { Value = 200, Text = "200" },
+                    new { Value = -1, Text = "ALL" }
+                }, "Value", "Text", 10),
+                ClientList = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID),
+                ProjectList = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID),
+                TimezoneOffset = timezoneOffset,
+                VisibleCreateForm = true,
+                ReturnTo = "TimeEntries",
+                CurrentPage = 1,
+                TotalPages = 1,
+                TotalRecords = await _context.TimeEntries.CountAsync(t => t.UserId == userId && t.EndDateTime != null)
+            };
 
+            // Set ViewBag for _CreateForm.cshtml
+            ViewBag.ClientID = viewModel.ClientList;
+            ViewBag.ProjectID = viewModel.ProjectList;
             ViewBag.VisibleCreateForm = true;
-            return View("Index", await _context.TimeEntries.Where(t => t.UserId == userId).Include(t => t.Client).Include(t => t.Project).ToListAsync());
+            ViewBag.ReturnTo = "TimeEntries";
+            ViewBag.TimezoneOffset = timezoneOffset;
+
+            return View("Index", viewModel);
         }
 
         [HttpPost]
