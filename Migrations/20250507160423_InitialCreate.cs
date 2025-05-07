@@ -30,6 +30,7 @@ namespace TaskTracker.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TimeZoneId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -81,6 +82,25 @@ namespace TaskTracker.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.ProductID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Settings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CompanyName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    AccountsReceivableAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccountsReceivablePhone = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    AccountsReceivableEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PaymentInformation = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ThankYouMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SingletonGuard = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Settings", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -318,6 +338,11 @@ namespace TaskTracker.Migrations
                         principalColumn: "TimeEntryID");
                 });
 
+            migrationBuilder.InsertData(
+                table: "Settings",
+                columns: new[] { "Id", "AccountsReceivableAddress", "AccountsReceivableEmail", "AccountsReceivablePhone", "CompanyName", "PaymentInformation", "SingletonGuard", "ThankYouMessage" },
+                values: new object[] { 1, null, null, null, "Default Company", null, 0, null });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -378,6 +403,12 @@ namespace TaskTracker.Migrations
                 column: "ClientID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Settings_SingletonGuard",
+                table: "Settings",
+                column: "SingletonGuard",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TimeEntries_ClientID",
                 table: "TimeEntries",
                 column: "ClientID");
@@ -416,6 +447,9 @@ namespace TaskTracker.Migrations
 
             migrationBuilder.DropTable(
                 name: "InvoiceTimeEntries");
+
+            migrationBuilder.DropTable(
+                name: "Settings");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

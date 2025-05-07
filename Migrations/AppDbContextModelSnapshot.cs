@@ -388,6 +388,55 @@ namespace TaskTracker.Migrations
                     b.ToTable("Projects");
                 });
 
+            modelBuilder.Entity("TaskTracker.Models.Settings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccountsReceivableAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccountsReceivableEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccountsReceivablePhone")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PaymentInformation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SingletonGuard")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("ThankYouMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SingletonGuard")
+                        .IsUnique();
+
+                    b.ToTable("Settings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CompanyName = "Default Company",
+                            SingletonGuard = 0
+                        });
+                });
+
             modelBuilder.Entity("TaskTracker.Models.TimeEntry", b =>
                 {
                     b.Property<int>("TimeEntryID")

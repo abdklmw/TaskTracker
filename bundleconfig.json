@@ -8,5 +8,15 @@
       "enabled": true,
       "renameLocals": true
     }
+  },
+  {
+    "outputFileName": "wwwroot/css/site.min.css",
+    "inputFiles": [
+      "wwwroot/css/site.css",
+      "wwwroot/css/layout.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
   }
 ]

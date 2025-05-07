@@ -1,0 +1,24 @@
+li.nav-item {
+    margin: auto 2em;
+}
+
+/* Custom styles for the navigation bar SVG icon */
+.nav-icon {
+    width: 1.2em;
+    height: 1.2em;
+    margin-right: 1em;
+    vertical-align: middle;
+}
+
+/* Optional: Change SVG color using filter (if fill isn't CSS-controllable) */
+.nav-link.text-dark .nav-icon {
+    filter: brightness(0) saturate(100%) invert(15%) sepia(15%) saturate(1000%) hue-rotate(180deg); /* Approximates .text-dark color */
+}
+
+/* Ensure SVG scales properly in responsive navbar */
+@media (max-width: 576px) {
+    .nav-icon {
+        width: 1em;
+        height: 1em;
+    }
+}

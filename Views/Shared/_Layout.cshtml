@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - TaskTracker</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/TaskTracker.styles.css" asp-append-version="true" />
 </head>
 <body>
@@ -33,6 +33,12 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="TimeEntries" asp-action="Index">Time Entries</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Settings" asp-action="Index">
+                                    <img src="~/images/icons/settings.svg" alt="Settings Icon" class="nav-icon" />
+                                </a>
+                            </li>
+
                         }
                         else
                         {

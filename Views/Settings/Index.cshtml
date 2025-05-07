@@ -1,0 +1,41 @@
+﻿@model TaskTracker.Models.Settings
+
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<h1>Settings</h1>
+
+<form asp-action="Update" method="post">
+    <div class="form-group">
+        <label asp-for="CompanyName"></label>
+        <input asp-for="CompanyName" class="form-control" />
+        <span asp-validation-for="CompanyName" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="AccountsReceivableAddress"></label>
+        <textarea asp-for="AccountsReceivableAddress" class="form-control"></textarea>
+        <span asp-validation-for="AccountsReceivableAddress" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="AccountsReceivablePhone"></label>
+        <input asp-for="AccountsReceivablePhone" class="form-control" />
+        <span asp-validation-for="AccountsReceivablePhone" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="AccountsReceivableEmail"></label>
+        <input asp-for="AccountsReceivableEmail" class="form-control" />
+        <span asp-validation-for="AccountsReceivableEmail" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="PaymentInformation"></label>
+        <textarea asp-for="PaymentInformation" class="form-control"></textarea>
+        <span asp-validation-for="PaymentInformation" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="ThankYouMessage"></label>
+        <textarea asp-for="ThankYouMessage" class="form-control"></textarea>
+        <span asp-validation-for="ThankYouMessage" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>

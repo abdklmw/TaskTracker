@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Models;
-using TaskTracker.Data;
 
 namespace TaskTracker.Data
 {
@@ -19,11 +18,13 @@ namespace TaskTracker.Data
         public DbSet<InvoiceTimeEntry> InvoiceTimeEntries { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<InvoiceProduct> InvoiceProducts { get; set; }
+        public DbSet<Settings> Settings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // TimeEntry relationships
             modelBuilder.Entity<TimeEntry>()
                 .HasOne(t => t.User)
                 .WithMany()
@@ -82,6 +83,31 @@ namespace TaskTracker.Data
                 .WithMany(p => p.InvoiceProducts)
                 .HasForeignKey(ip => ip.ProductID)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            // Configure Settings entity
+            // Seed a default Settings record
+            modelBuilder.Entity<Settings>().HasData(
+                new Settings
+                {
+                    Id = 1,
+                    CompanyName = "Default Company",
+                    AccountsReceivableAddress = null,
+                    AccountsReceivablePhone = null,
+                    AccountsReceivableEmail = null,
+                    PaymentInformation = null,
+                    ThankYouMessage = null,
+                    SingletonGuard = 0
+                }
+            );
+
+            // Enforce single record with a unique index
+            modelBuilder.Entity<Settings>()
+                .Property<int>("SingletonGuard")
+                .HasDefaultValue(0)
+                .ValueGeneratedNever();
+            modelBuilder.Entity<Settings>()
+                .HasIndex("SingletonGuard")
+                .IsUnique();
         }
     }
 }
