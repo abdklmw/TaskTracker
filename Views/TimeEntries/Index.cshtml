@@ -66,18 +66,19 @@ else
 <div style="padding-top: 20px;"></div> <!-- Padding between sections -->
 
 <h2>Completed time entries</h2>
-<div class="row mb-3">
-    <div class="col-12 col-md-6 col-lg-4">
-        <form asp-action="Index" method="get">
-            <label for="recordLimit" class="form-label">Records per page</label>
-            <select id="recordLimit" name="recordLimit" class="form-select" asp-items="@Model.RecordLimitOptions" onchange="this.form.submit()"></select>
-            <input type="hidden" name="page" value="1" />
-        </form>
-    </div>
-</div>
 
 @if (Model.TotalRecords > 0)
 {
+    <div class="row mb-3">
+        <div class="col-12 col-md-6 col-lg-4">
+            <form asp-action="Index" method="get">
+                <label for="recordLimit" class="form-label">Records per page</label>
+                <select id="recordLimit" name="recordLimit" class="form-select" asp-items="@Model.RecordLimitOptions" onchange="this.form.submit()"></select>
+                <input type="hidden" name="page" value="1" />
+            </form>
+        </div>
+    </div>
+
     <div class="row mb-3">
         <div class="col-12">
             <p>Showing @Model.TimeEntries.Count() of @Model.TotalRecords records</p>
@@ -122,6 +123,11 @@ else
         @await Html.PartialAsync("_EditFormRow", item)
     }
 }
+else
+{
+    <p>No completed timers</p>
+}
+
 
 @section Scripts {
     <script>
