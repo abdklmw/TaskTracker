@@ -12,13 +12,18 @@ namespace TaskTracker.Models
         public int ProductID { get; set; }
 
         [Required]
+        [Column(TypeName = "decimal(18,2)")]
         public int Quantity { get; set; }
 
-        [Required]
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal UnitPrice { get; set; }
+        public decimal TotalAmount
+        {
+            get
+            {
+                return Quantity * Product.UnitPrice;
+            }
+        }
 
-        public virtual Invoice Invoice { get; set; }
-        public virtual Product Product { get; set; }
+        public virtual required Invoice Invoice { get; set; }
+        public virtual required Product Product { get; set; }
     }
 }

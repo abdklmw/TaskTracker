@@ -36,10 +36,7 @@ namespace TaskTracker.Models
         [Required]
         public InvoiceStatus Status { get; set; }
 
-        [Required]
-        public string UserId { get; set; }
-
-        public virtual Client Client { get; set; }
+        public virtual required Client Client { get; set; }
         public virtual ICollection<InvoiceTimeEntry> InvoiceTimeEntries { get; set; } = new List<InvoiceTimeEntry>();
         public virtual ICollection<InvoiceProduct> InvoiceProducts { get; set; } = new List<InvoiceProduct>();
     }

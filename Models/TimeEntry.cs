@@ -18,7 +18,7 @@ namespace TaskTracker.Models
         public Client? Client { get; set; }
 
         [Required]
-        public string UserId { get; set; }
+        public string? UserId { get; set; }
         public ApplicationUser? User { get; set; }
 
         [Required]
@@ -28,6 +28,9 @@ namespace TaskTracker.Models
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? HoursSpent { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? HourlyRate { get; set; }
 
         public string? Description { get; set; }
 
