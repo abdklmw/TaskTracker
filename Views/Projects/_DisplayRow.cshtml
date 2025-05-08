@@ -1,14 +1,23 @@
-﻿@model TaskTracker.Models.Project
+﻿@model TaskTracker.Models.ProjectRowViewModel
+@{
+    if (Model == null || Model.Project == null)
+    {
+        return;
+    }
 
-<div id="display-row-@Model.ProjectID" class="display-mode card mb-2">
+    var project = Model.Project;
+}
+<div id="display-row-@project.ProjectID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body">
         <div class="row">
-            <div class="col-md-4" data-field="Name">@Model.Name</div>
-            <div class="col-md-4" data-field="Description">@(Model.Description ?? "")</div>
-            <div class="col-md-2" data-field="Rate">@(Model.Rate.HasValue ? $"${Model.Rate.Value.ToString("F2")}" : "")</div>
+            <div class="col-md-4" data-field="Name">@project.Name</div>
+            <div class="col-md-4" data-field="Description">@project.Description</div>
+            <div class="col-md-2" data-field="Rate">
+                @(project.Rate is decimal rate ? $"${rate:F2}" : "")
+            </div>
             <div class="col-md-2">
-                <button class="btn btn-primary edit-btn" data-id="@Model.ProjectID">Edit</button>
-                <a asp-action="Delete" asp-route-id="@Model.ProjectID" class="btn btn-danger">Delete</a>
+                <button class="btn btn-primary edit-btn" data-id="@project.ProjectID">Edit</button>
+                <a asp-action="Delete" asp-route-id="@project.ProjectID" class="btn btn-danger">Delete</a>
             </div>
         </div>
     </div>

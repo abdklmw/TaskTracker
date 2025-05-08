@@ -28,11 +28,15 @@
     <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Address)</strong></div>
     <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.DefaultRate)</strong></div>
 </div>
-
+@{
+    var index = 1;
+}
 @foreach (var client in Model)
 {
-    @await Html.PartialAsync("_DisplayRow", client)
-    @await Html.PartialAsync("_EditFormRow", client)
+    var clientRowViewModel = new ClientRowViewModel(client, index);
+    @await Html.PartialAsync("_DisplayRow", clientRowViewModel)
+    @await Html.PartialAsync("_EditFormRow", clientRowViewModel)
+    index++;
 }
 
 <style>

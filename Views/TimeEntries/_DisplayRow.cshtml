@@ -1,22 +1,28 @@
-﻿@model TaskTracker.Models.TimeEntry
+﻿@model TaskTracker.Models.TimeEntryRowViewModel
 @{
+    if (Model == null || Model.TimeEntry == null)
+    {
+        return;
+    }
+
+    var timeEntry = Model.TimeEntry;
     int timezoneOffset = (int)ViewBag.TimezoneOffset;
-    var startLocal = Model.StartDateTime.AddMinutes(timezoneOffset);
-    var endLocal = Model.EndDateTime.HasValue ? Model.EndDateTime.Value.AddMinutes(timezoneOffset) : (DateTime?)null;
+    var startLocal = timeEntry.StartDateTime.AddMinutes(timezoneOffset);
+    var endLocal = timeEntry.EndDateTime is DateTime ? timeEntry.EndDateTime.Value.AddMinutes(timezoneOffset) : (DateTime?)null;
 }
 
-<div id="display-row-@Model.TimeEntryID" class="display-mode card mb-2">
+<div id="display-row-@timeEntry.TimeEntryID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body">
         <div class="row">
-            <div class="col-md-2" data-field="Client">@Model.Client.Name</div>
-            <div class="col-md-2" data-field="Project">@Model.Project.Name</div>
+            <div class="col-md-2" data-field="Client">@timeEntry.Client?.Name</div>
+            <div class="col-md-2" data-field="Project">@timeEntry.Project?.Name</div>
             <div class="col-md-2" data-field="StartDateTime">@startLocal.ToString("g")</div>
             <div class="col-md-2" data-field="EndDateTime">@(endLocal.HasValue ? endLocal.Value.ToString("g") : "")</div>
-            <div class="col-md-2" data-field="HoursSpent">@(Model.HoursSpent.HasValue ? Model.HoursSpent.Value.ToString("F2") : "")</div>
-            <div class="col-md-2" data-field="Description">@Model.Description</div>
+            <div class="col-md-2" data-field="HoursSpent">@(timeEntry.HoursSpent is decimal ? timeEntry.HoursSpent.Value.ToString("F2") : "")</div>
+            <div class="col-md-2" data-field="Description">@timeEntry.Description</div>
             <div class="col-md-2">
-                <button class="btn btn-primary edit-btn" data-id="@Model.TimeEntryID">Edit</button>
-                <a asp-action="Delete" asp-route-id="@Model.TimeEntryID" class="btn btn-danger">Delete</a>
+                <button class="btn btn-primary edit-btn" data-id="@timeEntry.TimeEntryID">Edit</button>
+                <a asp-action="Delete" asp-route-id="@timeEntry.TimeEntryID" class="btn btn-danger">Delete</a>
             </div>
         </div>
     </div>

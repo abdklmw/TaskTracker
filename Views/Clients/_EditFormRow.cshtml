@@ -1,33 +1,42 @@
-﻿@model TaskTracker.Models.Client
+﻿@model TaskTracker.Models.ClientRowViewModel
 
-<div id="edit-row-@Model.ClientID" class="edit-mode card mb-2" style="display:none;">
-    <form id="edit-form-@Model.ClientID" asp-action="Edit" asp-route-id="@Model.ClientID" method="post" class="card-body">
-        <input type="hidden" asp-for="ClientID" />
+@{
+    if (Model == null || Model.Client == null)
+    {
+        return;
+    }
+
+    var client = Model.Client;
+}
+
+<div id="edit-row-@client.ClientID" class="edit-mode card mb-2 @(Model.Parity)-row" style="display:none;">
+    <form id="edit-form-@client.ClientID" asp-action="Edit" asp-route-id="@client.ClientID" method="post" class="card-body">
+        <input type="hidden" asp-for="Client.ClientID" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="row g-3">
             <div class="col-md-3">
-                <input asp-for="Name" class="form-control" placeholder="Client Name" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <input asp-for="Client.Name" class="form-control" placeholder="Client Name" />
+                <span asp-validation-for="Client.Name" class="text-danger"></span>
             </div>
             <div class="col-md-3">
-                <input asp-for="Email" class="form-control" type="email" placeholder="Email" />
-                <span asp-validation-for="Email" class="text-danger"></span>
+                <input asp-for="Client.Email" class="form-control" type="email" placeholder="Email" />
+                <span asp-validation-for="Client.Email" class="text-danger"></span>
             </div>
             <div class="col-md-2">
-                <input asp-for="Phone" class="form-control" placeholder="Phone" />
-                <span asp-validation-for="Phone" class="text-danger"></span>
+                <input asp-for="Client.Phone" class="form-control" placeholder="Phone" />
+                <span asp-validation-for="Client.Phone" class="text-danger"></span>
             </div>
             <div class="col-md-2">
-                <textarea asp-for="Address" class="form-control" rows="4" placeholder="Enter street, city, state, ZIP"></textarea>
-                <span asp-validation-for="Address" class="text-danger"></span>
+                <textarea asp-for="Client.Address" class="form-control" rows="4" placeholder="Enter street, city, state, ZIP"></textarea>
+                <span asp-validation-for="Client.Address" class="text-danger"></span>
             </div>
             <div class="col-md-2">
-                <input asp-for="DefaultRate" class="form-control" type="number" step="0.01" placeholder="Default Rate" />
-                <span asp-validation-for="DefaultRate" class="text-danger"></span>
+                <input asp-for="Client.DefaultRate" class="form-control" type="number" step="0.01" placeholder="Default Rate" />
+                <span asp-validation-for="Client.DefaultRate" class="text-danger"></span>
             </div>
             <div class="col-md-12">
                 <button type="submit" class="btn btn-success save-btn">Save</button>
-                <button type="button" class="btn btn-secondary cancel-btn" data-id="@Model.ClientID">Cancel</button>
+                <button type="button" class="btn btn-secondary cancel-btn" data-id="@client.ClientID">Cancel</button>
             </div>
         </div>
     </form>

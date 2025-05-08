@@ -117,10 +117,14 @@ else
         <div class="col-md-2"><strong>Hours Spent</strong></div>
         <div class="col-md-2"><strong>Description</strong></div>
     </div>
-    @foreach (var item in Model.TimeEntries.Where(t => t.EndDateTime != null))
+
+    var index = 1;
+
+    @foreach (var timeEntry in Model.TimeEntries.Where(t => t.EndDateTime != null))
     {
-        @await Html.PartialAsync("_DisplayRow", item)
-        @await Html.PartialAsync("_EditFormRow", item)
+        var projectRowViewModel = new TimeEntryRowViewModel(timeEntry, index);
+        @await Html.PartialAsync("_DisplayRow", projectRowViewModel)
+        @await Html.PartialAsync("_EditFormRow", projectRowViewModel)
     }
 }
 else

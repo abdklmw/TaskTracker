@@ -28,10 +28,15 @@
     <div class="col-md-2"><strong>Actions</strong></div>
 </div>
 
+@{
+    var index = 1;
+}
 @foreach (var project in Model)
 {
-    @await Html.PartialAsync("_DisplayRow", project)
-    @await Html.PartialAsync("_EditFormRow", project)
+    var projectRowViewModel = new ProjectRowViewModel(project, index);
+    @await Html.PartialAsync("_DisplayRow", projectRowViewModel)
+    @await Html.PartialAsync("_EditFormRow", projectRowViewModel)
+    index++;
 }
 
 <style>

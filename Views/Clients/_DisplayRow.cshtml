@@ -1,16 +1,27 @@
-﻿@model TaskTracker.Models.Client
+﻿@model TaskTracker.Models.ClientRowViewModel
 
-<div id="display-row-@Model.ClientID" class="display-mode card mb-2">
+@{
+    if (Model == null || Model.Client == null)
+    {
+        return;
+    }
+
+    var client = Model.Client;
+}
+
+<div id="display-row-@client.ClientID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body">
         <div class="row">
-            <div class="col-md-3" data-field="Name">@Model.Name</div>
-            <div class="col-md-3" data-field="Email">@Model.Email</div>
-            <div class="col-md-2" data-field="Phone">@Model.Phone</div>
-            <div class="col-md-2" data-field="Address">@Model.Address</div>
-            <div class="col-md-2" data-field="DefaultRate">$@Model.DefaultRate.ToString("F2")</div>
+            <div class="col-md-3" data-field="Name">@client.Name</div>
+            <div class="col-md-3" data-field="Email">@client.Email</div>
+            <div class="col-md-2" data-field="Phone">@client.Phone</div>
+            <div class="col-md-2" data-field="Address">@client.Address</div>
+            <div class="col-md-2" data-field="DefaultRate">
+                @(client.DefaultRate is decimal defaultRate ? $"${defaultRate:F2}" : "")
+            </div>
             <div class="col-md-12">
-                <button class="btn btn-primary edit-btn" data-id="@Model.ClientID">Edit</button>
-                <a asp-action="Delete" asp-route-id="@Model.ClientID" class="btn btn-danger">Delete</a>
+                <button class="btn btn-primary edit-btn" data-id="@client.ClientID">Edit</button>
+                <a asp-action="Delete" asp-route-id="@client.ClientID" class="btn btn-danger">Delete</a>
             </div>
         </div>
     </div>

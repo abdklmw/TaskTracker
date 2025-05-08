@@ -1,25 +1,34 @@
-﻿@model TaskTracker.Models.Project
+﻿@model TaskTracker.Models.ProjectRowViewModel
 
-<div id="edit-row-@Model.ProjectID" class="edit-mode card mb-2" style="display:none;">
-    <form id="edit-form-@Model.ProjectID" asp-action="Edit" asp-route-id="@Model.ProjectID" method="post" class="card-body">
-        <input type="hidden" asp-for="ProjectID" />
+@{
+    if (Model == null || Model.Project == null)
+    {
+        return;
+    }
+
+    var project = Model.Project;
+}
+
+<div id="edit-row-@project.ProjectID" class="edit-mode card mb-2 @(Model.Parity)-row" style="display:none;">
+    <form id="edit-form-@project.ProjectID" asp-action="Edit" asp-route-id="@project.ProjectID" method="post" class="card-body">
+        <input type="hidden" asp-for="Project.ProjectID" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="row g-3">
             <div class="col-md-4">
-                <input asp-for="Name" class="form-control" placeholder="Project Name" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <input asp-for="Project.Name" class="form-control" placeholder="Project Name" />
+                <span asp-validation-for="Project.Name" class="text-danger"></span>
             </div>
             <div class="col-md-4">
-                <input asp-for="Description" class="form-control" placeholder="Description" />
-                <span asp-validation-for="Description" class="text-danger"></span>
+                <input asp-for="Project.Description" class="form-control" placeholder="Description" />
+                <span asp-validation-for="Project.Description" class="text-danger"></span>
             </div>
             <div class="col-md-2">
-                <input asp-for="Rate" class="form-control" type="number" step="0.01" placeholder="Project Rate" />
-                <span asp-validation-for="Rate" class="text-danger"></span>
+                <input asp-for="Project.Rate" class="form-control" type="number" step="0.01" placeholder="Project Rate" />
+                <span asp-validation-for="Project.Rate" class="text-danger"></span>
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-success save-btn">Save</button>
-                <button type="button" class="btn btn-secondary cancel-btn" data-id="@Model.ProjectID">Cancel</button>
+                <button type="button" class="btn btn-secondary cancel-btn" data-id="@project.ProjectID">Cancel</button>
             </div>
         </div>
     </form>

@@ -1,54 +1,60 @@
-﻿@model TaskTracker.Models.TimeEntry
+﻿@model TaskTracker.Models.TimeEntryRowViewModel
 @{
+    if (Model == null || Model.TimeEntry == null)
+    {
+        return;
+    }
+
+    var TimeEntry = Model.TimeEntry;
     int timezoneOffset = (int)ViewBag.TimezoneOffset;
-    var startLocal = Model.StartDateTime.AddMinutes(timezoneOffset);
-    var endLocal = Model.EndDateTime;
+    var startLocal = TimeEntry.StartDateTime.AddMinutes(timezoneOffset);
+    var endLocal = TimeEntry.EndDateTime;
     if (endLocal.HasValue)
     {
         endLocal = endLocal.Value.AddMinutes(timezoneOffset);
     }
 }
 
-<div id="edit-row-@Model.TimeEntryID" class="edit-mode mb-3" style="display:none;">
-    <form id="edit-form-@Model.TimeEntryID" asp-action="Edit" asp-route-id="@Model.TimeEntryID" method="post">
-        <input type="hidden" asp-for="@Model.TimeEntryID" name="TimeEntryID" />
-        <input type="hidden" asp-for="@Model.UserId" name="UserId" />
+<div id="edit-row-@TimeEntry.TimeEntryID" class="edit-mode mb-3 @(Model.Parity)-row" style="display:none;">
+    <form id="edit-form-@TimeEntry.TimeEntryID" asp-action="Edit" asp-route-id="@TimeEntry.TimeEntryID" method="post">
+        <input type="hidden" asp-for="@TimeEntry.TimeEntryID" name="TimeEntryID" />
+        <input type="hidden" asp-for="@TimeEntry.UserId" name="UserId" />
         <div class="card">
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-12 col-md-6 col-lg-4">
                         <label class="form-label">Client</label>
-                        <select asp-for="@Model.ClientID" name="ClientID" class="form-control" asp-items="@ViewBag.ClientID"></select>
-                        <span asp-validation-for="@Model.ClientID" class="text-danger"></span>
+                        <select asp-for="@TimeEntry.ClientID" name="ClientID" class="form-control" asp-items="@ViewBag.ClientID"></select>
+                        <span asp-validation-for="@TimeEntry.ClientID" class="text-danger"></span>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <label class="form-label">Project</label>
-                        <select asp-for="@Model.ProjectID" name="ProjectID" class="form-control" asp-items="@ViewBag.ProjectID"></select>
-                        <span asp-validation-for="@Model.ProjectID" class="text-danger"></span>
+                        <select asp-for="@TimeEntry.ProjectID" name="ProjectID" class="form-control" asp-items="@ViewBag.ProjectID"></select>
+                        <span asp-validation-for="@TimeEntry.ProjectID" class="text-danger"></span>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <label class="form-label">Start Date/Time</label>
                         <input asp-for="@startLocal" class="form-control start-datetime" type="datetime-local" name="StartDateTime" />
-                        <span asp-validation-for="@Model.StartDateTime" class="text-danger"></span>
+                        <span asp-validation-for="@TimeEntry.StartDateTime" class="text-danger"></span>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <label class="form-label">End Date/Time</label>
                         <input asp-for="@endLocal" class="form-control end-datetime" type="datetime-local" name="EndDateTime" />
-                        <span asp-validation-for="@Model.EndDateTime" class="text-danger"></span>
+                        <span asp-validation-for="@TimeEntry.EndDateTime" class="text-danger"></span>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <label class="form-label">Hours Spent</label>
-                        <input asp-for="@Model.HoursSpent" class="form-control hours-spent" type="number" step="0.01" name="HoursSpent" />
-                        <span asp-validation-for="@Model.HoursSpent" class="text-danger"></span>
+                        <input asp-for="@TimeEntry.HoursSpent" class="form-control hours-spent" type="number" step="0.01" name="HoursSpent" />
+                        <span asp-validation-for="@TimeEntry.HoursSpent" class="text-danger"></span>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Description</label>
-                        <textarea asp-for="@Model.Description" name="Description" class="form-control" rows="4"></textarea>
-                        <span asp-validation-for="@Model.Description" class="text-danger"></span>
+                        <textarea asp-for="@TimeEntry.Description" name="Description" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="@TimeEntry.Description" class="text-danger"></span>
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-success save-btn">Save</button>
-                        <button type="button" class="btn btn-secondary cancel-btn" data-id="@Model.TimeEntryID">Cancel</button>
+                        <button type="button" class="btn btn-secondary cancel-btn" data-id="@TimeEntry.TimeEntryID">Cancel</button>
                     </div>
                 </div>
             </div>
