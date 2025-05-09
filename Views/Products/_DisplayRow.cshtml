@@ -1,0 +1,25 @@
+@model TaskTracker.Models.ProductRowViewModel
+@{
+    if (Model == null || Model.Product == null)
+    {
+        return;
+    }
+
+    var product = Model.Product;
+}
+<div id="display-row-@product.ProductID" class="display-mode card mb-2 @(Model.Parity)-row">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3" data-field="ProductSku">@product.ProductSku</div>
+            <div class="col-md-3" data-field="Name">@product.Name</div>
+            <div class="col-md-3" data-field="Description">@product.Description</div>
+            <div class="col-md-2" data-field="UnitPrice">
+                @(product.UnitPrice is decimal price ? $"${price:F2}" : "")
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary edit-btn" data-id="@product.ProductID">Edit</button>
+                <a asp-action="Delete" asp-route-id="@product.ProductID" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>

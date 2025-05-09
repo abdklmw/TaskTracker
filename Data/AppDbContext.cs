@@ -108,6 +108,11 @@ namespace TaskTracker.Data
             modelBuilder.Entity<Settings>()
                 .HasIndex("SingletonGuard")
                 .IsUnique();
+
+            // Configure unique index for ProductSku
+            modelBuilder.Entity<Product>()
+                .HasIndex(p => p.ProductSku)
+                .IsUnique();
         }
     }
 }

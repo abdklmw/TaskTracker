@@ -1,0 +1,69 @@
+@model IEnumerable<TaskTracker.Models.Product>
+
+@{
+    ViewData["Title"] = "Products";
+}
+
+<h1>Products</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@await Html.PartialAsync("_CreateForm", new Product {ProductSku = "instatiate"})
+
+<p>
+    <button id="create-new-btn" class="btn btn-primary">Create New</button>
+</p>
+
+<div class="row mb-2">
+    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.ProductSku)</strong></div>
+    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Name)</strong></div>
+    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Description)</strong></div>
+    <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.UnitPrice)</strong></div>
+</div>
+
+@{
+    var index = 1;
+}
+@foreach (var product in Model)
+{
+    var productRowViewModel = new ProductRowViewModel(product, index);
+    @await Html.PartialAsync("_DisplayRow", productRowViewModel)
+    @await Html.PartialAsync("_EditFormRow", productRowViewModel)
+    index++;
+}
+
+<style>
+    .edit-mode .form-control, #create-form .form-control {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 4px;
+    }
+
+    .edit-mode .text-danger, #create-form .text-danger {
+        font-size: 0.8em;
+        display: block;
+    }
+
+    .edit-mode .btn, #create-form .btn {
+        margin-right: 5px;
+    }
+
+    .alert-success {
+        transition: opacity 1s ease-in-out;
+    }
+</style>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
+    }
