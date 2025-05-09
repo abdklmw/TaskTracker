@@ -26,7 +26,7 @@ namespace TaskTracker.Controllers
         // POST: Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Description,UnitPrice")] Product product)
+        public async Task<IActionResult> Create([Bind("Name,Description,UnitPrice,ProductSku")] Product product)
         {
             if (ModelState.IsValid)
             {
@@ -43,7 +43,7 @@ namespace TaskTracker.Controllers
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductID,Name,Description,UnitPrice")] Product product)
+        public async Task<IActionResult> Edit(int id, [Bind("ProductID,Name,Description,UnitPrice,ProductSku")] Product product)
         {
             if (id != product.ProductID)
             {
