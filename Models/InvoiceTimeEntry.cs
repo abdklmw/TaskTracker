@@ -1,15 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 namespace TaskTracker.Models
 {
-    public class InvoiceTimeEntry
+    public class InvoiceTimeEntry : InvoiceItemBase
     {
         [Required]
-        public int InvoiceID { get; set; }
-
-        [Required]
         public int TimeEntryID { get; set; }
-
         public decimal? TotalAmount
         {
             get
@@ -21,8 +17,8 @@ namespace TaskTracker.Models
                 return 0;
             }
         }
-
-        public virtual required Invoice Invoice { get; set; }
+        [StringLength(500)]
+        [Description("Additional notes for the invoice time entry")]
         public virtual required TimeEntry TimeEntry { get; set; }
     }
 }
