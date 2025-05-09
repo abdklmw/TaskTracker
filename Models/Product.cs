@@ -25,6 +25,6 @@ namespace TaskTracker.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal UnitPrice { get; set; }
 
-        public virtual ICollection<InvoiceProduct> InvoiceProducts { get; set; } = new List<InvoiceProduct>();
+        public virtual ICollection<InvoiceExpense> InvoiceProducts { get; set; } = new List<InvoiceExpense>();
     }
 }

@@ -1,0 +1,43 @@
+﻿@model TaskTracker.Models.ExpenseRowViewModel
+@{
+    if (Model == null || Model.Expense == null)
+    {
+        return;
+    }
+    var expense = Model.Expense;
+}
+<!-- Edit form container, hidden by default -->
+<div id="edit-row-@expense.ExpenseID" class="edit-mode card mb-2 @(Model.Parity)-row" style="display:none;">
+    <form id="edit-form-@expense.ExpenseID" asp-action="Edit" asp-route-id="@expense.ExpenseID" method="post" class="card-body">
+        <input type="hidden" asp-for="Expense.ExpenseID" />
+        <!-- Display validation errors -->
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="row g-3">
+            <!-- Client selection dropdown using ViewBag.ClientList -->
+            <div class="col-md-3">
+                <label asp-for="Expense.ClientID" class="form-label">Client</label>
+                <select asp-for="Expense.ClientID" class="form-control" asp-items="@ViewBag.ClientList">
+                    <option value="">Select a client</option>
+                </select>
+                <span asp-validation-for="Expense.ClientID" class="text-danger"></span>
+            </div>
+            <!-- Description input -->
+            <div class="col-md-3">
+                <label asp-for="Expense.Description" class="form-label">Description</label>
+                <textarea asp-for="Expense.Description" class="form-control" rows="4" placeholder="Expense Description"></textarea>
+                <span asp-validation-for="Expense.Description" class="text-danger"></span>
+            </div>
+            <!-- Amount input -->
+            <div class="col-md-2">
+                <label asp-for="Expense.Amount" class="form-label">Amount</label>
+                <input asp-for="Expense.Amount" class="form-control" type="number" step="0.01" placeholder="Amount" />
+                <span asp-validation-for="Expense.Amount" class="text-danger"></span>
+            </div>
+            <!-- Form buttons -->
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success save-btn">Save</button>
+                <button type="button" class="btn btn-secondary cancel-btn" data-id="@expense.ExpenseID">Cancel</button>
+            </div>
+        </div>
+    </form>
+</div>

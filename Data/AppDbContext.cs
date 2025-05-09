@@ -12,12 +12,13 @@ namespace TaskTracker.Data
         }
 
         public DbSet<Client> Clients { get; set; }
+        public DbSet<Expense> Expenses { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<TimeEntry> TimeEntries { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceTimeEntry> InvoiceTimeEntries { get; set; }
         public DbSet<Product> Products { get; set; }
-        public DbSet<InvoiceProduct> InvoiceProducts { get; set; }
+        public DbSet<InvoiceExpense> InvoiceProducts { get; set; }
         public DbSet<Settings> Settings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -48,7 +49,7 @@ namespace TaskTracker.Data
                 .HasKey(ite => new { ite.InvoiceID, ite.TimeEntryID });
 
             // Configure InvoiceProduct composite key
-            modelBuilder.Entity<InvoiceProduct>()
+            modelBuilder.Entity<InvoiceExpense>()
                 .HasKey(ip => new { ip.InvoiceID, ip.ProductID });
 
             // Invoice relationships
@@ -72,13 +73,13 @@ namespace TaskTracker.Data
                 .OnDelete(DeleteBehavior.NoAction);
 
             // InvoiceProduct relationships
-            modelBuilder.Entity<InvoiceProduct>()
+            modelBuilder.Entity<InvoiceExpense>()
                 .HasOne(ip => ip.Invoice)
                 .WithMany(i => i.InvoiceProducts)
                 .HasForeignKey(ip => ip.InvoiceID)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<InvoiceProduct>()
+            modelBuilder.Entity<InvoiceExpense>()
                 .HasOne(ip => ip.Product)
                 .WithMany(p => p.InvoiceProducts)
                 .HasForeignKey(ip => ip.ProductID)

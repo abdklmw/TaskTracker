@@ -1,0 +1,60 @@
+@model IEnumerable<TaskTracker.Models.Expense>
+@{
+    ViewData["Title"] = "Expenses";
+}
+<h1>Expenses</h1>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+@await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Expense())
+<p>
+    <button id="create-new-btn" class="btn btn-primary">Create New</button>
+</p>
+<div class="row mb-2">
+    <div class="col-md-3"><strong>Client</strong></div>
+    <div class="col-md-3"><strong>Description</strong></div>
+    <div class="col-md-2"><strong>Amount</strong></div>
+    <div class="col-md-2"><strong>Actions</strong></div>
+</div>
+@{
+    var index = 1;
+}
+@foreach (var expense in Model)
+{
+    var expenseRowViewModel = new ExpenseRowViewModel(expense, index);
+    @await Html.PartialAsync("_DisplayRow", expenseRowViewModel)
+    @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
+    index++;
+}
+<style>
+    .edit-mode .form-control, #create-form .form-control {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 4px;
+    }
+
+    .edit-mode .text-danger, #create-form .text-danger {
+        font-size: 0.8em;
+        display: block;
+    }
+
+    .edit-mode .btn, #create-form .btn {
+        margin-right: 5px;
+    }
+
+    .alert-success {
+        transition: opacity 1s ease-in-out;
+    }
+</style>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,40 @@
+@model TaskTracker.Models.Expense
+@{
+    // Determine display style for the form (hidden by default)
+    var displayStyle = ViewBag.VisibleCreateForm == true ? "" : "display:none;";
+    var divStyle = string.IsNullOrEmpty(displayStyle) ? "margin-bottom: 20px;" : $"{displayStyle} margin-bottom: 20px;";
+}
+<!-- Create form container, hidden by default -->
+<div id="create-form" style="@divStyle">
+    <form asp-action="Create" method="post" class="card p-4">
+        <!-- Display validation errors -->
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="row g-3">
+            <!-- Client selection dropdown using ViewBag.ClientList -->
+            <div class="col-md-3">
+                <label asp-for="ClientID" class="form-label">Client</label>
+                <select asp-for="ClientID" class="form-control" asp-items="@ViewBag.ClientList">
+                    <option value="">Select a client</option>
+                </select>
+                <span asp-validation-for="ClientID" class="text-danger"></span>
+            </div>
+            <!-- Description input -->
+            <div class="col-md-3">
+                <label asp-for="Description" class="form-label">Description</label>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Expense Description"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <!-- Amount input -->
+            <div class="col-md-2">
+                <label asp-for="Amount" class="form-label">Amount</label>
+                <input asp-for="Amount" class="form-control" type="number" step="0.01" placeholder="Amount" />
+                <span asp-validation-for="Amount" class="text-danger"></span>
+            </div>
+            <!-- Form buttons -->
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-success create-btn">Create</button>
+                <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
+            </div>
+        </div>
+    </form>
+</div>

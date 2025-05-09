@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 namespace TaskTracker.Models
 {
-    public class InvoiceProduct : InvoiceItemBase
+    public class InvoiceExpense : InvoiceItemBase
     {
         private static readonly Dictionary<string, string> FrequencyMap = new()
         {
