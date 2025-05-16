@@ -114,45 +114,143 @@
     setInterval(updateHoursSpent, 60 * 1000); // Update every minute
 
     // Enable/disable Create and Start Timer buttons based on form input
-    function validateCreateForm() {
+    function validateTimeEntryCreateForm() {
         const form = document.getElementById('create-time-entry-form');
-        const clientSelect = form.querySelector('select[name="ClientID"]');
-        const projectSelect = form.querySelector('select[name="ProjectID"]');
-        const startInput = form.querySelector('input[name="StartDateTime"]');
-        const endInput = form.querySelector('input[name="EndDateTime"]');
-        const hoursInput = form.querySelector('input[name="HoursSpent"]');
-        const descriptionInput = form.querySelector('textarea[name="Description"]');
-        const createButton = form.querySelector('.create-btn');
-        const startTimerButton = form.querySelector('.start-timer-btn');
+        if (form) {
+            const clientSelect = form.querySelector('select[name="ClientID"]');
+            const projectSelect = form.querySelector('select[name="ProjectID"]');
+            const startInput = form.querySelector('input[name="StartDateTime"]');
+            const endInput = form.querySelector('input[name="EndDateTime"]');
+            const hoursInput = form.querySelector('input[name="HoursSpent"]');
+            const descriptionInput = form.querySelector('textarea[name="Description"]');
+            const createButton = form.querySelector('.create-btn');
+            const startTimerButton = form.querySelector('.start-timer-btn');
 
-        // Validate Create button: all fields must be filled
-        const isCreateValid =
-            clientSelect.value && clientSelect.value !== '0' &&
-            projectSelect.value && projectSelect.value !== '0' &&
-            startInput.value &&
-            endInput.value &&
-            hoursInput.value &&
-            descriptionInput.value.trim();
+            // Validate Create button: all fields must be filled
+            const isCreateValid =
+                clientSelect.value && clientSelect.value !== '0' &&
+                projectSelect.value && projectSelect.value !== '0' &&
+                startInput.value &&
+                endInput.value &&
+                hoursInput.value &&
+                descriptionInput.value.trim();
 
-        createButton.disabled = !isCreateValid;
+            createButton.disabled = !isCreateValid;
 
-        // Validate Start Timer button: ClientID, ProjectID, and Description required
-        const isStartTimerValid =
-            clientSelect.value && clientSelect.value !== '0' &&
-            projectSelect.value && projectSelect.value !== '0' &&
-            descriptionInput.value.trim();
+            // Validate Start Timer button: ClientID, ProjectID, and Description required
+            const isStartTimerValid =
+                clientSelect.value && clientSelect.value !== '0' &&
+                projectSelect.value && projectSelect.value !== '0' &&
+                descriptionInput.value.trim();
 
-        startTimerButton.disabled = !isStartTimerValid;
+            startTimerButton.disabled = !isStartTimerValid;
+        }
     }
 
-    // Attach input listeners to create form
-    const createForm = document.getElementById('create-time-entry-form');
-    if (createForm) {
-        const inputs = createForm.querySelectorAll('select, input, textarea');
+    // Attach input listeners to time entry create form
+    const createTimeEntryForm = document.getElementById('create-time-entry-form');
+    if (createTimeEntryForm) {
+        const inputs = createTimeEntryForm.querySelectorAll('select, input, textarea');
         inputs.forEach(input => {
-            input.addEventListener('input', validateCreateForm);
+            input.addEventListener('input', validateTimeEntryCreateForm);
         });
         // Initial validation
-        validateCreateForm();
+        validateTimeEntryCreateForm();
     }
+
+    // Calculate TotalAmount as UnitAmount * Quantity for expense forms
+    function calculateTotalAmount(form) {
+        const unitAmountInput = form.querySelector('.unit-amount-input');
+        const quantityInput = form.querySelector('.quantity-input');
+        const totalAmountInput = form.querySelector('.total-amount-input');
+        if (unitAmountInput && quantityInput && totalAmountInput) {
+            const unitAmount = parseFloat(unitAmountInput.value) || 0;
+            const quantity = parseInt(quantityInput.value) || 1;
+            const totalAmount = unitAmount * quantity;
+            totalAmountInput.value = totalAmount.toFixed(2);
+            console.log(`Calculated TotalAmount: ${totalAmount} (UnitAmount: ${unitAmount}, Quantity: ${quantity})`);
+        } else {
+            console.warn('Missing inputs for TotalAmount calculation', { unitAmountInput, quantityInput, totalAmountInput });
+        }
+    }
+
+    // Update Description and UnitAmount based on product selection
+    window.updateProductFields = function (selectElement) {
+        const form = selectElement.closest('form');
+        const descriptionInput = form.querySelector('.description-input');
+        const unitAmountInput = form.querySelector('.unit-amount-input');
+
+        if (!descriptionInput || !unitAmountInput) {
+            console.warn('Missing form elements', { descriptionInput, unitAmountInput });
+            return;
+        }
+
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        console.log('Product selected:', {
+            value: selectElement.value,
+            sku: selectedOption.dataset.sku,
+            name: selectedOption.dataset.name,
+            price: selectedOption.dataset.price
+        });
+
+        if (selectedOption.value && selectedOption.dataset.sku && selectedOption.dataset.name) {
+            descriptionInput.value = `${selectedOption.dataset.sku} - ${selectedOption.dataset.name}`;
+            unitAmountInput.value = parseFloat(selectedOption.dataset.price || 0).toFixed(2);
+        } else {
+            descriptionInput.value = '';
+            unitAmountInput.value = '';
+        }
+
+        calculateTotalAmount(form);
+        validateExpenseCreateForm();
+    };
+
+    // Validate expense create form
+    function validateExpenseCreateForm() {
+        const expenseForm = document.querySelector('#create-form form[asp-action="Create"]');
+        if (expenseForm) {
+            const clientSelect = expenseForm.querySelector('select[name="ClientID"]');
+            const descriptionInput = expenseForm.querySelector('.description-input');
+            const unitAmountInput = expenseForm.querySelector('.unit-amount-input');
+            const quantityInput = expenseForm.querySelector('.quantity-input');
+            const totalAmountInput = expenseForm.querySelector('.total-amount-input');
+            const createButton = expenseForm.querySelector('.create-btn');
+            const isExpenseValid =
+                clientSelect.value && clientSelect.value !== '0' &&
+                descriptionInput.value.trim() &&
+                unitAmountInput.value && parseFloat(unitAmountInput.value) >= 0 &&
+                quantityInput.value && parseInt(quantityInput.value) >= 1 &&
+                totalAmountInput.value && parseFloat(totalAmountInput.value) >= 0;
+            createButton.disabled = !isExpenseValid;
+            console.log('Expense form validation:', { isExpenseValid, client: clientSelect.value, description: descriptionInput.value });
+        }
+    }
+
+    // Attach input listeners to expense create form
+    const expenseCreateForm = document.querySelector('#create-form form[asp-action="Create"]');
+    if (expenseCreateForm) {
+        const inputs = expenseCreateForm.querySelectorAll('.unit-amount-input, .quantity-input, .product-select');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                calculateTotalAmount(expenseCreateForm);
+                validateExpenseCreateForm();
+            });
+        });
+        // Initialize TotalAmount and validation
+        calculateTotalAmount(expenseCreateForm);
+        validateExpenseCreateForm();
+    }
+
+    // Attach input listeners to expense edit forms
+    document.querySelectorAll('.edit-mode form[asp-action="Edit"]').forEach(form => {
+        const inputs = form.querySelectorAll('.unit-amount-input, .quantity-input, .product-select');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                calculateTotalAmount(form);
+                // Note: Edit forms may have separate validation if needed
+            });
+        });
+        // Initialize TotalAmount
+        calculateTotalAmount(form);
+    });
 });

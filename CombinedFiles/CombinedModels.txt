@@ -1,0 +1,521 @@
+===== BEGIN FILE: Models\Client.cs =====
+
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel;
+namespace TaskTracker.Models
+{
+public class Client
+{
+public int ClientID { get; set; }
+public string Name { get; set; }
+public string Email { get; set; }
+public string? Phone { get; set; }
+public string? Address { get; set; }
+[Column(TypeName = "decimal(18,2)"), DisplayName("Rate"), Description("Default rate for client. Project specific rate, where provided, will override.")]
+public decimal DefaultRate { get; set; }
+public ICollection<Project>? Projects { get; set; }
+}
+}
+
+===== END FILE: Models\Client.cs =====
+
+===== BEGIN FILE: Models\ClientRowViewModel.cs =====
+
+namespace TaskTracker.Models
+{
+public class ClientRowViewModel
+{
+public Client? Client { get; set; }
+public string Parity { get; set; }
+public ClientRowViewModel()
+{
+this.Parity = "odd";
+}
+public ClientRowViewModel(Client client, int index)
+{
+this.Parity = (index % 2 == 0) ? "even" : "odd";
+this.Client = client;
+}
+}
+}
+
+===== END FILE: Models\ClientRowViewModel.cs =====
+
+===== BEGIN FILE: Models\ErrorViewModel.cs =====
+
+namespace TaskTracker.Models
+{
+public class ErrorViewModel
+{
+public string? RequestId { get; set; }
+public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+}
+}
+
+===== END FILE: Models\ErrorViewModel.cs =====
+
+===== BEGIN FILE: Models\Expense.cs =====
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace TaskTracker.Models
+{
+public class Expense
+{
+public int ExpenseID { get; set; }
+[Required]
+public int ClientID { get; set; }
+[Required]
+[StringLength(500)]
+public string Description { get; set; }
+[Required]
+[Column(TypeName = "decimal(18,2)")]
+public decimal UnitAmount { get; set; }
+[Required]
+[Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
+public int Quantity { get; set; } = 1;
+[Required]
+[Column(TypeName = "decimal(18,2)")]
+public decimal TotalAmount { get; set; }
+public virtual Client Client { get; set; }
+}
+}
+
+===== END FILE: Models\Expense.cs =====
+
+===== BEGIN FILE: Models\ExpenseRowViewModel.cs =====
+
+namespace TaskTracker.Models
+{
+public class ExpenseRowViewModel
+{
+public Expense? Expense { get; set; }
+public string Parity { get; set; }
+public ExpenseRowViewModel()
+{
+this.Parity = "odd";
+}
+public ExpenseRowViewModel(Expense expense, int index)
+{
+this.Parity = (index % 2 == 0) ? "even" : "odd";
+this.Expense = expense;
+}
+}
+}
+
+===== END FILE: Models\ExpenseRowViewModel.cs =====
+
+===== BEGIN FILE: Models\Invoice.cs =====
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace TaskTracker.Models
+{
+public enum InvoiceStatus
+{
+Draft,
+Sent,
+Paid,
+Void
+}
+public class Invoice
+{
+public int InvoiceID { get; set; }
+[Required]
+public int ClientID { get; set; }
+[Required]
+[Column(TypeName = "date")]
+public DateTime InvoiceDate { get; set; }
+[Column(TypeName = "date")]
+public DateTime? InvoiceSentDate { get; set; }
+[Column(TypeName = "date")]
+public DateTime? PaidDate { get; set; }
+[Column(TypeName = "decimal(18,2)")]
+public decimal TotalAmount { get; set; }
+[Required]
+public InvoiceStatus Status { get; set; }
+public virtual required Client Client { get; set; }
+public virtual ICollection<InvoiceTimeEntry> InvoiceTimeEntries { get; set; } = new List<InvoiceTimeEntry>();
+public virtual ICollection<InvoiceExpense> InvoiceProducts { get; set; } = new List<InvoiceExpense>();
+}
+}
+
+===== END FILE: Models\Invoice.cs =====
+
+===== BEGIN FILE: Models\InvoiceExpense.cs =====
+
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection;
+namespace TaskTracker.Models
+{
+public class InvoiceExpense : InvoiceItemBase
+{
+private static readonly Dictionary<string, string> FrequencyMap = new()
+{
+{ "Monthly", "AddMonths" },
+{ "Yearly", "AddYears" }
+};
+private static readonly HashSet<string> ValidMethodNames = new(FrequencyMap.Values);
+[Required]
+public int ProductID { get; set; }
+[Required]
+public DateOnly ProductInvoiceDate { get; set; }
+[Description("Recurring charge")]
+public bool IsRecurring { get; set; } = false;
+private string _recurringFrequency = FrequencyMap["Yearly"];
+[Description("Recurring charge frequency")]
+public string RecurringFrequency
+{
+get
+{
+var userFriendlyName = FrequencyMap.FirstOrDefault(kvp => kvp.Value == _recurringFrequency).Key;
+return userFriendlyName ?? _recurringFrequency;
+}
+set
+{
+if (FrequencyMap.TryGetValue(value, out var methodName))
+{
+_recurringFrequency = methodName;
+}
+else if (ValidMethodNames.Contains(value))
+{
+_recurringFrequency = value;
+}
+else
+{
+throw new ArgumentException($"Invalid recurring frequency. Must be one of: {string.Join(", ", FrequencyMap.Keys)} or {string.Join(", ", ValidMethodNames)}");
+}
+}
+}
+[Required]
+[Column(TypeName = "decimal(18,2)")]
+public int Quantity { get; set; }
+public decimal TotalAmount
+{
+get
+{
+return Quantity * Product.UnitPrice;
+}
+}
+public virtual required Product Product { get; set; }
+public DateOnly GetNextChargeDate(int intervals = 1)
+{
+if (!IsRecurring)
+{
+return ProductInvoiceDate;
+}
+MethodInfo? method = typeof(DateOnly).GetMethod(_recurringFrequency, new[] { typeof(int) });
+if (method == null || method.ReturnType != typeof(DateOnly))
+{
+throw new InvalidOperationException($"Invalid frequency method: {_recurringFrequency}");
+}
+try
+{
+return (DateOnly)method.Invoke(ProductInvoiceDate, new object[] { intervals })!;
+}
+catch (Exception ex)
+{
+throw new InvalidOperationException($"Failed to invoke frequency method: {_recurringFrequency}", ex);
+}
+}
+}
+}
+
+===== END FILE: Models\InvoiceExpense.cs =====
+
+===== BEGIN FILE: Models\InvoiceItemBase.cs =====
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
+namespace TaskTracker.Models
+{
+public abstract class InvoiceItemBase
+{
+[Required]
+public int InvoiceID { get; set; }
+[StringLength(500)]
+[Description("Additional notes for the invoice item")]
+public string? AdditionalNotes { get; set; }
+public virtual required Invoice Invoice { get; set; }
+}
+}
+
+===== END FILE: Models\InvoiceItemBase.cs =====
+
+===== BEGIN FILE: Models\InvoiceRowViewModel.cs =====
+
+namespace TaskTracker.Models
+{
+public class InvoiceRowViewModel
+{
+public Invoice? Invoice { get; set; }
+public string Parity { get; set; }
+public InvoiceRowViewModel()
+{
+this.Parity = "odd";
+}
+public InvoiceRowViewModel(Invoice Invoice, int index)
+{
+this.Parity = (index % 2 == 0) ? "even" : "odd";
+this.Invoice = Invoice;
+}
+}
+}
+
+===== END FILE: Models\InvoiceRowViewModel.cs =====
+
+===== BEGIN FILE: Models\InvoiceTimeEntry.cs =====
+
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+namespace TaskTracker.Models
+{
+public class InvoiceTimeEntry : InvoiceItemBase
+{
+[Required]
+public int TimeEntryID { get; set; }
+public decimal? TotalAmount
+{
+get
+{
+if (TimeEntry?.HourlyRate != null && TimeEntry?.HoursSpent != null)
+{
+return TimeEntry.HourlyRate * TimeEntry.HoursSpent;
+}
+return 0;
+}
+}
+[StringLength(500)]
+[Description("Additional notes for the invoice time entry")]
+public virtual required TimeEntry TimeEntry { get; set; }
+}
+}
+
+===== END FILE: Models\InvoiceTimeEntry.cs =====
+
+===== BEGIN FILE: Models\Product.cs =====
+
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace TaskTracker.Models
+{
+public class Product
+{
+public int ProductID { get; set; }
+[Required]
+[StringLength(100)]
+public string? Name { get; set; }
+[Required]
+[StringLength(100)]
+[Description("Product Sku")]
+public required string ProductSku { get; set; }
+[StringLength(500)]
+public string? Description { get; set; }
+[Required]
+[Column(TypeName = "decimal(18,2)")]
+public decimal UnitPrice { get; set; }
+public virtual ICollection<InvoiceExpense> InvoiceProducts { get; set; } = new List<InvoiceExpense>();
+}
+}
+
+===== END FILE: Models\Product.cs =====
+
+===== BEGIN FILE: Models\ProductRowViewModel.cs =====
+
+namespace TaskTracker.Models
+{
+public class ProductRowViewModel
+{
+public Product? Product { get; set; }
+public string Parity { get; set; }
+public ProductRowViewModel()
+{
+this.Parity = "odd";
+}
+public ProductRowViewModel(Product product, int index)
+{
+this.Parity = (index % 2 == 0) ? "even" : "odd";
+this.Product = product;
+}
+}
+}
+
+===== END FILE: Models\ProductRowViewModel.cs =====
+
+===== BEGIN FILE: Models\Project.cs =====
+
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace TaskTracker.Models
+{
+public class Project
+{
+public int ProjectID { get; set; }
+public string Name { get; set; }
+public string? Description { get; set; }
+[Column(TypeName = "decimal(18,2)"), DisplayName("Project Rate")]
+public decimal? Rate { get; set; }
+public ICollection<TimeEntry>? TimeEntries { get; set; }
+}
+}
+
+===== END FILE: Models\Project.cs =====
+
+===== BEGIN FILE: Models\ProjectRowViewModel.cs =====
+
+namespace TaskTracker.Models
+{
+public class ProjectRowViewModel
+{
+public Project? Project { get; set; }
+public string Parity { get; set; }
+public ProjectRowViewModel()
+{
+this.Parity = "odd";
+}
+public ProjectRowViewModel(Project project, int index)
+{
+this.Parity = (index % 2 == 0) ? "even" : "odd";
+this.Project = project;
+}
+}
+}
+
+===== END FILE: Models\ProjectRowViewModel.cs =====
+
+===== BEGIN FILE: Models\SetTimezoneViewModel.cs =====
+
+using System.ComponentModel.DataAnnotations;
+namespace TaskTracker.Models
+{
+public class SetTimezoneViewModel
+{
+[Required(ErrorMessage = "Please select a timezone.")]
+public string TimeZoneId { get; set; }
+}
+}
+
+===== END FILE: Models\SetTimezoneViewModel.cs =====
+
+===== BEGIN FILE: Models\Settings.cs =====
+
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+namespace TaskTracker.Models
+{
+public class Settings
+{
+public int Id { get; set; }
+[Required]
+[StringLength(100)]
+[DisplayName("Company Name")]
+public string CompanyName { get; set; }
+[DataType(DataType.MultilineText)]
+[DisplayName("Accounts Receivable Address")]
+public string? AccountsReceivableAddress { get; set; }
+[StringLength(15)]
+[DisplayName("Accounts Receivable Phone")]
+public string? AccountsReceivablePhone { get; set; }
+[EmailAddress]
+[DisplayName("Accounts Receivable Email")]
+public string? AccountsReceivableEmail { get; set; }
+[DataType(DataType.MultilineText)]
+[DisplayName("Payment Information Message")]
+public string? PaymentInformation { get; set; }
+[DataType(DataType.MultilineText)]
+[DisplayName("Thank You Message")]
+public string? ThankYouMessage { get; set; }
+public int SingletonGuard { get; set; } = 0;
+}
+}
+
+===== END FILE: Models\Settings.cs =====
+
+===== BEGIN FILE: Models\TimeEntriesIndexViewModel.cs =====
+
+using System.Collections.Generic;
+using TaskTracker.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
+namespace TaskTracker.Models
+{
+public class TimeEntriesIndexViewModel
+{
+public List<TimeEntry> TimeEntries { get; set; }
+public int RecordLimit { get; set; } 
+public int CurrentPage { get; set; } 
+public int TotalPages { get; set; } 
+public int TotalRecords { get; set; } 
+public SelectList RecordLimitOptions { get; set; } 
+public SelectList ClientList { get; set; } 
+public SelectList ProjectList { get; set; } 
+public int TimezoneOffset { get; set; } 
+public string ReturnTo { get; set; } 
+public bool VisibleCreateForm { get; set; } 
+}
+}
+
+===== END FILE: Models\TimeEntriesIndexViewModel.cs =====
+
+===== BEGIN FILE: Models\TimeEntry.cs =====
+
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using TaskTracker.Data;
+namespace TaskTracker.Models
+{
+public class TimeEntry
+{
+public int TimeEntryID { get; set; }
+[Required]
+public int ProjectID { get; set; }
+public Project? Project { get; set; }
+[Required]
+public int ClientID { get; set; }
+public Client? Client { get; set; }
+[Required]
+public string? UserId { get; set; }
+public ApplicationUser? User { get; set; }
+[Required]
+public DateTime StartDateTime { get; set; }
+public DateTime? EndDateTime { get; set; }
+[Column(TypeName = "decimal(18,2)")]
+public decimal? HoursSpent { get; set; }
+[Column(TypeName = "decimal(18,2)")]
+public decimal? HourlyRate { get; set; }
+public string? Description { get; set; }
+[Column(TypeName = "date")]
+public DateTime? InvoicedDate { get; set; }
+}
+}
+
+===== END FILE: Models\TimeEntry.cs =====
+
+===== BEGIN FILE: Models\TimeEntryRowViewModel.cs =====
+
+namespace TaskTracker.Models
+{
+public class TimeEntryRowViewModel
+{
+public TimeEntry? TimeEntry { get; set; }
+public string Parity { get; set; }
+public TimeEntryRowViewModel()
+{
+this.Parity = "odd";
+}
+public TimeEntryRowViewModel(TimeEntry TimeEntry, int index)
+{
+this.Parity = (index % 2 == 0) ? "even" : "odd";
+this.TimeEntry = TimeEntry;
+}
+}
+}
+
+===== END FILE: Models\TimeEntryRowViewModel.cs =====
+

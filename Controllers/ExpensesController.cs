@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering; // Added for SelectList
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
@@ -23,8 +23,18 @@ namespace TaskTracker.Controllers
         // Displays the list of all expenses with associated clients
         public async Task<IActionResult> Index()
         {
-            // Populate ViewBag.ClientList for the create form
+            // Populate ViewBag for client and product dropdowns
             ViewBag.ClientList = new SelectList(await _context.Clients.ToListAsync(), "ClientID", "Name");
+            ViewBag.ProductList = await _context.Products
+                .OrderBy(p => p.ProductSku)
+                .Select(p => new
+                {
+                    ProductID = p.ProductID.ToString(),
+                    ProductSku = p.ProductSku,
+                    Name = p.Name,
+                    UnitPrice = p.UnitPrice
+                })
+                .ToListAsync();
             var expenses = _context.Expenses.Include(e => e.Client);
             return View(await expenses.ToListAsync());
         }
@@ -33,7 +43,7 @@ namespace TaskTracker.Controllers
         // Creates a new expense and saves it to the database
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,Description,Amount")] Expense expense)
+        public async Task<IActionResult> Create([Bind("ClientID,Description,UnitAmount,Quantity,TotalAmount")] Expense expense)
         {
             if (ModelState.IsValid)
             {
@@ -45,8 +55,18 @@ namespace TaskTracker.Controllers
             // Collect validation errors for display
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
-            // Repopulate ViewBag.ClientList in case of validation failure
+            // Repopulate ViewBag for form redisplay
             ViewBag.ClientList = new SelectList(await _context.Clients.ToListAsync(), "ClientID", "Name");
+            ViewBag.ProductList = await _context.Products
+                .OrderBy(p => p.ProductSku)
+                .Select(p => new
+                {
+                    ProductID = p.ProductID.ToString(),
+                    ProductSku = p.ProductSku,
+                    Name = p.Name,
+                    UnitPrice = p.UnitPrice
+                })
+                .ToListAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -54,7 +74,7 @@ namespace TaskTracker.Controllers
         // Updates an existing expense
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ExpenseID,ClientID,Description,Amount")] Expense expense)
+        public async Task<IActionResult> Edit(int id, [Bind("ExpenseID,ClientID,Description,UnitAmount,Quantity,TotalAmount")] Expense expense)
         {
             if (id != expense.ExpenseID)
             {
@@ -81,8 +101,18 @@ namespace TaskTracker.Controllers
             // Collect validation errors for display
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
-            // Repopulate ViewBag.ClientList in case of validation failure
+            // Repopulate ViewBag for form redisplay
             ViewBag.ClientList = new SelectList(await _context.Clients.ToListAsync(), "ClientID", "Name");
+            ViewBag.ProductList = await _context.Products
+                .OrderBy(p => p.ProductSku)
+                .Select(p => new
+                {
+                    ProductID = p.ProductID.ToString(),
+                    ProductSku = p.ProductSku,
+                    Name = p.Name,
+                    UnitPrice = p.UnitPrice
+                })
+                .ToListAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -101,8 +131,18 @@ namespace TaskTracker.Controllers
             {
                 return NotFound();
             }
-            // Populate ViewBag.ClientList for consistency, though not used in Delete view
+            // Populate ViewBag for consistency
             ViewBag.ClientList = new SelectList(await _context.Clients.ToListAsync(), "ClientID", "Name");
+            ViewBag.ProductList = await _context.Products
+                .OrderBy(p => p.ProductSku)
+                .Select(p => new
+                {
+                    ProductID = p.ProductID.ToString(),
+                    ProductSku = p.ProductSku,
+                    Name = p.Name,
+                    UnitPrice = p.UnitPrice
+                })
+                .ToListAsync();
             return View(expense);
         }
 

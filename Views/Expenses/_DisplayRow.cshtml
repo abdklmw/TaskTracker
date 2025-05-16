@@ -6,12 +6,15 @@
     }
     var expense = Model.Expense;
 }
+<!-- Display row for an expense -->
 <div id="display-row-@expense.ExpenseID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body">
         <div class="row">
-            <div class="col-md-3" data-field="Client">@expense.Client?.Name</div>
+            <div class="col-md-2" data-field="Client">@expense.Client?.Name</div>
             <div class="col-md-3" data-field="Description">@expense.Description</div>
-            <div class="col-md-2" data-field="Amount">$@expense.Amount.ToString("F2")</div>
+            <div class="col-md-1" data-field="UnitAmount">$@expense.UnitAmount.ToString("F2")</div>
+            <div class="col-md-1" data-field="Quantity">@expense.Quantity</div>
+            <div class="col-md-1" data-field="TotalAmount">$@expense.TotalAmount.ToString("F2")</div>
             <div class="col-md-2">
                 <button class="btn btn-primary edit-btn" data-id="@expense.ExpenseID">Edit</button>
                 <a asp-action="Delete" asp-route-id="@expense.ExpenseID" class="btn btn-danger">Delete</a>

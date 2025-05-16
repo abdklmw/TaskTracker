@@ -13,28 +13,53 @@
         <!-- Display validation errors -->
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="row g-3">
-            <!-- Client selection dropdown using ViewBag.ClientList -->
-            <div class="col-md-3">
+            <!-- Client selection dropdown -->
+            <div class="col-md-2">
                 <label asp-for="Expense.ClientID" class="form-label">Client</label>
                 <select asp-for="Expense.ClientID" class="form-control" asp-items="@ViewBag.ClientList">
                     <option value="">Select a client</option>
                 </select>
                 <span asp-validation-for="Expense.ClientID" class="text-danger"></span>
             </div>
+            <!-- Product selection dropdown -->
+            <div class="col-md-2">
+                <label class="form-label">Product</label>
+                <select class="form-control product-select" onchange="updateProductFields(this)">
+                    <option value="">Select a product</option>
+                    @foreach (var product in ViewBag.ProductList)
+                    {
+                        <option value="@product.ProductID" data-sku="@product.ProductSku" data-name="@product.Name" data-price="@product.UnitPrice.ToString("F2")">
+                            @product.ProductSku
+                        </option>
+                    }
+                </select>
+            </div>
             <!-- Description input -->
             <div class="col-md-3">
                 <label asp-for="Expense.Description" class="form-label">Description</label>
-                <textarea asp-for="Expense.Description" class="form-control" rows="4" placeholder="Expense Description"></textarea>
+                <textarea asp-for="Expense.Description" class="form-control description-input" rows="4" placeholder="Expense Description"></textarea>
                 <span asp-validation-for="Expense.Description" class="text-danger"></span>
             </div>
-            <!-- Amount input -->
+            <!-- Unit Amount input -->
             <div class="col-md-2">
-                <label asp-for="Expense.Amount" class="form-label">Amount</label>
-                <input asp-for="Expense.Amount" class="form-control" type="number" step="0.01" placeholder="Amount" />
-                <span asp-validation-for="Expense.Amount" class="text-danger"></span>
+                <label asp-for="Expense.UnitAmount" class="form-label">Unit Amount</label>
+                <input asp-for="Expense.UnitAmount" class="form-control unit-amount-input" type="number" step="0.01" placeholder="0.00" />
+                <span asp-validation-for="Expense.UnitAmount" class="text-danger"></span>
+            </div>
+            <!-- Quantity input -->
+            <div class="col-md-2">
+                <label asp-for="Expense.Quantity" class="form-label">Quantity</label>
+                <input asp-for="Expense.Quantity" class="form-control quantity-input" type="number" min="1" value="@expense.Quantity" />
+                <span asp-validation-for="Expense.Quantity" class="text-danger"></span>
+            </div>
+            <!-- Total Amount input (read-only) -->
+            <div class="col-md-2">
+                <label asp-for="Expense.TotalAmount" class="form-label">Total Amount</label>
+                <input asp-for="Expense.TotalAmount" class="form-control total-amount-input" type="number" step="0.01" readonly />
+                <span asp-validation-for="Expense.TotalAmount" class="text-danger"></span>
             </div>
             <!-- Form buttons -->
-            <div class="col-md-2">
+            <div class="col-md-12">
                 <button type="submit" class="btn btn-success save-btn">Save</button>
                 <button type="button" class="btn btn-secondary cancel-btn" data-id="@expense.ExpenseID">Cancel</button>
             </div>

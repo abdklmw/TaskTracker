@@ -2,7 +2,10 @@
 @{
     ViewData["Title"] = "Expenses";
 }
+<!-- Page title -->
 <h1>Expenses</h1>
+
+<!-- Display success or error messages -->
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
@@ -11,16 +14,26 @@
 {
     <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
 }
+
+<!-- Create form partial, hidden by default -->
 @await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Expense())
+
+<!-- Button to show the create form -->
 <p>
     <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>
+
+<!-- Header row for the expense list -->
 <div class="row mb-2">
-    <div class="col-md-3"><strong>Client</strong></div>
+    <div class="col-md-2"><strong>Client</strong></div>
     <div class="col-md-3"><strong>Description</strong></div>
-    <div class="col-md-2"><strong>Amount</strong></div>
+    <div class="col-md-2"><strong>Unit Amount</strong></div>
+    <div class="col-md-1"><strong>Quantity</strong></div>
+    <div class="col-md-2"><strong>Total Amount</strong></div>
     <div class="col-md-2"><strong>Actions</strong></div>
 </div>
+
+<!-- Loop through expenses to display each row -->
 @{
     var index = 1;
 }
@@ -31,6 +44,8 @@
     @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
     index++;
 }
+
+<!-- Inline styles for form inputs and alerts -->
 <style>
     .edit-mode .form-control, #create-form .form-control {
         width: 100%;
@@ -52,9 +67,9 @@
         transition: opacity 1s ease-in-out;
     }
 </style>
+
+<!-- Scripts for form validation and dynamic behavior -->
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @await Html.PartialAsync("_ValidationScriptsPartial")
     <script src="~/js/site.min.js" asp-append-version="true"></script>
 }
