@@ -207,7 +207,7 @@
 
     // Validate expense create form
     function validateExpenseCreateForm() {
-        const expenseForm = document.querySelector('#create-form form[asp-action="Create"]');
+        const expenseForm = document.querySelector('#create-form form[action="/Expenses/Create"]');
         if (expenseForm) {
             const clientSelect = expenseForm.querySelector('select[name="ClientID"]');
             const descriptionInput = expenseForm.querySelector('.description-input');
@@ -223,34 +223,73 @@
                 totalAmountInput.value && parseFloat(totalAmountInput.value) >= 0;
             createButton.disabled = !isExpenseValid;
             console.log('Expense form validation:', { isExpenseValid, client: clientSelect.value, description: descriptionInput.value });
+        } else {
+            console.warn('Create form not found for validation');
         }
     }
 
-    // Attach input listeners to expense create form
-    const expenseCreateForm = document.querySelector('#create-form form[asp-action="Create"]');
-    if (expenseCreateForm) {
-        const inputs = expenseCreateForm.querySelectorAll('.unit-amount-input, .quantity-input, .product-select');
-        inputs.forEach(input => {
-            input.addEventListener('input', () => {
-                calculateTotalAmount(expenseCreateForm);
-                validateExpenseCreateForm();
-            });
-        });
-        // Initialize TotalAmount and validation
-        calculateTotalAmount(expenseCreateForm);
-        validateExpenseCreateForm();
-    }
+    // Attach input listeners to expense create form using event delegation
+    document.addEventListener('input', function (event) {
+        const target = event.target;
+        const form = target.closest('#create-form form[action="/Expenses/Create"]');
+        if (form && (target.classList.contains('unit-amount-input') || target.classList.contains('quantity-input'))) {
+            console.log('Input detected on:', target.className, 'Value:', target.value);
+            calculateTotalAmount(form);
+            validateExpenseCreateForm();
+        } else if (form && (target.classList.contains('product-select') ||
+            target.classList.contains('description-input') ||
+            target.matches('select[name="ClientID"]'))) {
+            console.log('Input detected on additional field:', target.className || target.tagName);
+            validateExpenseCreateForm();
+        }
+    });
 
     // Attach input listeners to expense edit forms
-    document.querySelectorAll('.edit-mode form[asp-action="Edit"]').forEach(form => {
-        const inputs = form.querySelectorAll('.unit-amount-input, .quantity-input, .product-select');
+    document.querySelectorAll('.edit-mode form[action="/Expenses/"]').forEach(form => {
+        const inputs = form.querySelectorAll('.unit-amount-input, .quantity-input');
         inputs.forEach(input => {
             input.addEventListener('input', () => {
+                console.log('Edit form input:', input.className, 'Value:', input.value);
                 calculateTotalAmount(form);
-                // Note: Edit forms may have separate validation if needed
+                validateExpenseEditForm(form);
+            });
+        });
+        const additionalInputs = form.querySelectorAll('.product-select, .description-input, select[name="ClientID"]');
+        additionalInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                validateExpenseEditForm(form);
             });
         });
         // Initialize TotalAmount
         calculateTotalAmount(form);
+        validateExpenseEditForm(form);
     });
+
+    // Validate expense edit form
+    function validateExpenseEditForm(form) {
+        const clientSelect = form.querySelector('select[name="ClientID"]');
+        const descriptionInput = form.querySelector('.description-input');
+        const unitAmountInput = form.querySelector('.unit-amount-input');
+        const quantityInput = form.querySelector('.quantity-input');
+        const totalAmountInput = form.querySelector('.total-amount-input');
+        const saveButton = form.querySelector('.save-btn');
+        const isExpenseValid =
+            clientSelect.value && clientSelect.value !== '0' &&
+            descriptionInput.value.trim() &&
+            unitAmountInput.value && parseFloat(unitAmountInput.value) >= 0 &&
+            quantityInput.value && parseInt(quantityInput.value) >= 1 &&
+            totalAmountInput.value && parseFloat(totalAmountInput.value) >= 0;
+        saveButton.disabled = !isExpenseValid;
+        console.log('Expense edit form validation:', { isExpenseValid, client: clientSelect.value, description: descriptionInput.value });
+    }
+
+    // Initialize create form
+    const expenseCreateForm = document.querySelector('#create-form form[action="/Expenses/Create"]');
+    if (expenseCreateForm) {
+        console.log('Create form found, initializing...');
+        calculateTotalAmount(expenseCreateForm);
+        validateExpenseCreateForm();
+    } else {
+        console.warn('Create form not found on DOMContentLoaded');
+    }
 });
