@@ -34,6 +34,6 @@ namespace TaskTracker.Models
         public decimal TotalAmount { get; set; }
 
         // Navigation property to access the associated client
-        public virtual Client Client { get; set; }
+        public virtual Client? Client { get; set; }
     }
 }
