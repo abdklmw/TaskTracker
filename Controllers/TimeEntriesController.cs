@@ -125,6 +125,15 @@ namespace TaskTracker.Controllers
             ViewBag.ReturnTo = "TimeEntries"; // Set form redirect target
             ViewBag.TimezoneOffset = timezoneOffset;
 
+            // Fetch running timers
+            var runningTimers = _context.TimeEntries
+                .Where(t => t.UserId == userId && t.EndDateTime == null)
+                .Include(t => t.Client)
+                .Include(t => t.Project)
+                .ToList();
+
+            viewModel.RunningTimers = runningTimers;
+
             return View(viewModel);
         }
 

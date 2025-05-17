@@ -32,36 +32,7 @@
 
 @await Html.PartialAsync("_CreateForm", Model)
 
-<h2>Running timer(s)</h2>
-@if (Model.TimeEntries.Any(t => t.EndDateTime == null))
-{
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        @foreach (var item in Model.TimeEntries.Where(t => t.EndDateTime == null))
-        {
-            <div class="col">
-                <div class="card h-100" id="display-row-@item.TimeEntryID">
-                    <div class="card-body">
-                        <h5 class="card-title">@item.Client?.Name</h5>
-                        <p class="card-text"><strong>Project:</strong> @item.Project?.Name</p>
-                        <p class="card-text"><strong>Started:</strong> @item.StartDateTime.AddMinutes(timezoneOffset).ToString("yyyy-MM-dd hh:mm tt")</p>
-                        <p class="card-text"><strong>Hours Spent:</strong> <span class="hours-spent" data-time-entry-id="@item.TimeEntryID" data-start-utc="@item.StartDateTime.ToString("o")">N/A</span></p>
-                        <p class="card-text"><strong>Description:</strong> @item.Description</p>
-                    </div>
-                    <div class="card-footer">
-                        <form asp-action="StopTimer" method="post">
-                            <input type="hidden" name="TimeEntryID" value="@item.TimeEntryID" />
-                            <button type="submit" class="btn btn-danger">Stop Timer</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-}
-else
-{
-    <p>No timers currently running</p>
-}
+@await Html.PartialAsync("~/Views/TimeEntries/_RunningTimers.cshtml", Model.RunningTimers)
 
 <div style="padding-top: 20px;"></div> <!-- Padding between sections -->
 

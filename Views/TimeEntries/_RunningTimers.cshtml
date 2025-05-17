@@ -1,0 +1,36 @@
+﻿@model IEnumerable<TimeEntry>;
+
+<h2>Running timer(s)</h2>
+@if (Model != null && Model.Any())
+{
+    <div class="row">
+        @foreach (var timeEntry in Model)
+        {
+            var startLocal = timeEntry.StartDateTime.AddMinutes(ViewBag.TimezoneOffset ?? 0);
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h5 class="card-title">@timeEntry.Client?.Name</h5>
+                                <p class="card-text"><strong>Project:</strong> @timeEntry.Project?.Name</p>
+                                <p class="card-text"><strong>Started:</strong> @startLocal.ToString("yyyy-MM-dd hh:mm tt")</p>
+                                <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
+                                    <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
+                                    <button type="submit" class="btn btn-danger">Stop Timer</button>
+                                </form>
+                            </div>
+                            <div class="col-4">
+                                <p class="card-text"><strong>Hours spent:</strong> <span class="hours-spent" data-time-entry-id="@timeEntry.TimeEntryID" data-start-utc="@timeEntry.StartDateTime.ToString("o")"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>No running timers.</p>
+}
