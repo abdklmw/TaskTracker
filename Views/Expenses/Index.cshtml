@@ -6,14 +6,7 @@
 <h1>Expenses</h1>
 
 <!-- Display success or error messages -->
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-}
+@await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
 
 <!-- Create form partial, hidden by default -->
 @await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Expense())
@@ -44,29 +37,6 @@
     @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
     index++;
 }
-
-<!-- Inline styles for form inputs and alerts -->
-<style>
-    .edit-mode .form-control, #create-form .form-control {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 4px;
-    }
-
-    .edit-mode .text-danger, #create-form .text-danger {
-        font-size: 0.8em;
-        display: block;
-    }
-
-    .edit-mode .btn, #create-form .btn {
-        margin-right: 5px;
-    }
-
-    .alert-success {
-        transition: opacity 1s ease-in-out;
-    }
-</style>
 
 <!-- Scripts for form validation and dynamic behavior -->
 @section Scripts {

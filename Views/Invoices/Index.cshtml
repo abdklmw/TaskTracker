@@ -6,14 +6,8 @@
 
 <h1>Invoices</h1>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-}
+<!-- Display success or error messages -->
+@await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
 
 @await Html.PartialAsync("_CreateForm")
 
@@ -33,28 +27,6 @@
     @await Html.PartialAsync("_DisplayRow", item)
     @await Html.PartialAsync("_EditFormRow", item)
 }
-
-<style>
-    .edit-mode .form-control, #create-form .form-control {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 4px;
-    }
-
-    .edit-mode .text-danger, #create-form .text-danger {
-        font-size: 0.8em;
-        display: block;
-    }
-
-    .edit-mode .btn, #create-form .btn {
-        margin-right: 5px;
-    }
-
-    .alert-success {
-        transition: opacity 1s ease-in-out;
-    }
-</style>
 
 @section Scripts {
     @{

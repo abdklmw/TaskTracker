@@ -33,3 +33,23 @@ textarea {
 .even-row {
     background-color: #ffffff; /* White for even rows */
 }
+
+.edit-mode .form-control, #create-form .form-control {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 4px;
+}
+
+.edit-mode .text-danger, #create-form .text-danger {
+    font-size: 0.8em;
+    display: block;
+}
+
+.edit-mode .btn, #create-form .btn {
+    margin-right: 5px;
+}
+
+.alert-success {
+    transition: opacity 1s ease-in-out;
+}

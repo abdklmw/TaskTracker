@@ -6,12 +6,8 @@
 
 <h1>Settings</h1>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success" role="alert">
-        @TempData["SuccessMessage"]
-    </div>
-}
+<!-- Display success or error messages -->
+@await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
 
 <form asp-action="Update" method="post">
     <input type="hidden" asp-for="Id" />
