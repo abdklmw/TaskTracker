@@ -54,7 +54,8 @@ namespace TaskTracker.Controllers
                 .Where(t => t.UserId == userId && t.EndDateTime != null)
                 .Include(t => t.Client)
                 .Include(t => t.Project)
-                .OrderByDescending(t => t.StartDateTime); // Sort by StartDateTime descending
+                .OrderBy(t => t.Client.Name ?? "") // Sort by Client.Name ascending, handle nulls
+                .ThenByDescending(t => t.StartDateTime); // Then sort by StartDateTime descending
 
             var totalRecords = await completedTimeEntriesQuery.CountAsync();
             var viewModel = new TimeEntriesIndexViewModel
@@ -137,6 +138,7 @@ namespace TaskTracker.Controllers
             return View(viewModel);
         }
 
+        // Other actions (Create, StartTimer, StopTimer, Edit, Delete, DeleteConfirmed, TimeEntryExists) remain unchanged
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("ClientID,ProjectID,Description,StartDateTime,EndDateTime,HoursSpent")] TimeEntry timeEntry, string action)
@@ -223,7 +225,8 @@ namespace TaskTracker.Controllers
                     .Where(t => t.UserId == userId && t.EndDateTime != null)
                     .Include(t => t.Client)
                     .Include(t => t.Project)
-                    .OrderByDescending(t => t.StartDateTime)
+                    .OrderBy(t => t.Client.Name ?? "")
+                    .ThenByDescending(t => t.StartDateTime)
                     .Take(10) // Default limit for error case
                     .ToListAsync(),
                 RecordLimit = 10,
@@ -314,7 +317,8 @@ namespace TaskTracker.Controllers
                     .Where(t => t.UserId == userId && t.EndDateTime != null)
                     .Include(t => t.Client)
                     .Include(t => t.Project)
-                    .OrderByDescending(t => t.StartDateTime)
+                    .OrderBy(t => t.Client.Name ?? "")
+                    .ThenByDescending(t => t.StartDateTime)
                     .Take(10)
                     .ToListAsync(),
                 RecordLimit = 10,
@@ -362,7 +366,18 @@ namespace TaskTracker.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            timeEntry.EndDateTime = DateTime.UtcNow;
+            // Get current UTC time and round up to the nearest quarter hour
+            var currentUtc = DateTime.UtcNow;
+            var minutes = currentUtc.Minute;
+            var quarterHours = (int)Math.Ceiling(minutes / 15.0) * 15;
+            if (quarterHours >= 60)
+            {
+                currentUtc = currentUtc.AddHours(1).AddMinutes(-minutes);
+                quarterHours = 0;
+            }
+            timeEntry.EndDateTime = new DateTime(currentUtc.Year, currentUtc.Month, currentUtc.Day, currentUtc.Hour, quarterHours, 0, DateTimeKind.Utc);
+
+            // Calculate HoursSpent based on rounded EndDateTime
             var duration = timeEntry.EndDateTime.Value - timeEntry.StartDateTime;
             timeEntry.HoursSpent = Convert.ToDecimal(duration.TotalHours);
 
@@ -370,7 +385,7 @@ namespace TaskTracker.Controllers
             {
                 _context.Update(timeEntry);
                 await _context.SaveChangesAsync();
-                LoggerExtensions.LogInformation(_logger, "Timer stopped for user {UserId}, TimeEntryID: {TimeEntryID}, HoursSpent: {HoursSpent}", userId, timeEntry.TimeEntryID, timeEntry.HoursSpent);
+                LoggerExtensions.LogInformation(_logger, "Timer stopped for user {UserId}, TimeEntryID: {TimeEntryID}, EndDateTime: {EndDateTime}, HoursSpent: {HoursSpent}", userId, timeEntry.TimeEntryID, timeEntry.EndDateTime, timeEntry.HoursSpent);
                 TempData["SuccessMessage"] = "Timer stopped successfully.";
             }
             else
