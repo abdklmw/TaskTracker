@@ -20,7 +20,7 @@ namespace TaskTracker.Controllers
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Products.ToListAsync());
+            return View(await _context.Products.OrderBy(p => p.ProductSku).ToListAsync());
         }
 
         // POST: Products/Create
@@ -84,6 +84,7 @@ namespace TaskTracker.Controllers
             }
 
             var product = await _context.Products
+                .OrderBy(p => p.ProductSku)
                 .FirstOrDefaultAsync(m => m.ProductID == id);
             if (product == null)
             {

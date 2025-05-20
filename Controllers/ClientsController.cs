@@ -20,7 +20,7 @@ namespace TaskTracker.Controllers
         // GET: Clients
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Clients.ToListAsync());
+            return View(await _context.Clients.OrderBy(c => c.Name).ToListAsync());
         }
 
         // POST: Clients/Create
