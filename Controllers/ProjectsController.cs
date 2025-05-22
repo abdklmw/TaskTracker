@@ -23,6 +23,13 @@ namespace TaskTracker.Controllers
             return View(await _context.Projects.OrderBy(p => p.Name).ToListAsync());
         }
 
+        // GET: Projects/Create
+        public IActionResult Create()
+        {
+            ViewBag.VisibleCreateForm = true; // Ensure form is visible
+            return View();
+        }
+
         // POST: Projects/Create
         [HttpPost]
         [ValidateAntiForgeryToken]

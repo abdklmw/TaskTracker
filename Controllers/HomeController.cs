@@ -35,19 +35,25 @@ namespace TaskTracker.Controllers
                     LoggerExtensions.LogError(_logger, "User ID could not be retrieved for authenticated user.");
                     return RedirectToAction("Login", "Account");
                 }
-
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     LoggerExtensions.LogError(_logger, "User not found for ID {UserId}", userId);
                     return NotFound();
                 }
-
                 // Check if user has a TimeZoneId set
                 if (string.IsNullOrEmpty(user.TimeZoneId))
                 {
                     LoggerExtensions.LogInformation(_logger, "No TimeZoneId set for user {UserId}, redirecting to SetTimezone.", userId);
                     return RedirectToAction(nameof(SetTimezone));
+                }
+
+                // Check if there are any projects
+                var hasProjects = await _context.Projects.AnyAsync();
+                if (!hasProjects)
+                {
+                    LoggerExtensions.LogInformation(_logger, "No projects found for user {UserId}, redirecting to Create Project.", userId);
+                    return RedirectToAction("Create", "Projects");
                 }
 
                 // Calculate dynamic offset from user's TimeZoneId, accounting for DST
@@ -71,31 +77,25 @@ namespace TaskTracker.Controllers
                     .ToList();
                 clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
                 ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", 0);
-
                 // Populate ProjectID dropdown
                 var projectList = _context.Projects
                     .Select(p => new { p.ProjectID, p.Name })
                     .ToList();
                 projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
                 ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", 0);
-
                 // Set form visibility and return target
                 ViewBag.VisibleCreateForm = true;
                 ViewBag.ReturnTo = "Home";
-
                 // Fetch running timers
                 var runningTimers = _context.TimeEntries
                     .Where(t => t.UserId == userId && t.EndDateTime == null)
                     .Include(t => t.Client)
                     .Include(t => t.Project)
                     .ToList();
-
                 return View(runningTimers);
             }
-
             return View();
         }
-
         public IActionResult SetTimezone()
         {
             // Populate timezone dropdown with system timezones

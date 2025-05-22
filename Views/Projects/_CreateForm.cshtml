@@ -1,6 +1,9 @@
 ﻿@model TaskTracker.Models.Project
-
-<div id="create-form" style="display:none; margin-bottom: 20px;">
+@{
+    var displayStyle = ViewBag.VisibleCreateForm == true ? "" : "display:none;";
+    var divStyle = string.IsNullOrEmpty(displayStyle) ? "margin-bottom: 20px;" : $"{displayStyle} margin-bottom: 20px;";
+}
+<div id="create-form" style="@divStyle">
     <form asp-action="Create" method="post" class="card p-4">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="row g-3">
