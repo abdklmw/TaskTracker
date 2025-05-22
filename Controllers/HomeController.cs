@@ -56,6 +56,14 @@ namespace TaskTracker.Controllers
                     return RedirectToAction("Create", "Projects");
                 }
 
+                // Check if there are any clients
+                var hasClients = await _context.Clients.AnyAsync();
+                if (!hasClients)
+                {
+                    LoggerExtensions.LogInformation(_logger, "No clients found for user {UserId}, redirecting to Create Client.", userId);
+                    return RedirectToAction("Create", "Clients");
+                }
+
                 // Calculate dynamic offset from user's TimeZoneId, accounting for DST
                 try
                 {

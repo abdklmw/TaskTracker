@@ -1,0 +1,13 @@
+﻿@model TaskTracker.Models.Client
+@{
+    ViewData["Title"] = "Create Client";
+}
+<h1>Create Client</h1>
+@await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
+@await Html.PartialAsync("_CreateForm", Model ?? new TaskTracker.Models.Client())
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
+}
