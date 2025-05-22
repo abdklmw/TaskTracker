@@ -362,7 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-/CombinedFiles/
 /appsettings.json
 /CombinedFiles/CombinedConfiguration.txt
 /CombinedFiles/CombinedControllers.txt
