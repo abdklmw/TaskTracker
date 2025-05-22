@@ -17,8 +17,6 @@ namespace TaskTracker.Models
                 return 0;
             }
         }
-        [StringLength(500)]
-        [Description("Additional notes for the invoice time entry")]
         public virtual required TimeEntry TimeEntry { get; set; }
     }
 }

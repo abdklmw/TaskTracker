@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -22,12 +23,15 @@ namespace TaskTracker.Models
 
         [Required]
         [Column(TypeName = "date")]
+        [Description("Date the invoice was created")]
         public DateTime InvoiceDate { get; set; }
 
         [Column(TypeName = "date")]
+        [Description("Date the invoice was sent")]
         public DateTime? InvoiceSentDate { get; set; }
 
         [Column(TypeName = "date")]
+        [Description("Date the invoice was paid")]
         public DateTime? PaidDate { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
