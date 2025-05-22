@@ -364,3 +364,9 @@ FodyWeavers.xsd
 
 /CombinedFiles/
 /appsettings.json
+/CombinedFiles/CombinedConfiguration.txt
+/CombinedFiles/CombinedControllers.txt
+/CombinedFiles/CombinedJavaScript.txt
+/CombinedFiles/CombinedModels.txt
+/CombinedFiles/CombinedStylesheet.txt
+/CombinedFiles/CombinedViews.txt
