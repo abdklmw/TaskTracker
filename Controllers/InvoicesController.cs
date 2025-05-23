@@ -26,25 +26,6 @@ namespace TaskTracker.Controllers
             return View(await appDbContext.ToListAsync());
         }
 
-        // GET: Invoices/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var invoice = await _context.Invoices
-                .Include(i => i.Client)
-                .FirstOrDefaultAsync(m => m.InvoiceID == id);
-            if (invoice == null)
-            {
-                return NotFound();
-            }
-
-            return View(invoice);
-        }
-
         // GET: Invoices/Create
         public IActionResult Create()
         {
