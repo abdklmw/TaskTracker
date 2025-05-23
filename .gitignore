@@ -371,3 +371,4 @@ FodyWeavers.xsd
 /CombinedFiles/CombinedViews.txt
 /wwwroot/css/site.min.css
 /wwwroot/js/site.min.js
+/package-lock.json
