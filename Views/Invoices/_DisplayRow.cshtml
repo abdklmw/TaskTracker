@@ -9,7 +9,6 @@
             <div class="col-md-2">@Model.Client.Name</div>
             <div class="col-md-2">
                 <button class="btn btn-primary edit-btn" data-Id="@Model.InvoiceID">Edit</button>
-                <a asp-action="Details" asp-route-id="@Model.InvoiceID" class="btn btn-info">Details</a>
                 <a asp-action="Delete" asp-route-id="@Model.InvoiceID" class="btn btn-danger">Delete</a>
             </div>
         </div>
