@@ -22,6 +22,13 @@ namespace TaskTracker.Controllers
         // GET: Invoices
         public async Task<IActionResult> Index()
         {
+            // Populate ClientID dropdown
+            var clientList = _context.Clients
+                .Select(c => new { c.ClientID, c.Name })
+                .ToList();
+            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
+            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", 0);
+
             var appDbContext = _context.Invoices.Include(i => i.Client);
             return View(await appDbContext.ToListAsync());
         }
