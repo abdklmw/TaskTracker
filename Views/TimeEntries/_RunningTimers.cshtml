@@ -1,5 +1,4 @@
-﻿@model IEnumerable<TimeEntry>;
-
+﻿@model IEnumerable<TaskTracker.Models.TimeEntry>
 <h2>Running timer(s)</h2>
 @if (Model != null && Model.Any())
 {
@@ -17,7 +16,10 @@
                                 <p class="card-text"><strong>Started:</strong> @startLocal.ToString("yyyy-MM-dd hh:mm tt")</p>
                                 <form asp-controller="TimeEntries" asp-action="StopTimer" method="post">
                                     <input type="hidden" name="TimeEntryID" value="@timeEntry.TimeEntryID" />
-                                    <button type="submit" class="btn btn-danger">Stop Timer</button>
+                                    <button type="submit" class="btn btn-danger stop-timer-btn">
+                                        Stop Timer
+                                        <img src="/images/icons/Clock/clock-twelve.svg" alt="Clock" class="clock-icon" width="20" height="20" />
+                                    </button>
                                 </form>
                             </div>
                             <div class="col-4">
@@ -33,4 +35,9 @@
 else
 {
     <p>No running timers.</p>
+}
+
+@section Scripts {
+    <link rel="stylesheet" href="~/css/clock-animation.css" asp-append-version="true" />
+    <script src="~/js/clock-animation.js" asp-append-version="true"></script>
 }

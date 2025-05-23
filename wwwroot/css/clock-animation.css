@@ -1,0 +1,15 @@
+﻿.clock-icon {
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+@media (max-width: 576px) {
+    .clock-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.stop-timer-btn:hover .clock-icon {
+    opacity: 0.8;
+}
