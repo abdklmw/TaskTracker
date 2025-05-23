@@ -6,22 +6,8 @@
     var timezoneOffset = ViewBag.TimezoneOffset;
 }
 
-<h1>Time Entries</h1>
-
-<div class="row mb-3">
-    <div class="col-12 col-md-6 col-lg-4">
-        <button type="button" id="create-new-btn" class="btn btn-primary" style="@(Model.VisibleCreateForm ? "display:none;" : "")">Create New</button>
-    </div>
-</div>
-
 <!-- Display success or error messages -->
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
-
-@await Html.PartialAsync("_CreateForm", Model)
-
-@await Html.PartialAsync("~/Views/TimeEntries/_RunningTimers.cshtml", Model.RunningTimers)
-
-<div style="padding-top: 20px;"></div> <!-- Padding between sections -->
 
 <h2>Completed time entries</h2>
 
