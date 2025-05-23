@@ -9,7 +9,7 @@
 <!-- Display success or error messages -->
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
 
-@await Html.PartialAsync("_CreateForm")
+@await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Invoice())
 
 <p>
     <button id="create-new-btn" class="btn btn-primary">Create New</button>
