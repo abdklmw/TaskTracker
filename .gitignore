@@ -369,3 +369,5 @@ FodyWeavers.xsd
 /CombinedFiles/CombinedModels.txt
 /CombinedFiles/CombinedStylesheet.txt
 /CombinedFiles/CombinedViews.txt
+/wwwroot/css/site.min.css
+/wwwroot/js/site.min.js
