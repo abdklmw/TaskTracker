@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
+using TaskTracker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,9 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<AppDbContext>();
 builder.Services.AddControllersWithViews();
+
+// Register SetupService
+builder.Services.AddScoped<SetupService>();
 
 var app = builder.Build();
 

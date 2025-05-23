@@ -5,21 +5,43 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
+using TaskTracker.Services;
+using Microsoft.AspNetCore.Identity;
 
 namespace TaskTracker.Controllers
 {
     public class ProjectsController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly SetupService _setupService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ProjectsController(AppDbContext context)
+        public ProjectsController(
+            AppDbContext context,
+            SetupService setupService,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _setupService = setupService;
+            _userManager = userManager;
         }
 
-        // GET: Projects
         public async Task<IActionResult> Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                var setupResult = await _setupService.CheckSetupAsync(userId);
+                if (setupResult != null)
+                {
+                    return setupResult;
+                }
+            }
             return View(await _context.Projects.OrderBy(p => p.Name).ToListAsync());
         }
 
@@ -45,6 +67,7 @@ namespace TaskTracker.Controllers
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
             return RedirectToAction(nameof(Index));
+            return View(project);
         }
 
         // POST: Projects/Edit/5

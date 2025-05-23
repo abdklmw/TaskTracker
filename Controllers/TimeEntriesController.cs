@@ -8,6 +8,7 @@ using TaskTracker.Data;
 using TaskTracker.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
 {
@@ -16,17 +17,35 @@ namespace TaskTracker.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<TimeEntriesController> _logger;
+        private readonly SetupService _setupService;
 
-        public TimeEntriesController(AppDbContext context, UserManager<ApplicationUser> userManager, ILogger<TimeEntriesController> logger)
+        public TimeEntriesController(
+            AppDbContext context,
+            UserManager<ApplicationUser> userManager,
+            ILogger<TimeEntriesController> logger,
+            SetupService setupService)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
+            _setupService = setupService;
         }
 
         public async Task<IActionResult> Index(int recordLimit = 10, int page = 1)
         {
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                LoggerExtensions.LogError(_logger, "User ID could not be retrieved for authenticated user.");
+                return RedirectToAction("Login", "Account");
+            }
+
+            var setupResult = await _setupService.CheckSetupAsync(userId);
+            if (setupResult != null)
+            {
+                return setupResult;
+            }
+
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
@@ -104,7 +123,7 @@ namespace TaskTracker.Controllers
 
             // Apply pagination
             viewModel.CurrentPage = page < 1 ? 1 : page;
-            if (recordLimit == -1) // ALL
+            if (recordLimit == -1)
             {
                 const int pageSize = 200;
                 viewModel.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
@@ -227,7 +246,7 @@ namespace TaskTracker.Controllers
                     .Include(t => t.Project)
                     .OrderBy(t => t.Client.Name ?? "")
                     .ThenByDescending(t => t.StartDateTime)
-                    .Take(10) // Default limit for error case
+                    .Take(10)
                     .ToListAsync(),
                 RecordLimit = 10,
                 RecordLimitOptions = new SelectList(new[]

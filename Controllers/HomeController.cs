@@ -5,10 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using TaskTracker.Data;
 using TaskTracker.Models;
-using System.Linq;
-using System.Collections.Generic;
-using System;
-using Microsoft.Extensions.Logging; // Added for LoggerExtensions
+using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
 {
@@ -17,12 +14,18 @@ namespace TaskTracker.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SetupService _setupService;
 
-        public HomeController(AppDbContext context, UserManager<ApplicationUser> userManager, ILogger<HomeController> logger)
+        public HomeController(
+            AppDbContext context,
+            UserManager<ApplicationUser> userManager,
+            ILogger<HomeController> logger,
+            SetupService setupService)
         {
             _logger = logger;
             _context = context;
             _userManager = userManager;
+            _setupService = setupService;
         }
 
         public async Task<IActionResult> Index()
@@ -35,33 +38,19 @@ namespace TaskTracker.Controllers
                     LoggerExtensions.LogError(_logger, "User ID could not be retrieved for authenticated user.");
                     return RedirectToAction("Login", "Account");
                 }
+
+                // Check user setup using the service
+                var setupResult = await _setupService.CheckSetupAsync(userId);
+                if (setupResult != null)
+                {
+                    return setupResult;
+                }
+
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     LoggerExtensions.LogError(_logger, "User not found for ID {UserId}", userId);
                     return NotFound();
-                }
-                // Check if user has a TimeZoneId set
-                if (string.IsNullOrEmpty(user.TimeZoneId))
-                {
-                    LoggerExtensions.LogInformation(_logger, "No TimeZoneId set for user {UserId}, redirecting to SetTimezone.", userId);
-                    return RedirectToAction(nameof(SetTimezone));
-                }
-
-                // Check if there are any projects
-                var hasProjects = await _context.Projects.AnyAsync();
-                if (!hasProjects)
-                {
-                    LoggerExtensions.LogInformation(_logger, "No projects found for user {UserId}, redirecting to Create Project.", userId);
-                    return RedirectToAction("Create", "Projects");
-                }
-
-                // Check if there are any clients
-                var hasClients = await _context.Clients.AnyAsync();
-                if (!hasClients)
-                {
-                    LoggerExtensions.LogInformation(_logger, "No clients found for user {UserId}, redirecting to Create Client.", userId);
-                    return RedirectToAction("Create", "Clients");
                 }
 
                 // Calculate dynamic offset from user's TimeZoneId, accounting for DST
