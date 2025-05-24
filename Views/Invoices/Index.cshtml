@@ -1,36 +1,35 @@
 ﻿@model IEnumerable<TaskTracker.Models.Invoice>
-
 @{
     ViewData["Title"] = "Invoices";
+    var createModel = ViewBag.CreateModel as TaskTracker.Models.InvoiceCreateViewModel ?? new TaskTracker.Models.InvoiceCreateViewModel();
 }
-
 <h1>Invoices</h1>
-
-<!-- Display success or error messages -->
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
-
-@await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Invoice())
-
+@await Html.PartialAsync("_CreateForm", createModel)
 <p>
     <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>
-
-<div class="row mb-2">
-    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.InvoiceDate)</strong></div>
-    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.TotalAmount)</strong></div>
-    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Status)</strong></div>
-    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Client)</strong></div>
-</div>
-
-@foreach (var item in Model)
+@if (!Model.Any())
 {
-    @await Html.PartialAsync("_DisplayRow", item)
-    @await Html.PartialAsync("_EditFormRow", item)
+    <p>No invoices found. Click "Create New" to add an invoice.</p>
 }
-
+else
+{
+    <div class="row mb-2">
+        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.InvoiceDate)</strong></div>
+        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.TotalAmount)</strong></div>
+        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Status)</strong></div>
+        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Client)</strong></div>
+    </div>
+    @foreach (var item in Model)
+    {
+        @await Html.PartialAsync("_DisplayRow", item)
+        @await Html.PartialAsync("_EditFormRow", item)
+    }
+}
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="~/js/site.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 }

@@ -33,6 +33,12 @@ namespace TaskTracker.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
 
+        [Column(TypeName = "date")]
+        public DateTime? InvoicedDate { get; set; }
+
+        [Column(TypeName = "date")]
+        public DateTime? PaidDate { get; set; }
+
         // Navigation property to access the associated client
         public virtual Client? Client { get; set; }
     }

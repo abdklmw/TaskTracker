@@ -19,45 +19,117 @@ namespace TaskTracker.Controllers
             _context = context;
         }
 
-        // GET: Invoices
         public async Task<IActionResult> Index()
         {
-            // Populate ClientID dropdown
-            var clientList = _context.Clients
-                .Select(c => new { c.ClientID, c.Name })
-                .ToList();
-            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", 0);
+            var invoices = await _context.Invoices.Include(i => i.Client).ToListAsync();
+            var createModel = new InvoiceCreateViewModel
+            {
+                Clients = _context.Clients
+                    .Select(c => new SelectListItem
+                    {
+                        Value = c.ClientID.ToString(),
+                        Text = c.Name
+                    })
+                    .ToList()
+            };
+            createModel.Clients.Insert(0, new SelectListItem { Value = "0", Text = "Select Client" });
 
-            var appDbContext = _context.Invoices.Include(i => i.Client);
-            return View(await appDbContext.ToListAsync());
+            ViewBag.CreateModel = createModel;
+            return View(invoices);
         }
 
-        // GET: Invoices/Create
-        public IActionResult Create()
+        [HttpGet]
+        public IActionResult GetUnpaidItems(int clientId)
         {
-            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "ClientID");
-            return View();
+            var timeEntries = _context.TimeEntries
+                .Where(t => t.ClientID == clientId && t.PaidDate == null)
+                .Select(t => new TimeEntryViewModel
+                {
+                    TimeEntryID = t.TimeEntryID,
+                    HourlyRate = t.HourlyRate ?? 0m,
+                    HoursSpent = t.HoursSpent ?? 0m,
+                    TotalAmount = (t.HourlyRate ?? 0m) * (t.HoursSpent ?? 0m)
+                })
+                .ToList();
+
+            var expenses = _context.Expenses
+                .Where(e => e.ClientID == clientId && e.PaidDate == null)
+                .Select(e => new ExpenseViewModel
+                {
+                    ExpenseID = e.ExpenseID,
+                    Description = e.Description,
+                    UnitAmount = e.UnitAmount,
+                    Quantity = e.Quantity,
+                    TotalAmount = e.TotalAmount
+                })
+                .ToList();
+
+            return Json(new { TimeEntries = timeEntries, Expenses = expenses });
         }
 
-        // POST: Invoices/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("InvoiceID,ClientID,InvoiceDate,DueDate,TotalAmount,Status")] Invoice invoice)
+        public async Task<IActionResult> Create(InvoiceCreateViewModel model)
         {
-            if (ModelState.IsValid)
+            if (ModelState.IsValid && model.ClientID > 0)
             {
-                _context.Add(invoice);
+                var invoice = new Invoice
+                {
+                    ClientID = model.ClientID,
+                    InvoiceDate = DateTime.Today,
+                    TotalAmount = model.SelectedTimeEntryIDs
+                        .Select(id => _context.TimeEntries.Find(id))
+                        .Where(t => t != null)
+                        .Sum(t => (t.HourlyRate ?? 0m) * (t.HoursSpent ?? 0m)) +
+                        model.SelectedExpenseIDs
+                        .Select(id => _context.Expenses.Find(id))
+                        .Where(e => e != null)
+                        .Sum(e => e.TotalAmount),
+                    Status = model.Status
+                };
+
+                _context.Invoices.Add(invoice);
                 await _context.SaveChangesAsync();
+
+                foreach (var timeEntryId in model.SelectedTimeEntryIDs)
+                {
+                    var timeEntry = await _context.TimeEntries.FindAsync(timeEntryId);
+                    if (timeEntry != null)
+                    {
+                        timeEntry.PaidDate = DateTime.Today;
+                        _context.InvoiceTimeEntries.Add(new InvoiceTimeEntry
+                        {
+                            InvoiceID = invoice.InvoiceID,
+                            TimeEntryID = timeEntryId
+                        });
+                    }
+                }
+
+                foreach (var expenseId in model.SelectedExpenseIDs)
+                {
+                    var expense = await _context.Expenses.FindAsync(expenseId);
+                    if (expense != null)
+                    {
+                        expense.PaidDate = DateTime.Today;
+                        _context.InvoiceProducts.Add(new InvoiceExpense
+                        {
+                            InvoiceID = invoice.InvoiceID,
+                            ProductID = expense.ExpenseID,
+                            ProductInvoiceDate = DateOnly.FromDateTime(DateTime.Today),
+                            Quantity = expense.Quantity
+                        });
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Invoice created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "ClientID", invoice.ClientID);
-            return View(invoice);
+
+            TempData["ErrorMessage"] = "Error creating invoice: " + string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Invoices/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -70,13 +142,10 @@ namespace TaskTracker.Controllers
             {
                 return NotFound();
             }
-            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "ClientID", invoice.ClientID);
+            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "Name", invoice.ClientID);
             return View(invoice);
         }
 
-        // POST: Invoices/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("InvoiceID,ClientID,InvoiceDate,DueDate,TotalAmount,Status")] Invoice invoice)
@@ -106,11 +175,10 @@ namespace TaskTracker.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "ClientID", invoice.ClientID);
+            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "Name", invoice.ClientID);
             return View(invoice);
         }
 
-        // GET: Invoices/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -129,7 +197,6 @@ namespace TaskTracker.Controllers
             return View(invoice);
         }
 
-        // POST: Invoices/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

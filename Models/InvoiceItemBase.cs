@@ -12,6 +12,6 @@ namespace TaskTracker.Models
         [Description("Additional notes for the invoice item")]
         public string? AdditionalNotes { get; set; }
 
-        public virtual required Invoice Invoice { get; set; }
+        public virtual Invoice? Invoice { get; set; }
     }
 }

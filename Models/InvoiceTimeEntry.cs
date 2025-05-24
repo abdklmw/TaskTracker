@@ -17,6 +17,6 @@ namespace TaskTracker.Models
                 return 0;
             }
         }
-        public virtual required TimeEntry TimeEntry { get; set; }
+        public virtual TimeEntry? TimeEntry { get; set; }
     }
 }

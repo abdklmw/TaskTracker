@@ -1,33 +1,42 @@
-﻿@model TaskTracker.Models.Invoice
-
+﻿@model TaskTracker.Models.InvoiceCreateViewModel
 <div id="create-form" style="display:none; margin-bottom: 20px;">
     <form asp-action="Create" method="post" class="card p-4">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="row g-3">
             <div class="col-md-4">
                 <label asp-for="ClientID" class="form-label">Client</label>
-                <select asp-for="ClientID" class="form-control" asp-items="ViewBag.ClientID"></select>
+                <select asp-for="ClientID" class="form-control" id="client-select" asp-items="Model.Clients"></select>
                 <span asp-validation-for="ClientID" class="text-danger"></span>
             </div>
             <div class="col-md-4">
-                <label asp-for="InvoiceDate" class="form-label">Invoice Date</label>
-                <input asp-for="InvoiceDate" class="form-control" type="date" />
-                <span asp-validation-for="InvoiceDate" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="TotalAmount" class="form-label">Total Amount</label>
-                <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" />
-                <span asp-validation-for="TotalAmount" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
                 <label asp-for="Status" class="form-label">Status</label>
-                <input asp-for="Status" class="form-control" />
+                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<TaskTracker.Models.InvoiceStatus>()"></select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>
-            <div class="col-md-12">
-                <button type="submit" class="btn btn-success create-btn">Create</button>
-                <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
+            <div class="col-md-4">
+                <label class="form-label">Invoice Total</label>
+                <input type="text" id="invoice-total" class="form-control" value="$0.00" readonly />
             </div>
+        </div>
+        <div class="mt-3">
+            <h5>Time Entries</h5>
+            <div class="form-check">
+                <input type="checkbox" id="select-all-time-entries" class="form-check-input" />
+                <label for="select-all-time-entries" class="form-check-label">Select All Time Entries</label>
+            </div>
+            <div id="time-entries-list" class="mt-2"></div>
+        </div>
+        <div class="mt-3">
+            <h5>Expenses</h5>
+            <div class="form-check">
+                <input type="checkbox" id="select-all-expenses" class="form-check-input" />
+                <label for="select-all-expenses" class="form-check-label">Select All Expenses</label>
+            </div>
+            <div id="expenses-list" class="mt-2"></div>
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-success create-btn">Create</button>
+            <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>
         </div>
     </form>
 </div>

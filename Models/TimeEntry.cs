@@ -36,5 +36,8 @@ namespace TaskTracker.Models
 
         [Column(TypeName = "date")]
         public DateTime? InvoicedDate { get; set; }
+
+        [Column(TypeName = "date")]
+        public DateTime? PaidDate { get; set; }
     }
 }

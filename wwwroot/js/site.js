@@ -1,8 +1,8 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
     // Handle Create New button click
     $('#create-new-btn').click(function () {
-        $('#create-form').css('display', 'block');
-        $('#create-new-btn').css('display', 'none');
+        $("#create-form").show();
+        $("#create-new-btn").hide();
     });
 
     // Handle Cancel button click for create
