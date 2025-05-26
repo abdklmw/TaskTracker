@@ -1,14 +1,4 @@
 ﻿$(document).ready(function () {
-    $(".cancel-create-btn").click(function () {
-        $("#create-form").hide();
-        $("#client-select").val(0);
-        $("#time-entries-list").empty();
-        $("#expenses-list").empty();
-        $("#invoice-total").val("$0.00");
-        $("#select-all-time-entries").prop("checked", false);
-        $("#select-all-expenses").prop("checked", false);
-    });
-
     $("#client-select").change(function () {
         var clientId = $(this).val();
         if (clientId == 0) {
@@ -22,11 +12,14 @@
             $("#time-entries-list").empty();
             if (data.timeEntries.length > 0) {
                 data.timeEntries.forEach(function (item) {
+                    var description = item.description || "No description";
+                    var startDate = item.startDateTime ? new Date(item.startDateTime).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }) : "N/A";
                     $("#time-entries-list").append(
                         `<div class="form-check">
                             <input type="checkbox" class="form-check-input time-entry-checkbox" name="SelectedTimeEntryIDs" value="${item.timeEntryID}" data-amount="${item.totalAmount}" />
                             <label class="form-check-label">
-                                ${item.hoursSpent} hours at $${item.hourlyRate.toFixed(2)}/hr = $${item.totalAmount.toFixed(2)}
+                                ${item.hoursSpent} hours at $${item.hourlyRate.toFixed(2)}/hr = $${item.totalAmount.toFixed(2)}<br>
+                                <small><strong>Date:</strong> ${startDate} | <strong>Description:</strong> ${description}</small>
                             </label>
                         </div>`
                     );
@@ -38,11 +31,13 @@
             $("#expenses-list").empty();
             if (data.expenses.length > 0) {
                 data.expenses.forEach(function (item) {
+                    var description = item.description || "No description";
                     $("#expenses-list").append(
                         `<div class="form-check">
                             <input type="checkbox" class="form-check-input expense-checkbox" name="SelectedExpenseIDs" value="${item.expenseID}" data-amount="${item.totalAmount}" />
                             <label class="form-check-label">
-                                ${item.description} (${item.quantity} x $${item.unitAmount.toFixed(2)}) = $${item.totalAmount.toFixed(2)}
+                                ${item.quantity} x $${item.unitAmount.toFixed(2)} = $${item.totalAmount.toFixed(2)}<br>
+                                <small><strong>Description:</strong> ${description}</small>
                             </label>
                         </div>`
                     );

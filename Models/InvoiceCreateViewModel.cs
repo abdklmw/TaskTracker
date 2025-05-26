@@ -23,6 +23,8 @@ namespace TaskTracker.Models
         public decimal HourlyRate { get; set; }
         public decimal HoursSpent { get; set; }
         public decimal TotalAmount { get; set; }
+        public string Description { get; set; }
+        public DateTime StartDateTime { get; set; }
         public bool IsSelected { get; set; }
     }
 

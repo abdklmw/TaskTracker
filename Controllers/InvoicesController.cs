@@ -48,7 +48,9 @@ namespace TaskTracker.Controllers
                     TimeEntryID = t.TimeEntryID,
                     HourlyRate = t.HourlyRate ?? 0m,
                     HoursSpent = t.HoursSpent ?? 0m,
-                    TotalAmount = (t.HourlyRate ?? 0m) * (t.HoursSpent ?? 0m)
+                    TotalAmount = (t.HourlyRate ?? 0m) * (t.HoursSpent ?? 0m),
+                    Description = t.Description,
+                    StartDateTime = t.StartDateTime
                 })
                 .ToList();
 
