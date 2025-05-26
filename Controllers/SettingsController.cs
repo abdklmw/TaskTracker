@@ -55,6 +55,7 @@ namespace TaskTracker.Controllers
                     existingSettings.AccountsReceivableEmail = settings.AccountsReceivableEmail;
                     existingSettings.PaymentInformation = settings.PaymentInformation;
                     existingSettings.ThankYouMessage = settings.ThankYouMessage;
+                    existingSettings.DefaultHourlyRate = settings.DefaultHourlyRate;
                     _context.Update(existingSettings);
                 }
                 await _context.SaveChangesAsync();

@@ -6,7 +6,6 @@ using System.Diagnostics;
 using TaskTracker.Data;
 using TaskTracker.Models;
 using TaskTracker.Services;
-
 namespace TaskTracker.Controllers
 {
     public class HomeController : Controller
@@ -32,6 +31,14 @@ namespace TaskTracker.Controllers
         {
             if (User.Identity.IsAuthenticated)
             {
+                // Check if DefaultHourlyRate is set
+                var settings = await _context.Settings.FirstOrDefaultAsync();
+                if (settings == null || settings.DefaultHourlyRate == 0)
+                {
+                    TempData["ErrorMessage"] = "Please set a default hourly rate in Settings.";
+                    return RedirectToAction("Index", "Settings");
+                }
+
                 var userId = _userManager.GetUserId(User);
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -74,21 +81,25 @@ namespace TaskTracker.Controllers
                     .ToList();
                 clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
                 ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", 0);
+
                 // Populate ProjectID dropdown
                 var projectList = _context.Projects
                     .Select(p => new { p.ProjectID, p.Name })
                     .ToList();
                 projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
                 ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", 0);
+
                 // Set form visibility and return target
                 ViewBag.VisibleCreateForm = true;
                 ViewBag.ReturnTo = "Home";
+
                 // Fetch running timers
                 var runningTimers = _context.TimeEntries
                     .Where(t => t.UserId == userId && t.EndDateTime == null)
                     .Include(t => t.Client)
                     .Include(t => t.Project)
                     .ToList();
+
                 return View(runningTimers);
             }
             return View();

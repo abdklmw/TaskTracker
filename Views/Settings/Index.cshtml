@@ -1,41 +1,51 @@
 ﻿@model TaskTracker.Models.Settings
-
 @{
     ViewData["Title"] = "Settings";
 }
-
 <h1>Settings</h1>
-
 <form asp-action="Update" method="post">
+    @Html.AntiForgeryToken()
     <div class="form-group">
-        <label asp-for="CompanyName"></label>
+        <label asp-for="CompanyName" class="control-label"></label>
         <input asp-for="CompanyName" class="form-control" />
         <span asp-validation-for="CompanyName" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label asp-for="AccountsReceivableAddress"></label>
+        <label asp-for="AccountsReceivableAddress" class="control-label"></label>
         <textarea asp-for="AccountsReceivableAddress" class="form-control"></textarea>
         <span asp-validation-for="AccountsReceivableAddress" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label asp-for="AccountsReceivablePhone"></label>
+        <label asp-for="AccountsReceivablePhone" class="control-label"></label>
         <input asp-for="AccountsReceivablePhone" class="form-control" />
         <span asp-validation-for="AccountsReceivablePhone" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label asp-for="AccountsReceivableEmail"></label>
+        <label asp-for="AccountsReceivableEmail" class="control-label"></label>
         <input asp-for="AccountsReceivableEmail" class="form-control" />
         <span asp-validation-for="AccountsReceivableEmail" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label asp-for="PaymentInformation"></label>
+        <label asp-for="PaymentInformation" class="control-label"></label>
         <textarea asp-for="PaymentInformation" class="form-control"></textarea>
         <span asp-validation-for="PaymentInformation" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label asp-for="ThankYouMessage"></label>
+        <label asp-for="ThankYouMessage" class="control-label"></label>
         <textarea asp-for="ThankYouMessage" class="form-control"></textarea>
         <span asp-validation-for="ThankYouMessage" class="text-danger"></span>
     </div>
-    <button type="submit" class="btn btn-primary">Save</button>
+    <div class="form-group">
+        <label asp-for="DefaultHourlyRate" class="control-label"></label>
+        <input asp-for="DefaultHourlyRate" class="form-control" type="number" step="0.01" />
+        <span asp-validation-for="DefaultHourlyRate" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Save" class="btn btn-primary" />
+    </div>
 </form>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
