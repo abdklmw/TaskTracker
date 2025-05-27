@@ -36,7 +36,6 @@
                 <span asp-validation-for="@(new TaskTracker.Models.TimeEntry().Description)" class="text-danger"></span>
             </div>
             <div class="col-12">
-                <input type="hidden" name="UserId" value="@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.Identity.Name)" />
                 <input type="hidden" name="ReturnTo" value="@ViewBag.ReturnTo" />
                 <input type="hidden" name="action" id="form-action" value="" />
                 <button type="submit" class="btn btn-success create-btn" name="action" value="Create" disabled>Create</button>

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
 using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
@@ -160,9 +156,14 @@ namespace TaskTracker.Controllers
         // Other actions (Create, StartTimer, StopTimer, Edit, Delete, DeleteConfirmed, TimeEntryExists) remain unchanged
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,Description,StartDateTime,EndDateTime,HoursSpent")] TimeEntry timeEntry, string action)
+        public async Task<IActionResult> Create([Bind("ClientID,ProjectID,Description,StartDateTime,EndDateTime,HoursSpent")] TimeEntry timeEntry, string? action)
         {
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                LoggerExtensions.LogError(_logger, "User ID could not be retrieved for authenticated user.");
+                return RedirectToAction("Login", "Account");
+            }
             timeEntry.UserId = userId;
 
             var user = await _userManager.FindByIdAsync(userId);
@@ -186,6 +187,9 @@ namespace TaskTracker.Controllers
                 LoggerExtensions.LogError(_logger, "Invalid TimeZoneId {TimeZoneId} for user {UserId}: {Error}", user.TimeZoneId, userId, ex.Message);
                 timezoneOffset = 0; // Fallback to UTC
             }
+
+            // Remove UserId from ModelState validation
+            ModelState.Remove("UserId");
 
             if (action == "StartTimer")
             {
