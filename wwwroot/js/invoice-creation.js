@@ -5,10 +5,12 @@
             $("#time-entries-list").empty();
             $("#expenses-list").empty();
             $("#invoice-total").val("$0.00");
+            $("#create-form").hide();
             return;
         }
 
         $.get("/Invoices/GetUnpaidItems", { clientId: clientId }, function (data) {
+            $("#create-form").show();
             $("#time-entries-list").empty();
             if (data.timeEntries.length > 0) {
                 data.timeEntries.forEach(function (item) {
@@ -16,9 +18,9 @@
                     var startDate = item.startDateTime ? new Date(item.startDateTime).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }) : "N/A";
                     $("#time-entries-list").append(
                         `<div class="form-check">
-                            <input type="checkbox" class="form-check-input time-entry-checkbox" name="SelectedTimeEntryIDs" value="${item.timeEntryID}" data-amount="${item.totalAmount}" />
+                            <input type="checkbox" class="form-check-input time-entry-checkbox" name="SelectedTimeEntryIDs" value="${item.timeEntryID}" data-amount="${item.totalAmount || 0}" />
                             <label class="form-check-label">
-                                ${item.hoursSpent} hours at $${item.hourlyRate.toFixed(2)}/hr = $${item.totalAmount.toFixed(2)}<br>
+                                ${item.hoursSpent} hours at $${(item.hourlyRate || 0).toFixed(2)}/hr = $${(item.totalAmount || 0).toFixed(2)}<br>
                                 <small><strong>Date:</strong> ${startDate} | <strong>Description:</strong> ${description}</small>
                             </label>
                         </div>`
@@ -34,9 +36,9 @@
                     var description = item.description || "No description";
                     $("#expenses-list").append(
                         `<div class="form-check">
-                            <input type="checkbox" class="form-check-input expense-checkbox" name="SelectedExpenseIDs" value="${item.expenseID}" data-amount="${item.totalAmount}" />
+                            <input type="checkbox" class="form-check-input expense-checkbox" name="SelectedExpenseIDs" value="${item.expenseID}" data-amount="${item.totalAmount || 0}" />
                             <label class="form-check-label">
-                                ${item.quantity} x $${item.unitAmount.toFixed(2)} = $${item.totalAmount.toFixed(2)}<br>
+                                ${item.quantity} x $${(item.unitAmount || 0).toFixed(2)} = $${(item.totalAmount || 0).toFixed(2)}<br>
                                 <small><strong>Description:</strong> ${description}</small>
                             </label>
                         </div>`
@@ -47,6 +49,11 @@
             }
 
             updateInvoiceTotal();
+        }).fail(function (xhr) {
+            console.error("Error loading unpaid items:", xhr.responseText);
+            $("#time-entries-list").html("<p>Error loading time entries.</p>");
+            $("#expenses-list").html("<p>Error loading expenses.</p>");
+            $("#invoice-total").val("$0.00");
         });
     });
 
@@ -67,10 +74,12 @@
     function updateInvoiceTotal() {
         var total = 0;
         $(".time-entry-checkbox:checked").each(function () {
-            total += parseFloat($(this).data("amount"));
+            var amount = parseFloat($(this).data("amount")) || 0;
+            total += amount;
         });
         $(".expense-checkbox:checked").each(function () {
-            total += parseFloat($(this).data("amount"));
+            var amount = parseFloat($(this).data("amount")) || 0;
+            total += amount;
         });
         $("#invoice-total").val("$" + total.toFixed(2));
     }
