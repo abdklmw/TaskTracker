@@ -5,10 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using TaskTracker.Data;
 using TaskTracker.Models;
-
 namespace TaskTracker.Controllers
 {
     public class InvoicesController : Controller
@@ -63,6 +61,9 @@ namespace TaskTracker.Controllers
                         HourlyRate = t.Project != null && t.Project.Rate.HasValue ? t.Project.Rate.Value :
                                      t.Client != null ? t.Client.DefaultRate :
                                      defaultHourlyRate,
+                        RateSource = t.Project != null && t.Project.Rate.HasValue ? "Project" :
+                                     t.Client != null ? "Client" :
+                                     "Settings",
                         HoursSpent = t.HoursSpent ?? 0m,
                         Description = t.Description,
                         StartDateTime = t.StartDateTime
@@ -96,6 +97,138 @@ namespace TaskTracker.Controllers
             }
         }
 
-        // ... (rest of the InvoicesController code remains unchanged)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(InvoiceCreateViewModel model)
+        {
+            if (ModelState.IsValid && model.ClientID > 0)
+            {
+                var invoice = new Invoice
+                {
+                    ClientID = model.ClientID,
+                    InvoiceDate = DateTime.Today,
+                    TotalAmount = model.SelectedTimeEntryIDs
+                .Select(id => _context.TimeEntries.Find(id))
+                .Where(t => t != null)
+                .Sum(t => (t.HourlyRate ?? 0m) * (t.HoursSpent ?? 0m)) +
+                model.SelectedExpenseIDs
+                .Select(id => _context.Expenses.Find(id))
+                .Where(e => e != null)
+                .Sum(e => e.TotalAmount),
+                    Status = model.Status
+                };
+                _context.Invoices.Add(invoice);
+                await _context.SaveChangesAsync();
+                foreach (var timeEntryId in model.SelectedTimeEntryIDs)
+                {
+                    var timeEntry = await _context.TimeEntries.FindAsync(timeEntryId);
+                    if (timeEntry != null)
+                    {
+                        timeEntry.PaidDate = DateTime.Today;
+                        _context.InvoiceTimeEntries.Add(new InvoiceTimeEntry
+                        {
+                            InvoiceID = invoice.InvoiceID,
+                            TimeEntryID = timeEntryId
+                        });
+                    }
+                }
+                foreach (var expenseId in model.SelectedExpenseIDs)
+                {
+                    var expense = await _context.Expenses.FindAsync(expenseId);
+                    if (expense != null)
+                    {
+                        expense.PaidDate = DateTime.Today;
+                        _context.InvoiceProducts.Add(new InvoiceExpense
+                        {
+                            InvoiceID = invoice.InvoiceID,
+                            ProductID = expense.ExpenseID,
+                            ProductInvoiceDate = DateOnly.FromDateTime(DateTime.Today),
+                            Quantity = expense.Quantity
+                        });
+                    }
+                }
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Invoice created successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+            TempData["ErrorMessage"] = "Error creating invoice: " + string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            return RedirectToAction(nameof(Index));
+        }
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice == null)
+            {
+                return NotFound();
+            }
+            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "Name", invoice.ClientID);
+            return View(invoice);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("InvoiceID,ClientID,InvoiceDate,DueDate,TotalAmount,Status")] Invoice invoice)
+        {
+            if (id != invoice.InvoiceID)
+            {
+                return NotFound();
+            }
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(invoice);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!InvoiceExists(invoice.InvoiceID))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["ClientID"] = new SelectList(_context.Clients, "ClientID", "Name", invoice.ClientID);
+            return View(invoice);
+        }
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            var invoice = await _context.Invoices
+            .Include(i => i.Client)
+            .FirstOrDefaultAsync(m => m.InvoiceID == id);
+            if (invoice == null)
+            {
+                return NotFound();
+            }
+            return View(invoice);
+        }
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice != null)
+            {
+                _context.Invoices.Remove(invoice);
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+        private bool InvoiceExists(int id)
+        {
+            return _context.Invoices.Any(e => e.InvoiceID == id);
+        }
     }
 }

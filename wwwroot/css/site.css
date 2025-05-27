@@ -53,3 +53,9 @@ textarea {
 .alert-success {
     transition: opacity 1s ease-in-out;
 }
+
+abbr[title] {
+    text-decoration: underline dotted;
+    text-decoration-skip-ink: auto;
+    cursor: help;
+}

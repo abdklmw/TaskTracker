@@ -8,13 +8,12 @@ namespace TaskTracker.Models
     public class InvoiceCreateViewModel
     {
         public int ClientID { get; set; }
-        [Required]
-        public InvoiceStatus Status { get; set; }
+        public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
         public List<SelectListItem> Clients { get; set; } = new List<SelectListItem>();
-        public List<TimeEntryViewModel> TimeEntries { get; set; } = new List<TimeEntryViewModel>();
-        public List<ExpenseViewModel> Expenses { get; set; } = new List<ExpenseViewModel>();
         public List<int> SelectedTimeEntryIDs { get; set; } = new List<int>();
         public List<int> SelectedExpenseIDs { get; set; } = new List<int>();
+        public List<TimeEntryViewModel> TimeEntries { get; set; } = new List<TimeEntryViewModel>();
+        public List<ExpenseViewModel> Expenses { get; set; } = new List<ExpenseViewModel>();
     }
 
     public class TimeEntryViewModel
@@ -26,6 +25,7 @@ namespace TaskTracker.Models
         public string Description { get; set; }
         public DateTime StartDateTime { get; set; }
         public bool IsSelected { get; set; }
+        public string RateSource { get; set; } // Added: "Project", "Client", or "Settings"
     }
 
     public class ExpenseViewModel
