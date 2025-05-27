@@ -66,7 +66,8 @@ namespace TaskTracker.Controllers
                                      "Settings",
                         HoursSpent = t.HoursSpent ?? 0m,
                         Description = t.Description,
-                        StartDateTime = t.StartDateTime
+                        StartDateTime = t.StartDateTime,
+                        EndDateTime = t.EndDateTime // Added
                     })
                     .ToListAsync();
 

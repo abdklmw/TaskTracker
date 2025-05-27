@@ -24,6 +24,7 @@ namespace TaskTracker.Models
         public decimal TotalAmount { get; set; }
         public string Description { get; set; }
         public DateTime StartDateTime { get; set; }
+        public DateTime? EndDateTime { get; set; }
         public bool IsSelected { get; set; }
         public string RateSource { get; set; } // Added: "Project", "Client", or "Settings"
     }

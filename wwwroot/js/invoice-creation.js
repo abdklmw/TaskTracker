@@ -16,13 +16,22 @@
                 data.timeEntries.forEach(function (item) {
                     var description = item.description || "No description";
                     var startDate = item.startDateTime ? new Date(item.startDateTime).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }) : "N/A";
-                    var rateSource = item.rateSource || "Settings"; // Fallback
+                    var dateDisplay = startDate;
+                    if (item.endDateTime) {
+                        var endDate = new Date(item.endDateTime).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+                        var startDateObj = new Date(item.startDateTime).toDateString();
+                        var endDateObj = new Date(item.endDateTime).toDateString();
+                        if (startDateObj !== endDateObj) {
+                            dateDisplay = `${startDate} - ${endDate}`;
+                        }
+                    }
+                    var rateSource = item.rateSource || "Settings";
                     $("#time-entries-list").append(
                         `<div class="form-check">
                             <input type="checkbox" class="form-check-input time-entry-checkbox" name="SelectedTimeEntryIDs" value="${item.timeEntryID}" data-amount="${item.totalAmount || 0}" />
                             <label class="form-check-label">
                                 ${item.hoursSpent} hours at $<abbr title="Rate from ${rateSource.toLowerCase()}">${(item.hourlyRate || 0).toFixed(2)}</abbr>/hr = $${(item.totalAmount || 0).toFixed(2)}<br>
-                                <small><strong>Date:</strong> ${startDate} | <strong>Description:</strong> ${description}</small>
+                                <small><strong>Date:</strong> ${dateDisplay} | <strong>Description:</strong> ${description}</small>
                             </label>
                         </div>`
                     );
