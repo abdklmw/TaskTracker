@@ -18,7 +18,7 @@ namespace TaskTracker.Data
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceTimeEntry> InvoiceTimeEntries { get; set; }
         public DbSet<Product> Products { get; set; }
-        public DbSet<InvoiceExpense> InvoiceProducts { get; set; }
+        public DbSet<InvoiceExpense> InvoiceExpenses { get; set; }
         public DbSet<Settings> Settings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -72,10 +72,10 @@ namespace TaskTracker.Data
                 .HasForeignKey(ite => ite.TimeEntryID)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // InvoiceProduct relationships
+            // InvoiceExpenses relationships
             modelBuilder.Entity<InvoiceExpense>()
                 .HasOne(ip => ip.Invoice)
-                .WithMany(i => i.InvoiceProducts)
+                .WithMany(i => i.InvoiceExpenses)
                 .HasForeignKey(ip => ip.InvoiceID)
                 .OnDelete(DeleteBehavior.NoAction);
 

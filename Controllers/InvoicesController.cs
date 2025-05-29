@@ -52,7 +52,7 @@ namespace TaskTracker.Controllers
                 }
 
                 var timeEntries = await _context.TimeEntries
-                    .Where(t => t.ClientID == clientId && t.PaidDate == null)
+                    .Where(t => t.ClientID == clientId && t.InvoicedDate == null) // Changed from PaidDate
                     .Include(t => t.Project)
                     .Include(t => t.Client)
                     .Select(t => new TimeEntryViewModel
@@ -67,7 +67,7 @@ namespace TaskTracker.Controllers
                         HoursSpent = t.HoursSpent ?? 0m,
                         Description = t.Description,
                         StartDateTime = t.StartDateTime,
-                        EndDateTime = t.EndDateTime // Added
+                        EndDateTime = t.EndDateTime
                     })
                     .ToListAsync();
 
@@ -78,7 +78,7 @@ namespace TaskTracker.Controllers
                 }
 
                 var expenses = await _context.Expenses
-                    .Where(e => e.ClientID == clientId && e.PaidDate == null)
+                    .Where(e => e.ClientID == clientId && e.InvoicedDate == null) // Changed from PaidDate
                     .Select(e => new ExpenseViewModel
                     {
                         ExpenseID = e.ExpenseID,
@@ -166,7 +166,7 @@ namespace TaskTracker.Controllers
                     // Update time entries and create InvoiceTimeEntry records
                     foreach (var timeEntry in timeEntries)
                     {
-                        timeEntry.PaidDate = DateTime.Today;
+                        timeEntry.InvoicedDate = DateTime.Today; // Changed from PaidDate
                         _context.InvoiceTimeEntries.Add(new InvoiceTimeEntry
                         {
                             InvoiceID = invoice.InvoiceID,
@@ -177,8 +177,8 @@ namespace TaskTracker.Controllers
                     // Update expenses and create InvoiceExpense records
                     foreach (var expense in expenses)
                     {
-                        expense.PaidDate = DateTime.Today;
-                        _context.InvoiceProducts.Add(new InvoiceExpense
+                        expense.InvoicedDate = DateTime.Today; // Changed from PaidDate
+                        _context.InvoiceExpenses.Add(new InvoiceExpense
                         {
                             InvoiceID = invoice.InvoiceID,
                             ProductID = expense.ExpenseID,
@@ -266,13 +266,55 @@ namespace TaskTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var invoice = await _context.Invoices.FindAsync(id);
-            if (invoice != null)
+            try
             {
+                var invoice = await _context.Invoices
+                    .Include(i => i.InvoiceTimeEntries)
+                    .Include(i => i.InvoiceExpenses)
+                    .FirstOrDefaultAsync(i => i.InvoiceID == id);
+
+                if (invoice == null)
+                {
+                    return NotFound();
+                }
+
+                // Reset InvoicedDate for associated TimeEntry records
+                var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
+                var timeEntries = await _context.TimeEntries
+                    .Where(t => timeEntryIds.Contains(t.TimeEntryID))
+                    .ToListAsync();
+                foreach (var timeEntry in timeEntries)
+                {
+                    timeEntry.InvoicedDate = null; // Changed from PaidDate
+                }
+
+                // Reset InvoicedDate for associated Expense records
+                var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
+                var expenses = await _context.Expenses
+                    .Where(e => expenseIds.Contains(e.ExpenseID))
+                    .ToListAsync();
+                foreach (var expense in expenses)
+                {
+                    expense.InvoicedDate = null; // Changed from PaidDate
+                }
+
+                // Remove junction table records
+                _context.InvoiceTimeEntries.RemoveRange(invoice.InvoiceTimeEntries);
+                _context.InvoiceExpenses.RemoveRange(invoice.InvoiceExpenses);
+
+                // Remove the invoice
                 _context.Invoices.Remove(invoice);
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Invoice deleted successfully.";
+                return RedirectToAction(nameof(Index));
             }
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting invoice ID {InvoiceId}", id);
+                TempData["ErrorMessage"] = "An error occurred while deleting the invoice.";
+                return RedirectToAction(nameof(Index));
+            }
         }
         private bool InvoiceExists(int id)
         {
