@@ -1,14 +1,21 @@
 ﻿@model TaskTracker.Models.Invoice
 
-<div id="display-row-@Model.InvoiceID" class="display-mode card mb-2">
-    <div class avenir-light card-body">
+<div id="display-row-@Model.InvoiceID" class="display-mode card mb-2 invoice-display-row">
+    <div class="avenir-light card-body">
         <div class="row">
-            <div class="col-md-2">@Model.InvoiceDate.ToString("d")</div>
-            <div class="col-md-2">$@Model.TotalAmount.ToString("F2")</div>
-            <div class="col-md-2">@Model.Status</div>
-            <div class="col-md-2">@Model.Client.Name</div>
-            <div class="col-md-2">
+            <div class="col-md-3">@Model.InvoiceDate.ToString("d")</div>
+            <div class="col-md-3">$@Model.TotalAmount.ToString("F2")</div>
+            <div class="col-md-3">@Model.Status</div>
+            <div class="col-md-3">@Model.Client.Name</div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-12">
                 <button class="btn btn-primary edit-btn" data-Id="@Model.InvoiceID">Edit</button>
+                @if (Model.Status == TaskTracker.Models.InvoiceStatus.Draft)
+                {
+                    <a asp-action="Send" asp-route-id="@Model.InvoiceID" class="btn btn-info">Send</a>
+                }
+                <a asp-action="Paid" asp-route-id="@Model.InvoiceID" class="btn btn-success">Paid</a>
                 <a asp-action="Delete" asp-route-id="@Model.InvoiceID" class="btn btn-danger">Delete</a>
             </div>
         </div>
