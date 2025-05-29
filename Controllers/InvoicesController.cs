@@ -104,39 +104,78 @@ namespace TaskTracker.Controllers
         {
             if (ModelState.IsValid && model.ClientID > 0)
             {
-                var invoice = new Invoice
+                try
                 {
-                    ClientID = model.ClientID,
-                    InvoiceDate = DateTime.Today,
-                    TotalAmount = model.SelectedTimeEntryIDs
-                .Select(id => _context.TimeEntries.Find(id))
-                .Where(t => t != null)
-                .Sum(t => (t.HourlyRate ?? 0m) * (t.HoursSpent ?? 0m)) +
-                model.SelectedExpenseIDs
-                .Select(id => _context.Expenses.Find(id))
-                .Where(e => e != null)
-                .Sum(e => e.TotalAmount),
-                    Status = model.Status
-                };
-                _context.Invoices.Add(invoice);
-                await _context.SaveChangesAsync();
-                foreach (var timeEntryId in model.SelectedTimeEntryIDs)
-                {
-                    var timeEntry = await _context.TimeEntries.FindAsync(timeEntryId);
-                    if (timeEntry != null)
+                    // Fetch the default hourly rate from Settings
+                    var settings = await _context.Settings.FirstOrDefaultAsync();
+                    var defaultHourlyRate = settings?.DefaultHourlyRate ?? 0m;
+                    if (settings == null)
+                    {
+                        _logger.LogWarning("Settings not found. Using default hourly rate of 0.");
+                    }
+
+                    // Fetch all selected time entries and expenses in one query each
+                    var timeEntries = await _context.TimeEntries
+                        .Where(t => model.SelectedTimeEntryIDs.Contains(t.TimeEntryID))
+                        .Include(t => t.Project)
+                        .Include(t => t.Client)
+                        .ToListAsync();
+
+                    var expenses = await _context.Expenses
+                        .Where(e => model.SelectedExpenseIDs.Contains(e.ExpenseID))
+                        .ToListAsync();
+
+                    // Calculate TotalAmount for the invoice
+                    decimal totalAmount = 0m;
+
+                    // Calculate time entries total
+                    foreach (var timeEntry in timeEntries)
+                    {
+                        var hourlyRate = timeEntry.Project != null && timeEntry.Project.Rate.HasValue
+                            ? timeEntry.Project.Rate.Value
+                            : timeEntry.Client != null
+                                ? timeEntry.Client.DefaultRate
+                                : defaultHourlyRate;
+                        totalAmount += (hourlyRate * (timeEntry.HoursSpent ?? 0m));
+                    }
+
+                    // Add expenses total with validation
+                    foreach (var expense in expenses)
+                    {
+                        // Validate TotalAmount
+                        if (expense.TotalAmount != expense.UnitAmount * expense.Quantity)
+                        {
+                            _logger.LogWarning("Expense ID {ExpenseId} has inconsistent TotalAmount. Expected {Expected}, found {Actual}",
+                                expense.ExpenseID, expense.UnitAmount * expense.Quantity, expense.TotalAmount);
+                            expense.TotalAmount = expense.UnitAmount * expense.Quantity; // Correct the TotalAmount
+                        }
+                        totalAmount += expense.TotalAmount;
+                    }
+
+                    // Create the invoice
+                    var invoice = new Invoice
+                    {
+                        ClientID = model.ClientID,
+                        InvoiceDate = DateTime.Today,
+                        TotalAmount = totalAmount,
+                        Status = model.Status
+                    };
+                    _context.Invoices.Add(invoice);
+                    await _context.SaveChangesAsync();
+
+                    // Update time entries and create InvoiceTimeEntry records
+                    foreach (var timeEntry in timeEntries)
                     {
                         timeEntry.PaidDate = DateTime.Today;
                         _context.InvoiceTimeEntries.Add(new InvoiceTimeEntry
                         {
                             InvoiceID = invoice.InvoiceID,
-                            TimeEntryID = timeEntryId
+                            TimeEntryID = timeEntry.TimeEntryID
                         });
                     }
-                }
-                foreach (var expenseId in model.SelectedExpenseIDs)
-                {
-                    var expense = await _context.Expenses.FindAsync(expenseId);
-                    if (expense != null)
+
+                    // Update expenses and create InvoiceExpense records
+                    foreach (var expense in expenses)
                     {
                         expense.PaidDate = DateTime.Today;
                         _context.InvoiceProducts.Add(new InvoiceExpense
@@ -147,11 +186,19 @@ namespace TaskTracker.Controllers
                             Quantity = expense.Quantity
                         });
                     }
+
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Invoice created successfully.";
+                    return RedirectToAction(nameof(Index));
                 }
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Invoice created successfully.";
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating invoice for client ID {ClientId}", model.ClientID);
+                    TempData["ErrorMessage"] = "An error occurred while creating the invoice.";
+                    return RedirectToAction(nameof(Index));
+                }
             }
+
             TempData["ErrorMessage"] = "Error creating invoice: " + string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             return RedirectToAction(nameof(Index));
         }
