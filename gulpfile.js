@@ -16,7 +16,7 @@ gulp.task('js', () => {
 
 // Bundle and minify CSS
 gulp.task('css', () => {
-    return gulp.src(['wwwroot/css/site.css', 'wwwroot/css/clock-animation.css', 'wwwroot/css/layout.css'])
+    return gulp.src(['wwwroot/css/site.css', 'wwwroot/css/clock-animation.css', 'wwwroot/css/invoices.css', 'wwwroot/css/layout.css'])
         .pipe(concat('site.min.css'))
         .pipe(cleanCSS({ compatibility: 'ie8' }))
         .pipe(gulp.dest('wwwroot/css'));

@@ -59,3 +59,19 @@ abbr[title] {
     text-decoration-skip-ink: auto;
     cursor: help;
 }
+
+.ml-2 {
+    margin-left: .5em;
+}
+
+.ml-3 {
+    margin-left: 1em;
+}
+
+.ml-4 {
+    margin-left: 1.5em;
+}
+
+.ml-5 {
+    margin-left: 2em;
+}
