@@ -1,7 +1,7 @@
-﻿#time-entries-list > :nth-child(odd) {
+﻿#time-entries-list > :nth-child(odd), #expenses-list > :nth-child(odd) {
     background-color: #f8f8f8; /* Light gray for odd rows */
 }
 
-#time-entries-list > :nth-child(even) {
+#time-entries-list > :nth-child(even), #expenses-list > :nth-child(even) {
     background-color: #ffffff; /* White for even rows */
 }
