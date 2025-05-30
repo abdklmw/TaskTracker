@@ -21,6 +21,9 @@ builder.Services.AddScoped<SetupService>();
 //Register PdfService
 builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
 
+//Register RateCalculationService
+builder.Services.AddScoped<RateCalculationService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

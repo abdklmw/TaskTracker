@@ -16,12 +16,18 @@ namespace TaskTracker.Controllers
         private readonly AppDbContext _context;
         private readonly ILogger<InvoicesController> _logger;
         private readonly IInvoicePdfService _pdfService;
+        private readonly RateCalculationService _rateService;
 
-        public InvoicesController(AppDbContext context, ILogger<InvoicesController> logger, IInvoicePdfService pdfService)
+        public InvoicesController(
+            AppDbContext context,
+            ILogger<InvoicesController> logger,
+            IInvoicePdfService pdfService,
+            RateCalculationService rateService)
         {
             _context = context;
             _logger = logger;
             _pdfService = pdfService;
+            _rateService = rateService;
         }
 
         public async Task<IActionResult> Index()
@@ -47,13 +53,6 @@ namespace TaskTracker.Controllers
         {
             try
             {
-                var settings = await _context.Settings.FirstOrDefaultAsync();
-                var defaultHourlyRate = settings?.DefaultHourlyRate ?? 0m;
-                if (settings == null)
-                {
-                    _logger.LogWarning("Settings not found. Using default hourly rate of 0.");
-                }
-
                 var timeEntries = await _context.TimeEntries
                     .Where(t => t.ClientID == clientId && t.InvoicedDate == null)
                     .Include(t => t.Project)
@@ -61,21 +60,58 @@ namespace TaskTracker.Controllers
                     .Select(t => new TimeEntryViewModel
                     {
                         TimeEntryID = t.TimeEntryID,
-                        HourlyRate = t.Project != null && t.Project.Rate != 0m ? t.Project.Rate :
-                                     t.Client != null ? t.Client.DefaultRate :
-                                     defaultHourlyRate,
-                        RateSource = t.Project != null && t.Project.Rate != 0 ? "Project" :
-                                     t.Client != null ? "Client" :
-                                     "Settings",
+                        HourlyRate = t.HourlyRate ?? 0m, // Use TimeEntry.HourlyRate if set
+                        RateSource = "", // Will be set below
                         HoursSpent = t.HoursSpent ?? 0m,
-                        Description = t.Description,
+                        Description = t.Description ?? "",
                         StartDateTime = t.StartDateTime,
-                        EndDateTime = t.EndDateTime
+                        EndDateTime = t.EndDateTime,
+                        ProjectID = t.ProjectID,
+                        ClientID = t.ClientID
                     })
                     .ToListAsync();
 
                 foreach (var entry in timeEntries)
                 {
+                    // If TimeEntry.HourlyRate is set and non-zero, use it and mark source as "TimeEntry"
+                    if (entry.HourlyRate > 0m)
+                    {
+                        entry.RateSource = "TimeEntry";
+                    }
+                    else
+                    {
+                        // Otherwise, use RateCalculationService
+                        entry.HourlyRate = await _rateService.GetHourlyRateAsync(entry.ProjectID, entry.ClientID);
+
+                        // Determine RateSource
+                        if (entry.ProjectID.HasValue)
+                        {
+                            var project = await _context.Projects
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync(p => p.ProjectID == entry.ProjectID.Value);
+                            if (project != null && project.Rate != 0m && project.Rate == entry.HourlyRate)
+                            {
+                                entry.RateSource = "Project";
+                                entry.TotalAmount = entry.HourlyRate * entry.HoursSpent;
+                                continue;
+                            }
+                        }
+
+                        if (entry.ClientID.HasValue)
+                        {
+                            var client = await _context.Clients
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync(c => c.ClientID == entry.ClientID.Value);
+                            if (client != null && client.DefaultRate != 0m && client.DefaultRate == entry.HourlyRate)
+                            {
+                                entry.RateSource = "Client";
+                                entry.TotalAmount = entry.HourlyRate * entry.HoursSpent;
+                                continue;
+                            }
+                        }
+
+                        entry.RateSource = "Settings";
+                    }
                     entry.TotalAmount = entry.HourlyRate * entry.HoursSpent;
                 }
 
@@ -108,13 +144,6 @@ namespace TaskTracker.Controllers
             {
                 try
                 {
-                    var settings = await _context.Settings.FirstOrDefaultAsync();
-                    var defaultHourlyRate = settings?.DefaultHourlyRate ?? 0m;
-                    if (settings == null)
-                    {
-                        _logger.LogWarning("Settings not found. Using default hourly rate of 0.");
-                    }
-
                     var timeEntries = await _context.TimeEntries
                         .Where(t => model.SelectedTimeEntryIDs.Contains(t.TimeEntryID))
                         .Include(t => t.Project)
@@ -126,14 +155,9 @@ namespace TaskTracker.Controllers
                         .ToListAsync();
 
                     decimal totalAmount = 0m;
-
                     foreach (var timeEntry in timeEntries)
                     {
-                        var hourlyRate = timeEntry.Project != null && timeEntry.Project.Rate != 0m
-                            ? timeEntry.Project.Rate
-                            : timeEntry.Client != null
-                                ? timeEntry.Client.DefaultRate
-                                : defaultHourlyRate;
+                        var hourlyRate = await _rateService.GetHourlyRateAsync(timeEntry.ProjectID, timeEntry.ClientID);
                         totalAmount += (hourlyRate * (timeEntry.HoursSpent ?? 0m));
                     }
 
@@ -165,7 +189,7 @@ namespace TaskTracker.Controllers
                         {
                             InvoiceID = invoice.InvoiceID,
                             TimeEntryID = timeEntry.TimeEntryID,
-                            TimeEntry = new TimeEntry()
+                            TimeEntry = timeEntry
                         });
                     }
 
@@ -192,7 +216,6 @@ namespace TaskTracker.Controllers
                     return RedirectToAction(nameof(Index));
                 }
             }
-
             TempData["ErrorMessage"] = "Error creating invoice: " + string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             return RedirectToAction(nameof(Index));
         }
@@ -270,12 +293,10 @@ namespace TaskTracker.Controllers
                     .Include(i => i.InvoiceTimeEntries)
                     .Include(i => i.InvoiceExpenses)
                     .FirstOrDefaultAsync(i => i.InvoiceID == id);
-
                 if (invoice == null)
                 {
                     return NotFound();
                 }
-
                 var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
                 var timeEntries = await _context.TimeEntries
                     .Where(t => timeEntryIds.Contains(t.TimeEntryID))
@@ -284,7 +305,6 @@ namespace TaskTracker.Controllers
                 {
                     timeEntry.InvoicedDate = null;
                 }
-
                 var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
                 var expenses = await _context.Expenses
                     .Where(e => expenseIds.Contains(e.ExpenseID))
@@ -293,12 +313,9 @@ namespace TaskTracker.Controllers
                 {
                     expense.InvoicedDate = null;
                 }
-
                 _context.InvoiceTimeEntries.RemoveRange(invoice.InvoiceTimeEntries);
                 _context.InvoiceExpenses.RemoveRange(invoice.InvoiceExpenses);
-
                 _context.Invoices.Remove(invoice);
-
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Invoice deleted successfully.";
                 return RedirectToAction(nameof(Index));
@@ -319,28 +336,22 @@ namespace TaskTracker.Controllers
             {
                 var invoice = await _context.Invoices
                     .FirstOrDefaultAsync(i => i.InvoiceID == id);
-
                 if (invoice == null)
                 {
                     _logger.LogWarning("Invoice ID {InvoiceId} not found for sending.", id);
                     TempData["ErrorMessage"] = "Invoice not found.";
                     return RedirectToAction(nameof(Index));
                 }
-
                 if (invoice.Status == InvoiceStatus.Sent || invoice.Status == InvoiceStatus.Paid)
                 {
                     _logger.LogWarning("Invoice ID {InvoiceId} already sent or paid.", id);
                     TempData["ErrorMessage"] = "Invoice has already been sent or paid.";
                     return RedirectToAction(nameof(Index));
                 }
-
                 var pdfBytes = await _pdfService.GenerateInvoicePdfAsync(id);
-
                 invoice.InvoiceSentDate = DateTime.Today;
                 invoice.Status = InvoiceStatus.Sent;
-
                 await _context.SaveChangesAsync();
-
                 TempData["SuccessMessage"] = "Invoice PDF generated and marked as sent.";
                 return File(pdfBytes, "application/pdf", $"Invoice_{invoice.InvoiceID}.pdf");
             }
@@ -362,15 +373,12 @@ namespace TaskTracker.Controllers
                     .Include(i => i.InvoiceTimeEntries)
                     .Include(i => i.InvoiceExpenses)
                     .FirstOrDefaultAsync(i => i.InvoiceID == id);
-
                 if (invoice == null)
                 {
                     return NotFound();
                 }
-
                 invoice.PaidDate = DateTime.Today;
                 invoice.Status = InvoiceStatus.Paid;
-
                 var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
                 var timeEntries = await _context.TimeEntries
                     .Where(t => timeEntryIds.Contains(t.TimeEntryID))
@@ -379,7 +387,6 @@ namespace TaskTracker.Controllers
                 {
                     timeEntry.PaidDate = DateTime.Today;
                 }
-
                 var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
                 var expenses = await _context.Expenses
                     .Where(e => expenseIds.Contains(e.ExpenseID))
@@ -388,7 +395,6 @@ namespace TaskTracker.Controllers
                 {
                     expense.PaidDate = DateTime.Today;
                 }
-
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Invoice marked as paid successfully.";
                 return RedirectToAction(nameof(Index));

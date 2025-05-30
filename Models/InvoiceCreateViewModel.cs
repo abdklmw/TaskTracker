@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-
 namespace TaskTracker.Models
 {
     public class InvoiceCreateViewModel
@@ -26,7 +25,9 @@ namespace TaskTracker.Models
         public DateTime StartDateTime { get; set; }
         public DateTime? EndDateTime { get; set; }
         public bool IsSelected { get; set; }
-        public string RateSource { get; set; } // Added: "Project", "Client", or "Settings"
+        public string RateSource { get; set; } // "Project", "Client", or "Settings"
+        public int? ProjectID { get; set; }    // Added
+        public int? ClientID { get; set; }     // Added
     }
 
     public class ExpenseViewModel
