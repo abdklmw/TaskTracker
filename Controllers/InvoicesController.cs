@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
+using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
 {
@@ -14,11 +15,13 @@ namespace TaskTracker.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ILogger<InvoicesController> _logger;
+        private readonly IInvoicePdfService _pdfService;
 
-        public InvoicesController(AppDbContext context, ILogger<InvoicesController> logger)
+        public InvoicesController(AppDbContext context, ILogger<InvoicesController> logger, IInvoicePdfService pdfService)
         {
             _context = context;
             _logger = logger;
+            _pdfService = pdfService;
         }
 
         public async Task<IActionResult> Index()
@@ -58,10 +61,10 @@ namespace TaskTracker.Controllers
                     .Select(t => new TimeEntryViewModel
                     {
                         TimeEntryID = t.TimeEntryID,
-                        HourlyRate = t.Project != null && t.Project.Rate.HasValue ? t.Project.Rate.Value :
+                        HourlyRate = t.Project != null && t.Project.Rate != 0m ? t.Project.Rate :
                                      t.Client != null ? t.Client.DefaultRate :
                                      defaultHourlyRate,
-                        RateSource = t.Project != null && t.Project.Rate.HasValue ? "Project" :
+                        RateSource = t.Project != null && t.Project.Rate != 0 ? "Project" :
                                      t.Client != null ? "Client" :
                                      "Settings",
                         HoursSpent = t.HoursSpent ?? 0m,
@@ -126,8 +129,8 @@ namespace TaskTracker.Controllers
 
                     foreach (var timeEntry in timeEntries)
                     {
-                        var hourlyRate = timeEntry.Project != null && timeEntry.Project.Rate.HasValue
-                            ? timeEntry.Project.Rate.Value
+                        var hourlyRate = timeEntry.Project != null && timeEntry.Project.Rate != 0m
+                            ? timeEntry.Project.Rate
                             : timeEntry.Client != null
                                 ? timeEntry.Client.DefaultRate
                                 : defaultHourlyRate;
@@ -161,7 +164,8 @@ namespace TaskTracker.Controllers
                         _context.InvoiceTimeEntries.Add(new InvoiceTimeEntry
                         {
                             InvoiceID = invoice.InvoiceID,
-                            TimeEntryID = timeEntry.TimeEntryID
+                            TimeEntryID = timeEntry.TimeEntryID,
+                            TimeEntry = new TimeEntry()
                         });
                     }
 
@@ -311,8 +315,41 @@ namespace TaskTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Send(int id)
         {
-            // To be implemented
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                var invoice = await _context.Invoices
+                    .FirstOrDefaultAsync(i => i.InvoiceID == id);
+
+                if (invoice == null)
+                {
+                    _logger.LogWarning("Invoice ID {InvoiceId} not found for sending.", id);
+                    TempData["ErrorMessage"] = "Invoice not found.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (invoice.Status == InvoiceStatus.Sent || invoice.Status == InvoiceStatus.Paid)
+                {
+                    _logger.LogWarning("Invoice ID {InvoiceId} already sent or paid.", id);
+                    TempData["ErrorMessage"] = "Invoice has already been sent or paid.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var pdfBytes = await _pdfService.GenerateInvoicePdfAsync(id);
+
+                invoice.InvoiceSentDate = DateTime.Today;
+                invoice.Status = InvoiceStatus.Sent;
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Invoice PDF generated and marked as sent.";
+                return File(pdfBytes, "application/pdf", $"Invoice_{invoice.InvoiceID}.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending invoice ID {InvoiceId}", id);
+                TempData["ErrorMessage"] = "An error occurred while generating the invoice PDF.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [HttpPost, ActionName("Paid")]

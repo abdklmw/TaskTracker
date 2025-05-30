@@ -11,6 +11,11 @@
         <span asp-validation-for="CompanyName" class="text-danger"></span>
     </div>
     <div class="form-group">
+        <label asp-for="DefaultHourlyRate" class="control-label"></label>
+        <input asp-for="DefaultHourlyRate" class="form-control" type="number" step="0.01" required />
+        <span asp-validation-for="DefaultHourlyRate" class="text-danger"></span>
+    </div>
+    <div class="form-group">
         <label asp-for="AccountsReceivableAddress" class="control-label"></label>
         <textarea asp-for="AccountsReceivableAddress" class="form-control"></textarea>
         <span asp-validation-for="AccountsReceivableAddress" class="text-danger"></span>
@@ -36,9 +41,9 @@
         <span asp-validation-for="ThankYouMessage" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label asp-for="DefaultHourlyRate" class="control-label"></label>
-        <input asp-for="DefaultHourlyRate" class="form-control" type="number" step="0.01" required />
-        <span asp-validation-for="DefaultHourlyRate" class="text-danger"></span>
+        <label asp-for="InvoiceTemplate" class="control-label"></label>
+        <textarea asp-for="InvoiceTemplate" class="form-control" id="invoiceTemplate"></textarea>
+        <span asp-validation-for="InvoiceTemplate" class="text-danger"></span>
     </div>
     <div class="form-group">
         <label asp-for="SmtpServer" class="control-label"></label>
@@ -73,4 +78,20 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+@*     <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/45.1.0/ckeditor5.css" />
+    <script src="https://cdn.ckeditor.com/ckeditor5/45.1.0/ckeditor5.umd.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            ClassicEditor
+                .create(document.querySelector('#invoiceTemplate'), {
+                    toolbar: ['undo', 'redo', '|', 'bold', 'italic', 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'bulletedList', 'numberedList', 'insertTable']
+                })
+                .then(editor => {
+                    console.log('Editor was initialized', editor);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        });
+    </script> *@
 }
