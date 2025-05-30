@@ -97,6 +97,12 @@ namespace TaskTracker.Data
                     AccountsReceivableEmail = null,
                     PaymentInformation = null,
                     ThankYouMessage = null,
+                    DefaultHourlyRate = 0m,
+                    SmtpServer = null,
+                    SmtpPort = null,
+                    SmtpSenderEmail = null,
+                    SmtpUsername = null,
+                    SmtpPassword = null,
                     SingletonGuard = 0
                 }
             );

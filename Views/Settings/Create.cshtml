@@ -13,7 +13,7 @@
     <input type="hidden" asp-for="Id" />
     <div class="form-group">
         <label asp-for="CompanyName" class="control-label"></label>
-        <input asp-for="CompanyName" class="form-control" />
+        <input asp-for="CompanyName" class="form-control" required />
         <span asp-validation-for="CompanyName" class="text-danger"></span>
     </div>
     <div class="form-group">
@@ -42,6 +42,36 @@
         <span asp-validation-for="ThankYouMessage" class="text-danger"></span>
     </div>
     <div class="form-group">
+        <label asp-for="DefaultHourlyRate" class="control-label"></label>
+        <input asp-for="DefaultHourlyRate" class="form-control" type="number" step="0.01" required />
+        <span asp-validation-for="DefaultHourlyRate" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SmtpServer" class="control-label"></label>
+        <input asp-for="SmtpServer" class="form-control" />
+        <span asp-validation-for="SmtpServer" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SmtpPort" class="control-label"></label>
+        <input asp-for="SmtpPort" class="form-control" type="number" />
+        <span asp-validation-for="SmtpPort" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SmtpSenderEmail" class="control-label"></label>
+        <input asp-for="SmtpSenderEmail" class="form-control" />
+        <span asp-validation-for="SmtpSenderEmail" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SmtpUsername" class="control-label"></label>
+        <input asp-for="SmtpUsername" class="form-control" />
+        <span asp-validation-for="SmtpUsername" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SmtpPassword" class="control-label"></label>
+        <input asp-for="SmtpPassword" class="form-control" type="password" />
+        <span asp-validation-for="SmtpPassword" class="text-danger"></span>
+    </div>
+    <div class="form-group mt-4">
         <button type="submit" class="btn btn-primary">Save</button>
     </div>
 </form>
