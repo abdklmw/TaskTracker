@@ -157,7 +157,9 @@ namespace TaskTracker.Controllers
                     decimal totalAmount = 0m;
                     foreach (var timeEntry in timeEntries)
                     {
+                        // Calculate and update HourlyRate using RateCalculationService
                         var hourlyRate = await _rateService.GetHourlyRateAsync(timeEntry.ProjectID, timeEntry.ClientID);
+                        timeEntry.HourlyRate = hourlyRate;
                         totalAmount += (hourlyRate * (timeEntry.HoursSpent ?? 0m));
                     }
 
