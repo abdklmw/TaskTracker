@@ -18,6 +18,9 @@ builder.Services.AddControllersWithViews();
 // Register SetupService
 builder.Services.AddScoped<SetupService>();
 
+//Register PdfService
+builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
