@@ -85,7 +85,7 @@ namespace TaskTracker.Models
     <div class='header'>
         <div class='company-info'>
             <p>{{CompanyName}}</p>
-            <p>{{AccountsRece electrolytesReceivableAddress}}</p>
+            <p>{{AccountsReceivableAddress}}</p>
             <p>{{AccountsReceivablePhone}}</p>
             <p>{{AccountsReceivableEmail}}</p>
         </div>
