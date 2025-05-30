@@ -28,20 +28,24 @@ namespace TaskTracker.Controllers
 
         public async Task<IActionResult> Index()
         {
-            if (User.Identity.IsAuthenticated)
-            {
-                var userId = _userManager.GetUserId(User);
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return RedirectToAction("Login", "Account");
-                }
+            bool userIsAuthenticated = User?.Identity?.IsAuthenticated ?? false; // Safely check for null
 
+            if (User == null || !userIsAuthenticated)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var userId = _userManager.GetUserId(User);
+
+            if (userIsAuthenticated)
+            {
                 var setupResult = await _setupService.CheckSetupAsync(userId);
                 if (setupResult != null)
                 {
                     return setupResult;
                 }
             }
+
             return View(await _context.Clients.OrderBy(c => c.Name).ToListAsync());
         }
 

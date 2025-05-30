@@ -58,10 +58,10 @@ namespace TaskTracker.Controllers
                     .Select(t => new TimeEntryViewModel
                     {
                         TimeEntryID = t.TimeEntryID,
-                        HourlyRate = t.Project != null && t.Project.Rate.HasValue ? t.Project.Rate.Value :
+                        HourlyRate = t.Project != null && t.Project.Rate != 0m ? t.Project.Rate :
                                      t.Client != null ? t.Client.DefaultRate :
                                      defaultHourlyRate,
-                        RateSource = t.Project != null && t.Project.Rate.HasValue ? "Project" :
+                        RateSource = t.Project != null && t.Project.Rate != 0 ? "Project" :
                                      t.Client != null ? "Client" :
                                      "Settings",
                         HoursSpent = t.HoursSpent ?? 0m,
@@ -126,8 +126,8 @@ namespace TaskTracker.Controllers
 
                     foreach (var timeEntry in timeEntries)
                     {
-                        var hourlyRate = timeEntry.Project != null && timeEntry.Project.Rate.HasValue
-                            ? timeEntry.Project.Rate.Value
+                        var hourlyRate = timeEntry.Project != null && timeEntry.Project.Rate != 0m
+                            ? timeEntry.Project.Rate
                             : timeEntry.Client != null
                                 ? timeEntry.Client.DefaultRate
                                 : defaultHourlyRate;
@@ -161,7 +161,8 @@ namespace TaskTracker.Controllers
                         _context.InvoiceTimeEntries.Add(new InvoiceTimeEntry
                         {
                             InvoiceID = invoice.InvoiceID,
-                            TimeEntryID = timeEntry.TimeEntryID
+                            TimeEntryID = timeEntry.TimeEntryID,
+                            TimeEntry = new TimeEntry()
                         });
                     }
 
