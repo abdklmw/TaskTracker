@@ -1,0 +1,68 @@
+﻿@model TaskTracker.Models.TimeEntryImportViewModel
+
+@{
+    ViewData["Title"] = "Import Time Entries";
+}
+
+<h1>Import Time Entries</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Import" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ClientID" class="control-label"></label>
+                <select asp-for="ClientID" class="form-control" asp-items="Model.Clients">
+                </select>
+                <span asp-validation-for="ClientID" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ProjectID" class="control-label"></label>
+                <select asp-for="ProjectID" class="form-control" asp-items="Model.Projects">
+                </select>
+                <span asp-validation-for="ProjectID" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="CsvFile" class="control-label"></label>
+                <input asp-for="CsvFile" type="file" class="form-control" accept=".csv" />
+                <span asp-validation-for="CsvFile" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Import" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <h4>CSV File Format</h4>
+        <p>The CSV file must have the following columns, with the first row containing headers:</p>
+        <pre>
+StartDateTime,EndDateTime,HoursSpent,HourlyRate,Description,InvoicedDate,PaidDate
+        </pre>
+        <p><strong>Notes:</strong></p>
+        <ul>
+            <li><strong>StartDateTime</strong>: Required. Format: <code>MM/dd/yyyy</code> or <code>MM/dd/yyyy HH:mm</code>. If no time is provided, noon (12:00) is used.</li>
+            <li><strong>EndDateTime</strong>: Optional. Format: <code>MM/dd/yyyy HH:mm</code>.</li>
+            <li><strong>HoursSpent</strong>: Optional. Decimal number (e.g., <code>2.5</code>). If not provided and EndDateTime is set, calculated from StartDateTime and EndDateTime.</li>
+            <li><strong>HourlyRate</strong>: If missing, set automatically based on project or client rate.</li>
+            <li><strong>Description</strong>: Optional. Text description of the time entry.</li>
+            <li><strong>InvoicedDate</strong>: Optional. Format: <code>MM/dd/yyyy</code>.</li>
+            <li><strong>PaidDate</strong>: Optional. Format: <code>MM/dd/yyyy</code>.</li>
+        </ul>
+        <p><strong>Example:</strong></p>
+        <pre>
+StartDateTime,EndDateTime,HoursSpent,HourlyRate,Description,InvoicedDate,PaidDate
+"10/15/2025","10/15/2025 14:30",2.5,0,"Meeting with client",,
+"10/16/2025 09:00","10/16/2025 11:00",2,0,"Design review",,
+"10/17/2025",,,0,"Planning session",,
+        </pre>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

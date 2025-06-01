@@ -24,6 +24,9 @@ builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
 //Register RateCalculationService
 builder.Services.AddScoped<RateCalculationService>();
 
+// Register TimeEntryImportService
+builder.Services.AddScoped<TimeEntryImportService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

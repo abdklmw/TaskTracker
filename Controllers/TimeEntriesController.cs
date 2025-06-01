@@ -5,6 +5,10 @@ using TaskTracker.Data;
 using TaskTracker.Models;
 using Microsoft.AspNetCore.Identity;
 using TaskTracker.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace TaskTracker.Controllers
 {
@@ -14,17 +18,23 @@ namespace TaskTracker.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<TimeEntriesController> _logger;
         private readonly SetupService _setupService;
+        private readonly RateCalculationService _rateService;
+        private readonly TimeEntryImportService _importService;
 
         public TimeEntriesController(
             AppDbContext context,
             UserManager<ApplicationUser> userManager,
             ILogger<TimeEntriesController> logger,
-            SetupService setupService)
+            SetupService setupService,
+            RateCalculationService rateService,
+            TimeEntryImportService importService)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
             _setupService = setupService;
+            _rateService = rateService;
+            _importService = importService;
         }
 
         public async Task<IActionResult> Index(int recordLimit = 10, int page = 1)
@@ -579,6 +589,121 @@ namespace TaskTracker.Controllers
         private bool TimeEntryExists(int id)
         {
             return _context.TimeEntries.Any(e => e.TimeEntryID == id);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Import()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogError("User ID could not be retrieved for authenticated user.");
+                return RedirectToAction("Login", "Account");
+            }
+
+            var setupResult = await _setupService.CheckSetupAsync(userId);
+            if (setupResult != null)
+            {
+                return setupResult;
+            }
+
+            var viewModel = new TimeEntryImportViewModel();
+
+            // Populate client dropdown
+            var clientList = await _context.Clients
+                .Select(c => new { c.ClientID, c.Name })
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+            viewModel.Clients = clientList
+                .Select(c => new SelectListItem { Value = c.ClientID.ToString(), Text = c.Name })
+                .ToList();
+            viewModel.Clients.Insert(0, new SelectListItem { Value = "0", Text = "Select Client" });
+
+            // Populate project dropdown
+            var projectList = await _context.Projects
+                .Select(p => new { p.ProjectID, p.Name })
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+            viewModel.Projects = projectList
+                .Select(p => new SelectListItem { Value = p.ProjectID.ToString(), Text = p.Name })
+                .ToList();
+            viewModel.Projects.Insert(0, new SelectListItem { Value = "0", Text = "Select Project" });
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Import(TimeEntryImportViewModel model)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogError("User ID could not be retrieved for authenticated user.");
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (!ModelState.IsValid || model.CsvFile == null || model.CsvFile.Length == 0)
+            {
+                // Repopulate dropdowns for error case
+                model.Clients = await _context.Clients
+                    .Select(c => new SelectListItem { Value = c.ClientID.ToString(), Text = c.Name })
+                    .OrderBy(c => c.Text)
+                    .ToListAsync();
+                model.Clients.Insert(0, new SelectListItem { Value = "0", Text = "Select Client" });
+
+                model.Projects = await _context.Projects
+                    .Select(p => new SelectListItem { Value = p.ProjectID.ToString(), Text = p.Name })
+                    .OrderBy(p => p.Text)
+                    .ToListAsync();
+                model.Projects.Insert(0, new SelectListItem { Value = "0", Text = "Select Project" });
+
+                ModelState.AddModelError("CsvFile", "Please upload a valid CSV file.");
+                return View(model);
+            }
+
+            try
+            {
+                using var stream = model.CsvFile.OpenReadStream();
+                var (timeEntries, errors) = await _importService.ImportFromCsvAsync(stream, userId, model.ClientID, model.ProjectID);
+
+                if (errors.Any())
+                {
+                    foreach (var error in errors)
+                    {
+                        ModelState.AddModelError("", error);
+                    }
+                }
+
+                if (timeEntries.Any() && ModelState.IsValid)
+                {
+                    _context.TimeEntries.AddRange(timeEntries);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Imported {Count} time entries for user {UserId}", timeEntries.Count, userId);
+                    TempData["SuccessMessage"] = $"Successfully imported {timeEntries.Count} time entries.";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error importing CSV for user {UserId}", userId);
+                ModelState.AddModelError("", "An error occurred while processing the CSV file.");
+            }
+
+            // Repopulate dropdowns for error case
+            model.Clients = await _context.Clients
+                .Select(c => new SelectListItem { Value = c.ClientID.ToString(), Text = c.Name })
+                .OrderBy(c => c.Text)
+                .ToListAsync();
+            model.Clients.Insert(0, new SelectListItem { Value = "0", Text = "Select Client" });
+
+            model.Projects = await _context.Projects
+                .Select(p => new SelectListItem { Value = p.ProjectID.ToString(), Text = p.Name })
+                .OrderBy(p => p.Text)
+                .ToListAsync();
+            model.Projects.Insert(0, new SelectListItem { Value = "0", Text = "Select Project" });
+
+            return View(model);
         }
     }
 }
