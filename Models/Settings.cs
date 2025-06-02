@@ -64,50 +64,50 @@ namespace TaskTracker.Models
         [DataType(DataType.Html)]
         [DisplayName("Invoice Template")]
         public string InvoiceTemplate { get; set; } = @"
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #333; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .company-info { text-align: left; }
-        .payment-info { text-align: right; }
-        .title { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
-        .client-info { margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; font-weight: bold; }
-        .total { text-align: right; font-size: 14px; font-weight: bold; }
-        .footer { margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class='header'>
-        <div class='company-info'>
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+            body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #333; }
+            .header { overflow: auto; margin-bottom: 20px; }
+            .company-info { float: left; text-align: left; }
+            .payment-info { float: right; text-align: right; }
+            .title { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; clear: both; }
+            .client-info { margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f4f4f4; font-weight: bold; }
+            .total { text-align: right; font-size: 14px; font-weight: bold; }
+            .footer { margin-top: 20px; }
+            </style>
+            </head>
+            <body>
+            <div class='header'>
+            <div class='company-info'>
             <p>{{CompanyName}}</p>
             <p>{{AccountsReceivableAddress}}</p>
             <p>{{AccountsReceivablePhone}}</p>
             <p>{{AccountsReceivableEmail}}</p>
-        </div>
-        <div class='payment-info'>
+            </div>
+            <div class='payment-info'>
             <p>Payment Information</p>
             <p>{{PaymentInformation}}</p>
-        </div>
-    </div>
-    <div class='title'>Invoice #{{InvoiceID}}</div>
-    <div class='client-info'>
-        <p>Billed To: {{ClientName}}</p>
-        <p>Invoice Date: {{InvoiceDate}}</p>
-        <p>Total Amount: ${{TotalAmount}}</p>
-        <p>Status: {{Status}}</p>
-    </div>
-    {{TimeEntriesTable}}
-    {{ExpensesTable}}
-    <div class='total'>Total: ${{TotalAmount}}</div>
-    <div class='footer'>
-    </div>
-</body>
-</html>";
+            </div>
+            </div>
+            <div class='title'>Invoice #{{InvoiceID}}</div>
+            <div class='client-info'>
+            <p>Billed To: {{ClientName}}</p>
+            <p>Invoice Date: {{InvoiceDate}}</p>
+            <p>Total Amount: ${{TotalAmount}}</p>
+            <p>Status: {{Status}}</p>
+            </div>
+            {{TimeEntriesTable}}
+            {{ExpensesTable}}
+            <div class='total'>Total: ${{TotalAmount}}</div>
+            <div class='footer'>
+            </div>
+            </body>
+            </html>";
 
         public int SingletonGuard { get; set; } = 0;
     }
