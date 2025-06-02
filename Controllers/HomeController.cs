@@ -14,17 +14,20 @@ namespace TaskTracker.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SetupService _setupService;
+        private readonly DropdownService _dropdownService;
 
         public HomeController(
             AppDbContext context,
             UserManager<ApplicationUser> userManager,
             ILogger<HomeController> logger,
-            SetupService setupService)
+            SetupService setupService,
+            DropdownService dropdownService)
         {
             _logger = logger;
             _context = context;
             _userManager = userManager;
             _setupService = setupService;
+            _dropdownService = dropdownService;
         }
 
         public async Task<IActionResult> Index()
@@ -76,18 +79,12 @@ namespace TaskTracker.Controllers
                 }
 
                 // Populate ClientID dropdown
-                var clientList = _context.Clients
-                    .Select(c => new { c.ClientID, c.Name })
-                    .ToList();
-                clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-                ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", 0);
+                var clientList = await _dropdownService.GetClientDropdownAsync(0);
+                ViewBag.ClientID = new SelectList(clientList, "Value", "Text", 0);
 
                 // Populate ProjectID dropdown
-                var projectList = _context.Projects
-                    .Select(p => new { p.ProjectID, p.Name })
-                    .ToList();
-                projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
-                ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", 0);
+                var projectList = await _dropdownService.GetProjectDropdownAsync(0);
+                ViewBag.ProjectID = new SelectList(projectList, "Value", "Text", 0);
 
                 // Set form visibility and return target
                 ViewBag.VisibleCreateForm = true;

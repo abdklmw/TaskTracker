@@ -20,6 +20,7 @@ namespace TaskTracker.Controllers
         private readonly SetupService _setupService;
         private readonly RateCalculationService _rateService;
         private readonly TimeEntryImportService _importService;
+        private readonly DropdownService _dropdownService;
 
         public TimeEntriesController(
             AppDbContext context,
@@ -27,7 +28,8 @@ namespace TaskTracker.Controllers
             ILogger<TimeEntriesController> logger,
             SetupService setupService,
             RateCalculationService rateService,
-            TimeEntryImportService importService)
+            TimeEntryImportService importService,
+            DropdownService dropdownService)
         {
             _context = context;
             _userManager = userManager;
@@ -35,6 +37,7 @@ namespace TaskTracker.Controllers
             _setupService = setupService;
             _rateService = rateService;
             _importService = importService;
+            _dropdownService = dropdownService;
         }
 
         public async Task<IActionResult> Index(int recordLimit = 10, int page = 1)
@@ -112,19 +115,20 @@ namespace TaskTracker.Controllers
             };
             viewModel.RecordLimitOptions = new SelectList(limitOptions, "Value", "Text", recordLimit);
 
-            // Populate create form dropdowns
-            var clientList = _context.Clients
-                .Select(c => new { c.ClientID, c.Name })
-                .ToList();
-            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            viewModel.ClientList = new SelectList(clientList, "ClientID", "Name", 0);
+            // Populate create form dropdowns using DropdownService
+            viewModel.ClientList = new SelectList(
+                await _dropdownService.GetClientDropdownAsync(0),
+                "Value",
+                "Text",
+                0
+            );
+            viewModel.ProjectList = new SelectList(
+                await _dropdownService.GetProjectDropdownAsync(0),
+                "Value",
+                "Text",
+                0
+            );
             ViewBag.ClientID = viewModel.ClientList;
-
-            var projectList = _context.Projects
-                .Select(p => new { p.ProjectID, p.Name })
-                .ToList();
-            projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
-            viewModel.ProjectList = new SelectList(projectList, "ProjectID", "Name", 0);
             ViewBag.ProjectID = viewModel.ProjectList;
 
             // Apply pagination
@@ -163,7 +167,6 @@ namespace TaskTracker.Controllers
             return View(viewModel);
         }
 
-        // Other actions (Create, StartTimer, StopTimer, Edit, Delete, DeleteConfirmed, TimeEntryExists) remain unchanged
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("ClientID,ProjectID,Description,StartDateTime,EndDateTime,HoursSpent")] TimeEntry timeEntry, string? action)
@@ -243,14 +246,8 @@ namespace TaskTracker.Controllers
             }
 
             // Repopulate view model for error case
-            var clientList = _context.Clients
-                .Select(c => new { c.ClientID, c.Name })
-                .ToList();
-            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            var projectList = _context.Projects
-                .Select(p => new { p.ProjectID, p.Name })
-                .ToList();
-            projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
+            var clientList = await _dropdownService.GetClientDropdownAsync(timeEntry.ClientID);
+            var projectList = await _dropdownService.GetProjectDropdownAsync(timeEntry.ProjectID);
 
             var viewModel = new TimeEntriesIndexViewModel
             {
@@ -273,8 +270,8 @@ namespace TaskTracker.Controllers
                     new { Value = 200, Text = "200" },
                     new { Value = -1, Text = "ALL" }
                 }, "Value", "Text", 10),
-                ClientList = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID),
-                ProjectList = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID),
+                ClientList = new SelectList(clientList, "Value", "Text", timeEntry.ClientID),
+                ProjectList = new SelectList(projectList, "Value", "Text", timeEntry.ProjectID),
                 TimezoneOffset = timezoneOffset,
                 VisibleCreateForm = true,
                 ReturnTo = ViewBag.ReturnTo ?? "TimeEntries",
@@ -335,14 +332,8 @@ namespace TaskTracker.Controllers
                 timezoneOffset = 0;
             }
 
-            var clientList = _context.Clients
-                .Select(c => new { c.ClientID, c.Name })
-                .ToList();
-            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            var projectList = _context.Projects
-                .Select(p => new { p.ProjectID, p.Name })
-                .ToList();
-            projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
+            var clientList = await _dropdownService.GetClientDropdownAsync(timeEntry.ClientID);
+            var projectList = await _dropdownService.GetProjectDropdownAsync(timeEntry.ProjectID);
 
             var viewModel = new TimeEntriesIndexViewModel
             {
@@ -365,8 +356,8 @@ namespace TaskTracker.Controllers
                     new { Value = 200, Text = "200" },
                     new { Value = -1, Text = "ALL" }
                 }, "Value", "Text", 10),
-                ClientList = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID),
-                ProjectList = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID),
+                ClientList = new SelectList(clientList, "Value", "Text", timeEntry.ClientID),
+                ProjectList = new SelectList(projectList, "Value", "Text", timeEntry.ProjectID),
                 TimezoneOffset = timezoneOffset,
                 VisibleCreateForm = true,
                 ReturnTo = "TimeEntries",
@@ -461,17 +452,11 @@ namespace TaskTracker.Controllers
                 ViewBag.TimezoneOffset = 0; // Fallback to UTC
             }
 
-            var clientList = _context.Clients
-                .Select(c => new { c.ClientID, c.Name })
-                .ToList();
-            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID);
+            var clientList = await _dropdownService.GetClientDropdownAsync(timeEntry.ClientID);
+            ViewBag.ClientID = new SelectList(clientList, "Value", "Text", timeEntry.ClientID);
 
-            var projectList = _context.Projects
-                .Select(p => new { p.ProjectID, p.Name })
-                .ToList();
-            projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
-            ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID);
+            var projectList = await _dropdownService.GetProjectDropdownAsync(timeEntry.ProjectID);
+            ViewBag.ProjectID = new SelectList(projectList, "Value", "Text", timeEntry.ProjectID);
 
             return View(timeEntry);
         }
@@ -516,17 +501,11 @@ namespace TaskTracker.Controllers
             }
 
             // Repopulate dropdowns
-            var clientList = _context.Clients
-                .Select(c => new { c.ClientID, c.Name })
-                .ToList();
-            clientList.Insert(0, new { ClientID = 0, Name = "Select Client" });
-            ViewBag.ClientID = new SelectList(clientList, "ClientID", "Name", timeEntry.ClientID);
+            var clientList = await _dropdownService.GetClientDropdownAsync(timeEntry.ClientID);
+            ViewBag.ClientID = new SelectList(clientList, "Value", "Text", timeEntry.ClientID);
 
-            var projectList = _context.Projects
-                .Select(p => new { p.ProjectID, p.Name })
-                .ToList();
-            projectList.Insert(0, new { ProjectID = 0, Name = "Select Project" });
-            ViewBag.ProjectID = new SelectList(projectList, "ProjectID", "Name", timeEntry.ProjectID);
+            var projectList = await _dropdownService.GetProjectDropdownAsync(timeEntry.ProjectID);
+            ViewBag.ProjectID = new SelectList(projectList, "Value", "Text", timeEntry.ProjectID);
 
             // Calculate dynamic offset for view
             var user = await _userManager.FindByIdAsync(userId);
@@ -607,28 +586,7 @@ namespace TaskTracker.Controllers
                 return setupResult;
             }
 
-            var viewModel = new TimeEntryImportViewModel();
-
-            // Populate client dropdown
-            var clientList = await _context.Clients
-                .Select(c => new { c.ClientID, c.Name })
-                .OrderBy(c => c.Name)
-                .ToListAsync();
-            viewModel.Clients = clientList
-                .Select(c => new SelectListItem { Value = c.ClientID.ToString(), Text = c.Name })
-                .ToList();
-            viewModel.Clients.Insert(0, new SelectListItem { Value = "0", Text = "Select Client" });
-
-            // Populate project dropdown
-            var projectList = await _context.Projects
-                .Select(p => new { p.ProjectID, p.Name })
-                .OrderBy(p => p.Name)
-                .ToListAsync();
-            viewModel.Projects = projectList
-                .Select(p => new SelectListItem { Value = p.ProjectID.ToString(), Text = p.Name })
-                .ToList();
-            viewModel.Projects.Insert(0, new SelectListItem { Value = "0", Text = "Select Project" });
-
+            var viewModel = await PopulateImportViewModelAsync(new TimeEntryImportViewModel());
             return View(viewModel);
         }
 
@@ -645,21 +603,9 @@ namespace TaskTracker.Controllers
 
             if (!ModelState.IsValid || model.CsvFile == null || model.CsvFile.Length == 0)
             {
-                // Repopulate dropdowns for error case
-                model.Clients = await _context.Clients
-                    .Select(c => new SelectListItem { Value = c.ClientID.ToString(), Text = c.Name })
-                    .OrderBy(c => c.Text)
-                    .ToListAsync();
-                model.Clients.Insert(0, new SelectListItem { Value = "0", Text = "Select Client" });
-
-                model.Projects = await _context.Projects
-                    .Select(p => new SelectListItem { Value = p.ProjectID.ToString(), Text = p.Name })
-                    .OrderBy(p => p.Text)
-                    .ToListAsync();
-                model.Projects.Insert(0, new SelectListItem { Value = "0", Text = "Select Project" });
-
                 ModelState.AddModelError("CsvFile", "Please upload a valid CSV file.");
-                return View(model);
+                var viewModel = await PopulateImportViewModelAsync(model);
+                return View(viewModel);
             }
 
             try
@@ -690,20 +636,15 @@ namespace TaskTracker.Controllers
                 ModelState.AddModelError("", "An error occurred while processing the CSV file.");
             }
 
-            // Repopulate dropdowns for error case
-            model.Clients = await _context.Clients
-                .Select(c => new SelectListItem { Value = c.ClientID.ToString(), Text = c.Name })
-                .OrderBy(c => c.Text)
-                .ToListAsync();
-            model.Clients.Insert(0, new SelectListItem { Value = "0", Text = "Select Client" });
+            var errorViewModel = await PopulateImportViewModelAsync(model);
+            return View(errorViewModel);
+        }
 
-            model.Projects = await _context.Projects
-                .Select(p => new SelectListItem { Value = p.ProjectID.ToString(), Text = p.Name })
-                .OrderBy(p => p.Text)
-                .ToListAsync();
-            model.Projects.Insert(0, new SelectListItem { Value = "0", Text = "Select Project" });
-
-            return View(model);
+        private async Task<TimeEntryImportViewModel> PopulateImportViewModelAsync(TimeEntryImportViewModel model)
+        {
+            model.Clients = await _dropdownService.GetClientDropdownAsync(model.ClientID);
+            model.Projects = await _dropdownService.GetProjectDropdownAsync(model.ProjectID);
+            return model;
         }
     }
 }

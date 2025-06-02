@@ -17,7 +17,6 @@
             <div class="col-md-2">
                 <label asp-for="Expense.ClientID" class="form-label">Client</label>
                 <select asp-for="Expense.ClientID" class="form-control" asp-items="@ViewBag.ClientList">
-                    <option value="">Select a client</option>
                 </select>
                 <span asp-validation-for="Expense.ClientID" class="text-danger"></span>
             </div>

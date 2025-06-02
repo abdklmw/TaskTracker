@@ -56,30 +56,28 @@ namespace TaskTracker.Services
 
                     try
                     {
-                        // Parse StartDateTime (default to noon if no time)
+                        // Parse StartDateTime (required)
                         string startDateStr = csv.GetField("StartDateTime") ?? "";
                         if (string.IsNullOrWhiteSpace(startDateStr))
                         {
-                            errors.Add($"Row {rowNumber}: StartDateTime is required.");
+                            errors.Add($"Row {rowNumber}: Skipped - StartDateTime is required.");
                             continue;
                         }
 
-                        if (DateTime.TryParse(startDateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var startDate))
+                        if (!DateTime.TryParse(startDateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var startDate))
                         {
-                            // Check if time was provided (e.g., contains "AM", "PM", or ":")
-                            if (!startDateStr.Contains("AM", StringComparison.OrdinalIgnoreCase) &&
-                                !startDateStr.Contains("PM", StringComparison.OrdinalIgnoreCase) &&
-                                !startDateStr.Contains(":"))
-                            {
-                                startDate = new DateTime(startDate.Year, startDate.Month, startDate.Day, 12, 0, 0, DateTimeKind.Utc);
-                            }
-                            timeEntry.StartDateTime = startDate.ToUniversalTime();
-                        }
-                        else
-                        {
-                            errors.Add($"Row {rowNumber}: Invalid StartDateTime format: {startDateStr}");
+                            errors.Add($"Row {rowNumber}: Skipped - Invalid StartDateTime format: {startDateStr}.");
                             continue;
                         }
+
+                        // Check if time was provided (e.g., contains "AM", "PM", or ":")
+                        if (!startDateStr.Contains("AM", StringComparison.OrdinalIgnoreCase) &&
+                            !startDateStr.Contains("PM", StringComparison.OrdinalIgnoreCase) &&
+                            !startDateStr.Contains(":"))
+                        {
+                            startDate = new DateTime(startDate.Year, startDate.Month, startDate.Day, 12, 0, 0, DateTimeKind.Utc);
+                        }
+                        timeEntry.StartDateTime = startDate.ToUniversalTime();
 
                         // Parse EndDateTime (optional)
                         if (csv.TryGetField<DateTime>("EndDateTime", out var endDate))
@@ -88,11 +86,18 @@ namespace TaskTracker.Services
                         }
 
                         // Parse HoursSpent (optional)
-                        if (csv.TryGetField<decimal>("HoursSpent", out var hoursSpent))
+                        bool hasHoursSpent = csv.TryGetField<decimal>("HoursSpent", out var hoursSpent);
+                        if (hasHoursSpent)
                         {
                             timeEntry.HoursSpent = hoursSpent;
                         }
-                        else if (timeEntry.EndDateTime.HasValue)
+
+                        // Calculate EndDateTime if missing but StartDateTime and HoursSpent are present
+                        if (!timeEntry.EndDateTime.HasValue && hasHoursSpent && timeEntry.HoursSpent.HasValue)
+                        {
+                            timeEntry.EndDateTime = timeEntry.StartDateTime.AddHours((double)timeEntry.HoursSpent.Value);
+                        }
+                        else if (timeEntry.EndDateTime.HasValue && !hasHoursSpent)
                         {
                             timeEntry.HoursSpent = Convert.ToDecimal((timeEntry.EndDateTime.Value - timeEntry.StartDateTime).TotalHours);
                         }

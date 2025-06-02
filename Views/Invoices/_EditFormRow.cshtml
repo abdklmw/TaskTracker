@@ -22,7 +22,7 @@
             </div>
             <div class="col-md-4">
                 <label asp-for="Status" class="form-label">Status</label>
-                <input asp-for="Status" class="form-control" />
+                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<TaskTracker.Models.InvoiceStatus>()"></select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>
             <div class="col-md-12">

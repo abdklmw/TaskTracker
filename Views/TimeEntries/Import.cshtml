@@ -48,7 +48,7 @@ StartDateTime,EndDateTime,HoursSpent,HourlyRate,Description,InvoicedDate,PaidDat
             <li><strong>StartDateTime</strong>: Required. Format: <code>MM/dd/yyyy</code> or <code>MM/dd/yyyy HH:mm</code>. If no time is provided, noon (12:00) is used.</li>
             <li><strong>EndDateTime</strong>: Optional. Format: <code>MM/dd/yyyy HH:mm</code>.</li>
             <li><strong>HoursSpent</strong>: Optional. Decimal number (e.g., <code>2.5</code>). If not provided and EndDateTime is set, calculated from StartDateTime and EndDateTime.</li>
-            <li><strong>HourlyRate</strong>: If missing, set automatically based on project or client rate.</li>
+            <li><strong>HourlyRate</strong>: Optional. Decimal number (e.g., <code>90.00</code>). Used if provided and non-zero; otherwise, set automatically based on project or client rate.</li>
             <li><strong>Description</strong>: Optional. Text description of the time entry.</li>
             <li><strong>InvoicedDate</strong>: Optional. Format: <code>MM/dd/yyyy</code>.</li>
             <li><strong>PaidDate</strong>: Optional. Format: <code>MM/dd/yyyy</code>.</li>

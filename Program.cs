@@ -27,6 +27,9 @@ builder.Services.AddScoped<RateCalculationService>();
 // Register TimeEntryImportService
 builder.Services.AddScoped<TimeEntryImportService>();
 
+// Register DropdownService
+builder.Services.AddScoped<DropdownService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

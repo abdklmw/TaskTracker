@@ -1,10 +1,11 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
 using TaskTracker.Data;
 using TaskTracker.Models;
+using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
 {
@@ -12,11 +13,13 @@ namespace TaskTracker.Controllers
     public class ExpensesController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly DropdownService _dropdownService;
 
         // Constructor with dependency injection for database context
-        public ExpensesController(AppDbContext context)
+        public ExpensesController(AppDbContext context, DropdownService dropdownService)
         {
             _context = context;
+            _dropdownService = dropdownService;
         }
 
         // GET: Expenses
@@ -24,7 +27,7 @@ namespace TaskTracker.Controllers
         public async Task<IActionResult> Index()
         {
             // Populate ViewBag for client and product dropdowns
-            ViewBag.ClientList = new SelectList(await _context.Clients.ToListAsync(), "ClientID", "Name");
+            ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
                 .Select(p => new
@@ -56,7 +59,7 @@ namespace TaskTracker.Controllers
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
             // Repopulate ViewBag for form redisplay
-            ViewBag.ClientList = new SelectList(await _context.Clients.ToListAsync(), "ClientID", "Name");
+            ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
                 .Select(p => new
@@ -102,7 +105,7 @@ namespace TaskTracker.Controllers
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
             // Repopulate ViewBag for form redisplay
-            ViewBag.ClientList = new SelectList(await _context.Clients.ToListAsync(), "ClientID", "Name");
+            ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
                 .Select(p => new
@@ -132,7 +135,7 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
             // Populate ViewBag for consistency
-            ViewBag.ClientList = new SelectList(await _context.Clients.ToListAsync(), "ClientID", "Name");
+            ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
                 .Select(p => new
