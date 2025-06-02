@@ -21,12 +21,12 @@ namespace TaskTracker.Controllers
         private readonly TimeEntryImportService _importService;
 
         public InvoicesController(
-            AppDbContext context,
-            ILogger<InvoicesController> logger,
-            IInvoicePdfService pdfService,
-            RateCalculationService rateService,
-            DropdownService dropdownService,
-            TimeEntryImportService importService)
+        AppDbContext context,
+        ILogger<InvoicesController> logger,
+        IInvoicePdfService pdfService,
+        RateCalculationService rateService,
+        DropdownService dropdownService,
+        TimeEntryImportService importService)
         {
             _context = context;
             _logger = logger;
@@ -55,22 +55,22 @@ namespace TaskTracker.Controllers
             try
             {
                 var timeEntries = await _context.TimeEntries
-                    .Where(t => t.ClientID == clientId && t.InvoicedDate == null)
-                    .Include(t => t.Project)
-                    .Include(t => t.Client)
-                    .Select(t => new TimeEntryViewModel
-                    {
-                        TimeEntryID = t.TimeEntryID,
+                .Where(t => t.ClientID == clientId && t.InvoicedDate == null)
+                .Include(t => t.Project)
+                .Include(t => t.Client)
+                .Select(t => new TimeEntryViewModel
+                {
+                    TimeEntryID = t.TimeEntryID,
                         HourlyRate = t.HourlyRate ?? 0m, // Use TimeEntry.HourlyRate if set
                         RateSource = "", // Will be set below
-                        HoursSpent = t.HoursSpent ?? 0m,
-                        Description = t.Description ?? "",
-                        StartDateTime = t.StartDateTime,
-                        EndDateTime = t.EndDateTime,
-                        ProjectID = t.ProjectID,
-                        ClientID = t.ClientID
-                    })
-                    .ToListAsync();
+                    HoursSpent = t.HoursSpent ?? 0m,
+                    Description = t.Description ?? "",
+                    StartDateTime = t.StartDateTime,
+                    EndDateTime = t.EndDateTime,
+                    ProjectID = t.ProjectID,
+                    ClientID = t.ClientID
+                })
+                .ToListAsync();
 
                 foreach (var entry in timeEntries)
                 {
@@ -88,8 +88,8 @@ namespace TaskTracker.Controllers
                         if (entry.ProjectID.HasValue)
                         {
                             var project = await _context.Projects
-                                .AsNoTracking()
-                                .FirstOrDefaultAsync(p => p.ProjectID == entry.ProjectID.Value);
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(p => p.ProjectID == entry.ProjectID.Value);
                             if (project != null && project.Rate != 0m && project.Rate == entry.HourlyRate)
                             {
                                 entry.RateSource = "Project";
@@ -101,8 +101,8 @@ namespace TaskTracker.Controllers
                         if (entry.ClientID.HasValue)
                         {
                             var client = await _context.Clients
-                                .AsNoTracking()
-                                .FirstOrDefaultAsync(c => c.ClientID == entry.ClientID.Value);
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(c => c.ClientID == entry.ClientID.Value);
                             if (client != null && client.DefaultRate != 0m && client.DefaultRate == entry.HourlyRate)
                             {
                                 entry.RateSource = "Client";
@@ -117,16 +117,16 @@ namespace TaskTracker.Controllers
                 }
 
                 var expenses = await _context.Expenses
-                    .Where(e => e.ClientID == clientId && e.InvoicedDate == null)
-                    .Select(e => new ExpenseViewModel
-                    {
-                        ExpenseID = e.ExpenseID,
-                        Description = e.Description,
-                        UnitAmount = e.UnitAmount,
-                        Quantity = e.Quantity,
-                        TotalAmount = e.TotalAmount
-                    })
-                    .ToListAsync();
+                .Where(e => e.ClientID == clientId && e.InvoicedDate == null)
+                .Select(e => new ExpenseViewModel
+                {
+                    ExpenseID = e.ExpenseID,
+                    Description = e.Description,
+                    UnitAmount = e.UnitAmount,
+                    Quantity = e.Quantity,
+                    TotalAmount = e.TotalAmount
+                })
+                .ToListAsync();
 
                 return Json(new { TimeEntries = timeEntries, Expenses = expenses });
             }
@@ -146,14 +146,14 @@ namespace TaskTracker.Controllers
                 try
                 {
                     var timeEntries = await _context.TimeEntries
-                        .Where(t => model.SelectedTimeEntryIDs.Contains(t.TimeEntryID))
-                        .Include(t => t.Project)
-                        .Include(t => t.Client)
-                        .ToListAsync();
+                    .Where(t => model.SelectedTimeEntryIDs.Contains(t.TimeEntryID))
+                    .Include(t => t.Project)
+                    .Include(t => t.Client)
+                    .ToListAsync();
 
                     var expenses = await _context.Expenses
-                        .Where(e => model.SelectedExpenseIDs.Contains(e.ExpenseID))
-                        .ToListAsync();
+                    .Where(e => model.SelectedExpenseIDs.Contains(e.ExpenseID))
+                    .ToListAsync();
 
                     decimal totalAmount = 0m;
                     foreach (var timeEntry in timeEntries)
@@ -169,7 +169,7 @@ namespace TaskTracker.Controllers
                         if (expense.TotalAmount != expense.UnitAmount * expense.Quantity)
                         {
                             _logger.LogWarning("Expense ID {ExpenseId} has inconsistent TotalAmount. Expected {Expected}, found {Actual}",
-                                expense.ExpenseID, expense.UnitAmount * expense.Quantity, expense.TotalAmount);
+                            expense.ExpenseID, expense.UnitAmount * expense.Quantity, expense.TotalAmount);
                             expense.TotalAmount = expense.UnitAmount * expense.Quantity;
                         }
                         totalAmount += expense.TotalAmount;
@@ -279,8 +279,8 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
             var invoice = await _context.Invoices
-                .Include(i => i.Client)
-                .FirstOrDefaultAsync(m => m.InvoiceID == id);
+            .Include(i => i.Client)
+            .FirstOrDefaultAsync(m => m.InvoiceID == id);
             if (invoice == null)
             {
                 return NotFound();
@@ -295,28 +295,30 @@ namespace TaskTracker.Controllers
             try
             {
                 var invoice = await _context.Invoices
-                    .Include(i => i.InvoiceTimeEntries)
-                    .Include(i => i.InvoiceExpenses)
-                    .FirstOrDefaultAsync(i => i.InvoiceID == id);
+                .Include(i => i.InvoiceTimeEntries)
+                .Include(i => i.InvoiceExpenses)
+                .FirstOrDefaultAsync(i => i.InvoiceID == id);
                 if (invoice == null)
                 {
                     return NotFound();
                 }
                 var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
                 var timeEntries = await _context.TimeEntries
-                    .Where(t => timeEntryIds.Contains(t.TimeEntryID))
-                    .ToListAsync();
+                .Where(t => timeEntryIds.Contains(t.TimeEntryID))
+                .ToListAsync();
                 foreach (var timeEntry in timeEntries)
                 {
                     timeEntry.InvoicedDate = null;
+                    timeEntry.InvoiceSent = null;
                 }
                 var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
                 var expenses = await _context.Expenses
-                    .Where(e => expenseIds.Contains(e.ExpenseID))
-                    .ToListAsync();
+                .Where(e => expenseIds.Contains(e.ExpenseID))
+                .ToListAsync();
                 foreach (var expense in expenses)
                 {
                     expense.InvoicedDate = null;
+                    expense.InvoiceSent = null;
                 }
                 _context.InvoiceTimeEntries.RemoveRange(invoice.InvoiceTimeEntries);
                 _context.InvoiceExpenses.RemoveRange(invoice.InvoiceExpenses);
@@ -340,7 +342,9 @@ namespace TaskTracker.Controllers
             try
             {
                 var invoice = await _context.Invoices
-                    .FirstOrDefaultAsync(i => i.InvoiceID == id);
+                .Include(i => i.InvoiceTimeEntries)
+                .Include(i => i.InvoiceExpenses)
+                .FirstOrDefaultAsync(i => i.InvoiceID == id);
                 if (invoice == null)
                 {
                     _logger.LogWarning("Invoice ID {InvoiceId} not found for sending.", id);
@@ -356,6 +360,22 @@ namespace TaskTracker.Controllers
                 var pdfBytes = await _pdfService.GenerateInvoicePdfAsync(id);
                 invoice.InvoiceSentDate = DateTime.Today;
                 invoice.Status = InvoiceStatus.Sent;
+                var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
+                var timeEntries = await _context.TimeEntries
+                .Where(t => timeEntryIds.Contains(t.TimeEntryID))
+                .ToListAsync();
+                foreach (var timeEntry in timeEntries)
+                {
+                    timeEntry.InvoiceSent = DateTime.Today;
+                }
+                var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
+                var expenses = await _context.Expenses
+                .Where(e => expenseIds.Contains(e.ExpenseID))
+                .ToListAsync();
+                foreach (var expense in expenses)
+                {
+                    expense.InvoiceSent = DateTime.Today;
+                }
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Invoice PDF generated and marked as sent.";
                 return File(pdfBytes, "application/pdf", $"Invoice_{invoice.InvoiceID}.pdf");
@@ -375,9 +395,9 @@ namespace TaskTracker.Controllers
             try
             {
                 var invoice = await _context.Invoices
-                    .Include(i => i.InvoiceTimeEntries)
-                    .Include(i => i.InvoiceExpenses)
-                    .FirstOrDefaultAsync(i => i.InvoiceID == id);
+                .Include(i => i.InvoiceTimeEntries)
+                .Include(i => i.InvoiceExpenses)
+                .FirstOrDefaultAsync(i => i.InvoiceID == id);
                 if (invoice == null)
                 {
                     return NotFound();
@@ -386,16 +406,16 @@ namespace TaskTracker.Controllers
                 invoice.Status = InvoiceStatus.Paid;
                 var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
                 var timeEntries = await _context.TimeEntries
-                    .Where(t => timeEntryIds.Contains(t.TimeEntryID))
-                    .ToListAsync();
+                .Where(t => timeEntryIds.Contains(t.TimeEntryID))
+                .ToListAsync();
                 foreach (var timeEntry in timeEntries)
                 {
                     timeEntry.PaidDate = DateTime.Today;
                 }
                 var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
                 var expenses = await _context.Expenses
-                    .Where(e => expenseIds.Contains(e.ExpenseID))
-                    .ToListAsync();
+                .Where(e => expenseIds.Contains(e.ExpenseID))
+                .ToListAsync();
                 foreach (var expense in expenses)
                 {
                     expense.PaidDate = DateTime.Today;
