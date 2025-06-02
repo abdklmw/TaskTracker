@@ -77,9 +77,9 @@ namespace TaskTracker.Controllers
                 timezoneOffset = 0; // Fallback to UTC
             }
 
-            // Get completed time entries (EndDateTime != null)
+            // Get completed time entries (EndDateTime != null and InvoicedDate == null)
             var completedTimeEntriesQuery = _context.TimeEntries
-                .Where(t => t.UserId == userId && t.EndDateTime != null)
+                .Where(t => t.UserId == userId && t.EndDateTime != null && t.InvoicedDate == null)
                 .Include(t => t.Client)
                 .Include(t => t.Project)
                 .OrderBy(t => t.Client.Name ?? "") // Sort by Client.Name ascending, handle nulls
