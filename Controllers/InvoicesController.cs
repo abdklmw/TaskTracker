@@ -345,21 +345,17 @@ namespace TaskTracker.Controllers
                 .Include(i => i.InvoiceTimeEntries)
                 .Include(i => i.InvoiceExpenses)
                 .FirstOrDefaultAsync(i => i.InvoiceID == id);
+
                 if (invoice == null)
                 {
                     _logger.LogWarning("Invoice ID {InvoiceId} not found for sending.", id);
                     TempData["ErrorMessage"] = "Invoice not found.";
                     return RedirectToAction(nameof(Index));
                 }
-                if (invoice.Status == InvoiceStatus.Sent || invoice.Status == InvoiceStatus.Paid)
-                {
-                    _logger.LogWarning("Invoice ID {InvoiceId} already sent or paid.", id);
-                    TempData["ErrorMessage"] = "Invoice has already been sent or paid.";
-                    return RedirectToAction(nameof(Index));
-                }
+
                 var pdfBytes = await _pdfService.GenerateInvoicePdfAsync(id);
                 invoice.InvoiceSentDate = DateTime.Today;
-                invoice.Status = InvoiceStatus.Sent;
+                invoice.Status = invoice.Status == InvoiceStatus.Draft ? InvoiceStatus.Sent : invoice.Status;
                 var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
                 var timeEntries = await _context.TimeEntries
                 .Where(t => timeEntryIds.Contains(t.TimeEntryID))

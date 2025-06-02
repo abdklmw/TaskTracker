@@ -11,13 +11,10 @@
         <div class="row mt-2">
             <div class="col-md-12">
                 <button class="btn btn-primary edit-btn" data-Id="@Model.InvoiceID">Edit</button>
-                @if (Model.Status == TaskTracker.Models.InvoiceStatus.Draft)
-                {
-                    <form asp-action="Send" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-info">Send</button>
-                    </form>
-                }
+                <form asp-action="Send" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-info">Send</button>
+                </form>
                 <a asp-action="Paid" asp-route-id="@Model.InvoiceID" class="btn btn-success">Paid</a>
                 <a asp-action="Delete" asp-route-id="@Model.InvoiceID" class="btn btn-danger">Delete</a>
             </div>
