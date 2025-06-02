@@ -59,7 +59,7 @@ namespace TaskTracker.Services
                         var rate = timeEntry.HourlyRate.HasValue ? timeEntry.HourlyRate.Value :
                                    timeEntry.Project != null ? timeEntry.Project.Rate :
                                    invoice.Client.DefaultRate;
-                        timeEntriesTable += $"<tr><td>{(timeEntry.Description ?? "N/A")}</td><td>{timeEntry.HoursSpent:F2}</td><td>${rate:F2}</td><td>${(timeEntry.HoursSpent * rate):F2}</td></tr>";
+                        timeEntriesTable += $"<tr><td>{(timeEntry.Description ?? "N/A")}</td><td>{timeEntry.HoursSpent:F2}</td><td>${rate:N2}</td><td>${(timeEntry.HoursSpent * rate):N2}</td></tr>";
                     }
                     timeEntriesTable += "</table>";
                 }
@@ -72,7 +72,7 @@ namespace TaskTracker.Services
                     foreach (var expense in invoice.InvoiceExpenses)
                     {
                         var product = expense.Product;
-                        expensesTable += $"<tr><td>{(product?.Description ?? "N/A")}</td><td>{expense.Quantity}</td><td>${(product?.UnitPrice ?? 0):F2}</td><td>${((product?.UnitPrice ?? 0) * expense.Quantity):F2}</td></tr>";
+                        expensesTable += $"<tr><td>{(product?.Description ?? "N/A")}</td><td>{expense.Quantity}</td><td>${(product?.UnitPrice ?? 0):N2}</td><td>${((product?.UnitPrice ?? 0) * expense.Quantity):N2}</td></tr>";
                     }
                     expensesTable += "</table>";
                 }
