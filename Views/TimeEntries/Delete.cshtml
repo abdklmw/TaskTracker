@@ -36,7 +36,7 @@
             @Html.DisplayNameFor(model => model.HoursSpent)
         </dt>
         <dd class="col-sm-10">
-            @(Model.HoursSpent.HasValue? Model.HoursSpent.Value.ToString("F2") : "")
+            @(Model.HoursSpent.HasValue? Model.HoursSpent.Value.ToString("N2") : "")
         </dd>
         <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Description)
