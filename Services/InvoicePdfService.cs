@@ -84,6 +84,7 @@ namespace TaskTracker.Services
                     .Replace("{{AccountsReceivablePhone}}", settings.AccountsReceivablePhone ?? "")
                     .Replace("{{AccountsReceivableEmail}}", settings.AccountsReceivableEmail ?? "")
                     .Replace("{{InvoiceID}}", $"{invoice.InvoiceDate:yyyyMMdd}.{invoice.InvoiceID}")
+                    .Replace("{{AccountsReceivableName}}", invoice.Client?.AccountsReceivableName ?? "")
                     .Replace("{{ClientName}}", invoice.Client?.Name ?? "")
                     .Replace("{{InvoiceDate}}", invoice.InvoiceDate.ToString("M dd, yyyy"))
                     .Replace("{{TotalAmount}}", invoice.TotalAmount.ToString("N2"))
@@ -98,10 +99,8 @@ namespace TaskTracker.Services
                     var writer = new PdfWriter(stream);
                     var pdf = new PdfDocument(writer);
                     var document = new Document(pdf, iText.Kernel.Geom.PageSize.A4);
-
                     // Convert HTML to PDF
                     HtmlConverter.ConvertToPdf(htmlContent, pdf, new ConverterProperties());
-
                     document.Close();
                     return stream.ToArray();
                 }

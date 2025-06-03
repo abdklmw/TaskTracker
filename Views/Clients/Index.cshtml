@@ -1,22 +1,17 @@
 ﻿@model IEnumerable<TaskTracker.Models.Client>
-
 @{
     ViewData["Title"] = "Clients";
 }
-
 <h1>Clients</h1>
-
 <!-- Display success or error messages -->
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
-
 @await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Client())
-
 <p>
     <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>
-
 <div class="row mb-2">
     <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Name)</strong></div>
+    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.AccountsReceivableName)</strong></div>
     <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Email)</strong></div>
     <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Phone)</strong></div>
     <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Address)</strong></div>
@@ -32,10 +27,8 @@
     @await Html.PartialAsync("_EditFormRow", clientRowViewModel)
     index++;
 }
-
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-
 }

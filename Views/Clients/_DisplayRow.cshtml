@@ -1,18 +1,16 @@
 ﻿@model TaskTracker.Models.ClientRowViewModel
-
 @{
     if (Model == null || Model.Client == null)
     {
         return;
     }
-
     var client = Model.Client;
 }
-
 <div id="display-row-@client.ClientID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body">
         <div class="row">
             <div class="col-md-3" data-field="Name">@client.Name</div>
+            <div class="col-md-3" data-field="AccountsReceivableName">@client.AccountsReceivableName</div>
             <div class="col-md-3" data-field="Email">@client.Email</div>
             <div class="col-md-2" data-field="Phone">@client.Phone</div>
             <div class="col-md-2" data-field="Address">@client.Address</div>

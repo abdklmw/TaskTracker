@@ -3,7 +3,6 @@
     var displayStyle = ViewBag.VisibleCreateForm == true ? "" : "display:none;";
     var divStyle = string.IsNullOrEmpty(displayStyle) ? "margin-bottom: 20px;" : $"{displayStyle} margin-bottom: 20px;";
 }
-
 <div id="create-form" style="@divStyle">
     <form asp-action="Create" method="post" class="card p-4">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -12,6 +11,11 @@
                 <label asp-for="Name" class="form-label">Name</label>
                 <input asp-for="Name" class="form-control" placeholder="Name" />
                 <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="AccountsReceivableName" class="form-label">Accounts Receivable Name</label>
+                <input asp-for="AccountsReceivableName" class="form-control" placeholder="Accounts Receivable Name" />
+                <span asp-validation-for="AccountsReceivableName" class="text-danger"></span>
             </div>
             <div class="col-md-3">
                 <label asp-for="Email" class="form-label">Email</label>

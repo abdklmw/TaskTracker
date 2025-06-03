@@ -58,7 +58,7 @@ namespace TaskTracker.Controllers
         // POST: Clients/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Email,Phone,Address,DefaultRate")] Client client)
+        public async Task<IActionResult> Create([Bind("Name,AccountsReceivableName,Email,Phone,Address,DefaultRate")] Client client)
         {
             if (ModelState.IsValid)
             {
@@ -75,7 +75,7 @@ namespace TaskTracker.Controllers
         // POST: Clients/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ClientID,Name,Email,Phone,Address,DefaultRate")] Client client)
+        public async Task<IActionResult> Edit(int id, [Bind("ClientID,Name,AccountsReceivableName,Email,Phone,Address,DefaultRate")] Client client)
         {
             if (id != client.ClientID)
             {

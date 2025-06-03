@@ -1,14 +1,11 @@
 ﻿@model TaskTracker.Models.ClientRowViewModel
-
 @{
     if (Model == null || Model.Client == null)
     {
         return;
     }
-
     var client = Model.Client;
 }
-
 <div id="edit-row-@client.ClientID" class="edit-mode card mb-2 @(Model.Parity)-row" style="display:none;">
     <form id="edit-form-@client.ClientID" asp-action="Edit" asp-route-id="@client.ClientID" method="post" class="card-body">
         <input type="hidden" asp-for="Client.ClientID" />
@@ -17,6 +14,10 @@
             <div class="col-md-3">
                 <input asp-for="Client.Name" class="form-control" placeholder="Client Name" />
                 <span asp-validation-for="Client.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <input asp-for="Client.AccountsReceivableName" class="form-control" placeholder="Accounts Receivable Name" />
+                <span asp-validation-for="Client.AccountsReceivableName" class="text-danger"></span>
             </div>
             <div class="col-md-3">
                 <input asp-for="Client.Email" class="form-control" type="email" placeholder="Email" />
