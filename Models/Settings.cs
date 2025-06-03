@@ -73,6 +73,7 @@ namespace TaskTracker.Models
             .company-info { float: left; text-align: left; }
             .payment-info { float: right; text-align: right; }
             .title { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; clear: both; }
+            .company-name { font-size: 1.2em; font-weight: bold; }
             .client-info { margin-bottom: 20px; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -84,7 +85,7 @@ namespace TaskTracker.Models
             <body>
             <div class='header'>
             <div class='company-info'>
-            <p>{{CompanyName}}</p>
+            <p class='company-name'>{{CompanyName}}</p>
             <p>{{AccountsReceivableAddress}}</p>
             <p>{{AccountsReceivablePhone}}</p>
             <p>{{AccountsReceivableEmail}}</p>
@@ -99,7 +100,6 @@ namespace TaskTracker.Models
             <p>Billed To: {{ClientName}}</p>
             <p>Invoice Date: {{InvoiceDate}}</p>
             <p>Total Amount: ${{TotalAmount}}</p>
-            <p>Status: {{Status}}</p>
             </div>
             {{TimeEntriesTable}}
             {{ExpensesTable}}

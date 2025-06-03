@@ -52,14 +52,14 @@ namespace TaskTracker.Services
                 string timeEntriesTable = "";
                 if (invoice.InvoiceTimeEntries.Any())
                 {
-                    timeEntriesTable = "<table><tr><th>Description</th><th>Hours</th><th>Rate</th><th>Total</th></tr>";
+                    timeEntriesTable = "<table><tr><th>Project</th><th>Description</th><th>Hours</th><th>Rate</th><th>Total</th></tr>";
                     foreach (var entry in invoice.InvoiceTimeEntries)
                     {
                         var timeEntry = entry.TimeEntry;
                         var rate = timeEntry.HourlyRate.HasValue ? timeEntry.HourlyRate.Value :
                                    timeEntry.Project != null ? timeEntry.Project.Rate :
                                    invoice.Client.DefaultRate;
-                        timeEntriesTable += $"<tr><td>{(timeEntry.Description ?? "N/A")}</td><td>{timeEntry.HoursSpent:F2}</td><td>${rate:N2}</td><td>${(timeEntry.HoursSpent * rate):N2}</td></tr>";
+                        timeEntriesTable += $"<tr><td>{(timeEntry.Project?.Name ?? "N/A")}</td><td>{(timeEntry.Description ?? "N/A")}</td><td>{timeEntry.HoursSpent:F2}</td><td>${rate:N2}</td><td>${(timeEntry.HoursSpent * rate):N2}</td></tr>";
                     }
                     timeEntriesTable += "</table>";
                 }
@@ -85,7 +85,7 @@ namespace TaskTracker.Services
                     .Replace("{{AccountsReceivableEmail}}", settings.AccountsReceivableEmail ?? "")
                     .Replace("{{InvoiceID}}", $"{invoice.InvoiceDate:yyyyMMdd}.{invoice.InvoiceID}")
                     .Replace("{{ClientName}}", invoice.Client?.Name ?? "")
-                    .Replace("{{InvoiceDate}}", invoice.InvoiceDate.ToString("MM-dd-yyyy"))
+                    .Replace("{{InvoiceDate}}", invoice.InvoiceDate.ToString("M dd, yyyy"))
                     .Replace("{{TotalAmount}}", invoice.TotalAmount.ToString("N2"))
                     .Replace("{{Status}}", invoice.Status.ToString())
                     .Replace("{{TimeEntriesTable}}", timeEntriesTable)
@@ -108,7 +108,7 @@ namespace TaskTracker.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating PDF for invoice ID {InvoiceId}", invoiceId);
+                _logger.LogError(ex, "Error generating PDF for invoice ID {invoiceId}", invoiceId);
                 throw;
             }
         }
