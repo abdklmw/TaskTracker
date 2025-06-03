@@ -372,8 +372,8 @@ namespace TaskTracker.Controllers
                     {
                         var subject = $"Invoice {invoice.InvoiceDate:yyyyMMdd}.{invoice.InvoiceID} from {settings?.CompanyName}";
                         var body = $"<p>Dear {invoice.Client?.Name},</p>" +
-                                   $"<p>Please find attached your invoice dated {invoice.InvoiceDate:MM-dd-yyyy}. The total amount due is ${invoice.TotalAmount:N2}.</p>" +
-                                   "<p>Thank you for your business!</p>" +
+                                   $"<p>Please find your invoice attached. The total amount due is ${invoice.TotalAmount:N2}.</p>" +
+                                   "<p>Please let me know if you have any questions. Thank you for your business!</p>" +
                                    $"<p>Best regards,<br>{settings?.CompanyName}</p>";
 
                         await _emailService.SendEmailAsync(
