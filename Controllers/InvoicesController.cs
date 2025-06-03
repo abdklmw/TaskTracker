@@ -19,6 +19,7 @@ namespace TaskTracker.Controllers
         private readonly RateCalculationService _rateService;
         private readonly DropdownService _dropdownService;
         private readonly TimeEntryImportService _importService;
+        private readonly IEmailService _emailService;
 
         public InvoicesController(
         AppDbContext context,
@@ -26,7 +27,8 @@ namespace TaskTracker.Controllers
         IInvoicePdfService pdfService,
         RateCalculationService rateService,
         DropdownService dropdownService,
-        TimeEntryImportService importService)
+        TimeEntryImportService importService,
+        IEmailService emailService)
         {
             _context = context;
             _logger = logger;
@@ -34,6 +36,7 @@ namespace TaskTracker.Controllers
             _rateService = rateService;
             _dropdownService = dropdownService;
             _importService = importService;
+            _emailService = emailService;
         }
 
         public async Task<IActionResult> Index()
@@ -342,9 +345,10 @@ namespace TaskTracker.Controllers
             try
             {
                 var invoice = await _context.Invoices
-                .Include(i => i.InvoiceTimeEntries)
-                .Include(i => i.InvoiceExpenses)
-                .FirstOrDefaultAsync(i => i.InvoiceID == id);
+                    .Include(i => i.Client)
+                    .Include(i => i.InvoiceTimeEntries)
+                    .Include(i => i.InvoiceExpenses)
+                    .FirstOrDefaultAsync(i => i.InvoiceID == id);
 
                 if (invoice == null)
                 {
@@ -354,32 +358,104 @@ namespace TaskTracker.Controllers
                 }
 
                 var pdfBytes = await _pdfService.GenerateInvoicePdfAsync(id);
+
+                var clientEmail = invoice.Client?.Email;
+                var settings = await _context.Settings.FirstOrDefaultAsync();
+                bool canSendEmail = !string.IsNullOrWhiteSpace(clientEmail) &&
+                                   !string.IsNullOrWhiteSpace(settings?.SmtpServer) &&
+                                   settings?.SmtpPort.HasValue == true &&
+                                   !string.IsNullOrWhiteSpace(settings?.SmtpSenderEmail);
+
+                if (canSendEmail)
+                {
+                    try
+                    {
+                        var subject = $"Invoice {invoice.InvoiceDate:yyyyMMdd}.{invoice.InvoiceID} from {settings?.CompanyName}";
+                        var body = $"<p>Dear {invoice.Client?.Name},</p>" +
+                                   $"<p>Please find attached your invoice dated {invoice.InvoiceDate:MM-dd-yyyy}. The total amount due is ${invoice.TotalAmount:N2}.</p>" +
+                                   "<p>Thank you for your business!</p>" +
+                                   $"<p>Best regards,<br>{settings?.CompanyName}</p>";
+
+                        await _emailService.SendEmailAsync(
+                            clientEmail,
+                            subject,
+                            body,
+                            pdfBytes,
+                            $"Invoice_{invoice.InvoiceDate:yyyyMMdd}.{invoice.InvoiceID}.pdf");
+
+                        invoice.InvoiceSentDate = DateTime.Today;
+                        invoice.Status = invoice.Status == InvoiceStatus.Draft ? InvoiceStatus.Sent : invoice.Status;
+                        var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
+                        var timeEntries = await _context.TimeEntries
+                            .Where(t => timeEntryIds.Contains(t.TimeEntryID))
+                            .ToListAsync();
+
+                        foreach (var timeEntry in timeEntries)
+                        {
+                            timeEntry.InvoiceSent = DateTime.Today;
+                        }
+
+                        var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
+                        var expenses = await _context.Expenses
+                            .Where(e => expenseIds.Contains(e.ExpenseID))
+                            .ToListAsync();
+
+                        foreach (var expense in expenses)
+                        {
+                            expense.InvoiceSent = DateTime.Today;
+                        }
+
+                        await _context.SaveChangesAsync();
+                        TempData["SuccessMessage"] = "Invoice sent successfully via email.";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to send email for invoice ID {InvoiceId}. Falling back to download.", id);
+                        TempData["WarningMessage"] = "Failed to send email. The invoice PDF will be downloaded instead.";
+                    }
+                }
+                else
+                {
+                    var warningMessage = string.IsNullOrWhiteSpace(clientEmail)
+                        ? "Client email address is missing. The invoice PDF will be downloaded instead."
+                        : "SMTP settings are missing or incomplete. The invoice PDF will be downloaded instead.";
+                    _logger.LogWarning(warningMessage + " Invoice ID: {InvoiceId}", id);
+                    TempData["WarningMessage"] = warningMessage;
+                }
+
+                // Fallback to download
                 invoice.InvoiceSentDate = DateTime.Today;
-                invoice.Status = invoice.Status == InvoiceStatus.Draft ? InvoiceStatus.Sent : invoice.Status;
-                var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
-                var timeEntries = await _context.TimeEntries
-                .Where(t => timeEntryIds.Contains(t.TimeEntryID))
-                .ToListAsync();
-                foreach (var timeEntry in timeEntries)
+                invoice.Status = InvoiceStatus.Sent;
+
+                var timeEntryIdsFallback = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
+                var timeEntriesFallback = await _context.TimeEntries
+                    .Where(t => timeEntryIdsFallback.Contains(t.TimeEntryID))
+                    .ToListAsync();
+
+                foreach (var timeEntry in timeEntriesFallback)
                 {
                     timeEntry.InvoiceSent = DateTime.Today;
                 }
-                var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
-                var expenses = await _context.Expenses
-                .Where(e => expenseIds.Contains(e.ExpenseID))
-                .ToListAsync();
-                foreach (var expense in expenses)
+
+                var expenseIdsFallback = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
+                var expensesFallback = await _context.Expenses
+                    .Where(e => expenseIdsFallback.Contains(e.ExpenseID))
+                    .ToListAsync();
+
+                foreach (var expense in expensesFallback)
                 {
                     expense.InvoiceSent = DateTime.Today;
                 }
+
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Invoice PDF generated and marked as sent.";
-                return File(pdfBytes, "application/pdf", $"Invoice_{invoice.InvoiceID}.pdf");
+
+                return File(pdfBytes, "application/pdf", $"Invoice_{invoice.InvoiceDate:yyyyMMdd}.{invoice.InvoiceID}.pdf");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending invoice ID {InvoiceId}", id);
-                TempData["ErrorMessage"] = "An error occurred while generating the invoice PDF.";
+                TempData["ErrorMessage"] = "An error occurred while processing the invoice.";
                 return RedirectToAction(nameof(Index));
             }
         }
