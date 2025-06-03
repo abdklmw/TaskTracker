@@ -24,7 +24,7 @@ namespace TaskTracker.Services
             try
             {
                 var settings = await _context.Settings.FirstOrDefaultAsync();
-                if (settings == null || string.IsNullOrEmpty(settings.SmtpServer) || !settings.SmtpPort.HasValue || string.IsNullOrEmpty(settings.SmtpSenderEmail))
+                if (settings == null || string.IsNullOrWhiteSpace(settings.SmtpServer) || !settings.SmtpPort.HasValue || string.IsNullOrWhiteSpace(settings.SmtpSenderEmail))
                 {
                     _logger.LogWarning("SMTP settings are not configured.");
                     throw new InvalidOperationException("SMTP settings are not configured.");
@@ -32,13 +32,15 @@ namespace TaskTracker.Services
 
                 using var client = new SmtpClient(settings.SmtpServer, settings.SmtpPort.Value)
                 {
-                    Credentials = string.IsNullOrEmpty(settings.SmtpUsername) || string.IsNullOrEmpty(settings.SmtpPassword)
+                    Credentials = string.IsNullOrWhiteSpace(settings.SmtpUsername) || string.IsNullOrWhiteSpace(settings.SmtpPassword)
                         ? null
                         : new NetworkCredential(settings.SmtpUsername, settings.SmtpPassword),
-                    EnableSsl = true
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
                 };
 
-                var mailMessage = new MailMessage
+                using var mailMessage = new MailMessage
                 {
                     From = new MailAddress(settings.SmtpSenderEmail),
                     Subject = subject,
@@ -48,14 +50,32 @@ namespace TaskTracker.Services
 
                 mailMessage.To.Add(toEmail);
 
-                if (attachment != null && !string.IsNullOrEmpty(attachmentFileName))
+                MemoryStream stream = null;
+                if (attachment != null && !string.IsNullOrWhiteSpace(attachmentFileName))
                 {
-                    using var stream = new System.IO.MemoryStream(attachment);
+                    stream = new MemoryStream(attachment);
                     mailMessage.Attachments.Add(new Attachment(stream, attachmentFileName, "application/pdf"));
                 }
 
-                await client.SendMailAsync(mailMessage);
-                _logger.LogInformation("Email sent successfully to {ToEmail} with subject {Subject}.", toEmail, subject);
+                try
+                {
+                    await client.SendMailAsync(mailMessage);
+                    _logger.LogInformation("Email sent successfully to {ToEmail} with subject {Subject}.", toEmail, subject);
+                }
+                finally
+                {
+                    // Dispose of the stream and attachments after sending
+                    if (stream != null)
+                    {
+                        stream.Dispose();
+                    }
+                    // Attachments are disposed with mailMessage
+                }
+            }
+            catch (SmtpException ex)
+            {
+                _logger.LogError(ex, "SMTP error sending email to {ToEmail} with subject {Subject}.", toEmail, subject);
+                throw new InvalidOperationException("Failed to send email due to SMTP server configuration. Please verify SMTP settings.", ex);
             }
             catch (Exception ex)
             {
