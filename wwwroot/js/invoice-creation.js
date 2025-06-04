@@ -8,8 +8,7 @@
             $("#create-form").hide();
             return;
         }
-
-        $.get("/Invoices/GetUnpaidItems", { clientId: clientId }, function (data) {
+        $.get(window.AppSettings.GetUnpaidItemsUrl, { clientId: clientId }, function (data) {
             $("#create-form").show();
             $("#time-entries-list").empty();
             if (data.timeEntries.length > 0) {
@@ -39,7 +38,6 @@
             } else {
                 $("#time-entries-list").append("<p>No unpaid time entries found.</p>");
             }
-
             $("#expenses-list").empty();
             if (data.expenses.length > 0) {
                 data.expenses.forEach(function (item) {
@@ -57,7 +55,6 @@
             } else {
                 $("#expenses-list").append("<p>No unpaid expenses found.</p>");
             }
-
             updateInvoiceTotal();
         }).fail(function (xhr) {
             console.error("Error loading unpaid items:", xhr.responseText);

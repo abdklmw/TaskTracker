@@ -1,17 +1,17 @@
 ﻿const clockIcons = [
-    '/images/icons/clock/clock-twelve.svg',
-    '/images/icons/clock/clock-one.svg',
-    '/images/icons/clock/clock-two.svg',
-    '/images/icons/clock/clock-three.svg',
-    '/images/icons/clock/clock-four.svg',
-    '/images/icons/clock/clock-five.svg',
-    '/images/icons/clock/clock-six.svg',
-    '/images/icons/clock/clock-seven.svg',
-    '/images/icons/clock/clock-eight.svg',
-    '/images/icons/clock/clock-nine.svg',
-    '/images/icons/clock/clock-ten.svg',
-    '/images/icons/clock/clock-eleven.svg'
-];
+    '~/images/icons/clock/clock-twelve.svg',
+    '~/images/icons/clock/clock-one.svg',
+    '~/images/icons/clock/clock-two.svg',
+    '~/images/icons/clock/clock-three.svg',
+    '~/images/icons/clock/clock-four.svg',
+    '~/images/icons/clock/clock-five.svg',
+    '~/images/icons/clock/clock-six.svg',
+    '~/images/icons/clock/clock-seven.svg',
+    '~/images/icons/clock/clock-eight.svg',
+    '~/images/icons/clock/clock-nine.svg',
+    '~/images/icons/clock/clock-ten.svg',
+    '~/images/icons/clock/clock-eleven.svg'
+].map(path => path.replace('~', window.AppSettings.BasePath || ''));
 
 function animateClock(element) {
     if (!element) {
