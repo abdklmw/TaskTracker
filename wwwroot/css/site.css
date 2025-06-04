@@ -21,6 +21,14 @@ body {
     margin-bottom: 60px;
 }
 
+form {
+    display: inline;
+}
+
+label {
+    display: inline;
+}
+
 textarea {
     height: 5em;
 }
@@ -58,6 +66,17 @@ abbr[title] {
     text-decoration: underline dotted;
     text-decoration-skip-ink: auto;
     cursor: help;
+}
+
+.form-select {
+    display: inline;
+    width: auto;
+}
+
+.records-per-page {
+    text-align: right;
+    margin: auto 0 0.5em 0;
+}
 }
 
 .ml-2 {

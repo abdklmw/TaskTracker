@@ -16,8 +16,65 @@
     background: none;
     padding: 5px;
     cursor: pointer;
+    vertical-align: middle;
 }
 
     .filter-btn:hover .filter-icon, .clear-filter-btn:hover .filter-icon {
         opacity: 0.8;
     }
+
+.results-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.controls-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.records-per-page-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .records-per-page-form .form-label {
+        margin-bottom: 0;
+        margin-right: 0.5rem;
+    }
+
+    .records-per-page-form .form-select {
+        width: auto;
+    }
+
+.filter-form-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+    .filter-group .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-group .form-select {
+        width: 100%;
+    }
+
+.filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
