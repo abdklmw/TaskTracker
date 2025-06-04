@@ -1,4 +1,4 @@
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Project
 {
     public class ProjectRowViewModel
     {
@@ -7,13 +7,13 @@ namespace TaskTracker.Models
 
         public ProjectRowViewModel()
         {
-            this.Parity = "odd";
+            Parity = "odd";
         }
 
         public ProjectRowViewModel(Project project, int index)
         {
-            this.Parity = (index % 2 == 0) ? "even" : "odd";
-            this.Project = project;
+            Parity = index % 2 == 0 ? "even" : "odd";
+            Project = project;
         }
     }
 }

@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TaskTracker.Data;
-namespace TaskTracker.Models
+namespace TaskTracker.Models.TimeEntries
 {
     public class TimeEntry
     {

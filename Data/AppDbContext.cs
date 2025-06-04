@@ -1,6 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Models;
+using TaskTracker.Models.Client;
+using TaskTracker.Models.Expense;
+using TaskTracker.Models.Invoice;
+using TaskTracker.Models.Product;
+using TaskTracker.Models.Project;
+using TaskTracker.Models.TimeEntries;
 
 namespace TaskTracker.Data
 {

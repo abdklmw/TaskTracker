@@ -1,4 +1,4 @@
-namespace TaskTracker.Models
+namespace TaskTracker.Models.TimeEntries
 {
     public class TimeEntryRowViewModel
     {
@@ -6,11 +6,11 @@ namespace TaskTracker.Models
         public string Parity { get; set; }
         public TimeEntryRowViewModel()
         {
-            this.Parity = "odd";
+            Parity = "odd";
         }
         public TimeEntryRowViewModel(TimeEntry TimeEntry, int index)
         {
-            this.Parity = (index % 2 == 0) ? "even" : "odd";
+            Parity = index % 2 == 0 ? "even" : "odd";
             this.TimeEntry = TimeEntry;
         }
     }

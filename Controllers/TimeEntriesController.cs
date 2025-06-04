@@ -2,13 +2,13 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
-using TaskTracker.Models;
 using Microsoft.AspNetCore.Identity;
 using TaskTracker.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TaskTracker.Models.TimeEntries;
 
 namespace TaskTracker.Controllers
 {

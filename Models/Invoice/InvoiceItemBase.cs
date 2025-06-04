@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
 
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Invoice
 {
     public abstract class InvoiceItemBase
     {

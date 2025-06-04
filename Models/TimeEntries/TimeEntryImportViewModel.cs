@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace TaskTracker.Models
+namespace TaskTracker.Models.TimeEntries
 {
     public class TimeEntryImportViewModel
     {

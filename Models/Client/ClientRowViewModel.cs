@@ -1,4 +1,4 @@
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Client
 {
     public class ClientRowViewModel
     {
@@ -6,12 +6,12 @@ namespace TaskTracker.Models
         public string Parity { get; set; }
         public ClientRowViewModel()
         {
-            this.Parity = "odd";
+            Parity = "odd";
         }
         public ClientRowViewModel(Client client, int index)
         {
-            this.Parity = (index % 2 == 0) ? "even" : "odd";
-            this.Client = client;
+            Parity = index % 2 == 0 ? "even" : "odd";
+            Client = client;
         }
     }
 }

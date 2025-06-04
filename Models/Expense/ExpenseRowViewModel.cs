@@ -1,4 +1,4 @@
-﻿namespace TaskTracker.Models
+﻿namespace TaskTracker.Models.Expense
 {
     public class ExpenseRowViewModel
     {
@@ -6,13 +6,13 @@
         public string Parity { get; set; }
         public ExpenseRowViewModel()
         {
-            this.Parity = "odd";
+            Parity = "odd";
         }
 
         public ExpenseRowViewModel(Expense expense, int index)
         {
-            this.Parity = (index % 2 == 0) ? "even" : "odd";
-            this.Expense = expense;
+            Parity = index % 2 == 0 ? "even" : "odd";
+            Expense = expense;
         }
     }
 }

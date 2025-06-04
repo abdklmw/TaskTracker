@@ -1,4 +1,4 @@
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Product
 {
     public class ProductRowViewModel
     {
@@ -7,13 +7,13 @@ namespace TaskTracker.Models
 
         public ProductRowViewModel()
         {
-            this.Parity = "odd";
+            Parity = "odd";
         }
 
         public ProductRowViewModel(Product product, int index)
         {
-            this.Parity = (index % 2 == 0) ? "even" : "odd";
-            this.Product = product;
+            Parity = index % 2 == 0 ? "even" : "odd";
+            Product = product;
         }
     }
 }

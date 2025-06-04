@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Expense
 {
     public class Expense
     {

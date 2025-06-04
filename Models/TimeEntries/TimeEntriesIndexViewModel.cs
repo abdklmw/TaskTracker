@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using TaskTracker.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace TaskTracker.Models
+namespace TaskTracker.Models.TimeEntries
 {
     public class TimeEntriesIndexViewModel
     {

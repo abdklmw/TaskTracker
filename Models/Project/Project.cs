@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
+using TaskTracker.Models.TimeEntries;
 
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Project
 {
     public class Project
     {

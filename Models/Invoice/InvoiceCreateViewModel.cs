@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Invoice
 {
     public class InvoiceCreateViewModel
     {

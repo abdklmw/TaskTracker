@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel;
 
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Client
 {
     public class Client
     {

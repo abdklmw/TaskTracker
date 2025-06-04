@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
+using TaskTracker.Models.Invoice;
 using TaskTracker.Services;
 
 namespace TaskTracker.Controllers

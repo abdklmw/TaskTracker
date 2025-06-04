@@ -1,4 +1,5 @@
-﻿@model TaskTracker.Models.Invoice
+﻿@using TaskTracker.Models.Invoice
+@model Invoice
 
 <div id="edit-row-@Model.InvoiceID" class="edit-mode card mb-2" style="display:none;">
     <form id="edit-form-@Model.InvoiceID" asp-action="Edit" asp-route-id="@Model.InvoiceID" method="post" class="card-body">
@@ -22,7 +23,7 @@
             </div>
             <div class="col-md-4">
                 <label asp-for="Status" class="form-label">Status</label>
-                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<TaskTracker.Models.InvoiceStatus>()"></select>
+                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<InvoiceStatus>()"></select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>
             <div class="col-md-12">

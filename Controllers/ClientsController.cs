@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
-using TaskTracker.Models;
 using TaskTracker.Services;
 using Microsoft.AspNetCore.Identity;
+using TaskTracker.Models.Client;
 
 namespace TaskTracker.Controllers
 {

@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using CsvHelper;
 using System.Globalization;
 using TaskTracker.Data;
-using TaskTracker.Models;
 using Microsoft.Extensions.Logging;
+using TaskTracker.Models.TimeEntries;
 
 namespace TaskTracker.Services
 {

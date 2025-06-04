@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TaskTracker.Models.Invoice;
 
-namespace TaskTracker.Models
+namespace TaskTracker.Models.Product
 {
     public class Product
     {

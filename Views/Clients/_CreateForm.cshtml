@@ -1,4 +1,5 @@
-﻿@model TaskTracker.Models.Client
+﻿@using TaskTracker.Models.Client
+@model Client
 @{
     var displayStyle = ViewBag.VisibleCreateForm == true ? "" : "display:none;";
     var divStyle = string.IsNullOrEmpty(displayStyle) ? "margin-bottom: 20px;" : $"{displayStyle} margin-bottom: 20px;";

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using TaskTracker.Data;
-using TaskTracker.Models;
+using TaskTracker.Models.Expense;
 using TaskTracker.Services;
 
 namespace TaskTracker.Controllers

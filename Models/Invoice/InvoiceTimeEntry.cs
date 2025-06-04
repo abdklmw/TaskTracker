@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-namespace TaskTracker.Models
+using TaskTracker.Models.TimeEntries;
+namespace TaskTracker.Models.Invoice
 {
     public class InvoiceTimeEntry : InvoiceItemBase
     {

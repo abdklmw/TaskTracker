@@ -1,7 +1,8 @@
-﻿@model IEnumerable<TaskTracker.Models.Invoice>
+﻿@using TaskTracker.Models.Invoice
+@model IEnumerable<Invoice>
 @{
     ViewData["Title"] = "Invoices";
-    var createModel = ViewBag.CreateModel as TaskTracker.Models.InvoiceCreateViewModel ?? new TaskTracker.Models.InvoiceCreateViewModel();
+    var createModel = ViewBag.CreateModel as InvoiceCreateViewModel ?? new TaskTracker.Models.InvoiceCreateViewModel();
 }
 <h1>Invoices</h1>
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
