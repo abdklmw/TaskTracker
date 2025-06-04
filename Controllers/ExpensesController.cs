@@ -1,32 +1,64 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 using TaskTracker.Data;
+using TaskTracker.Models;
 using TaskTracker.Models.Expense;
 using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
 {
-    // Controller for managing expenses
     public class ExpensesController : Controller
     {
         private readonly AppDbContext _context;
         private readonly DropdownService _dropdownService;
 
-        // Constructor with dependency injection for database context
         public ExpensesController(AppDbContext context, DropdownService dropdownService)
         {
             _context = context;
             _dropdownService = dropdownService;
         }
 
-        // GET: Expenses
-        // Displays the list of all expenses with associated clients
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int recordLimit = 10, int clientFilter = 0)
         {
-            // Populate ViewBag for client and product dropdowns
+            var query = _context.Expenses
+                .Include(e => e.Client)
+                .AsQueryable();
+
+            if (clientFilter != 0)
+            {
+                query = query.Where(e => e.ClientID == clientFilter);
+            }
+
+            int totalRecords = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalRecords / recordLimit);
+            page = page < 1 ? 1 : page > totalPages ? totalPages : page;
+
+            var expenses = await query
+                .OrderByDescending(e => e.ExpenseID)
+                .Skip((page - 1) * recordLimit)
+                .Take(recordLimit)
+                .ToListAsync();
+
+            var viewModel = new ExpenseIndexViewModel
+            {
+                Expenses = expenses,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                TotalRecords = totalRecords,
+                RecordLimit = recordLimit,
+                SelectedClientID = clientFilter,
+                ClientFilterOptions = await _dropdownService.GetClientDropdownAsync(clientFilter),
+                RecordLimitOptions = new SelectList(new[]
+                {
+                    new { Value = "10", Text = "10" },
+                    new { Value = "25", Text = "25" },
+                    new { Value = "50", Text = "50" },
+                    new { Value = "100", Text = "100" }
+                }, "Value", "Text", recordLimit.ToString())
+            };
+
+            // Populate ViewBag for create/edit forms
             ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
@@ -38,12 +70,10 @@ namespace TaskTracker.Controllers
                     UnitPrice = p.UnitPrice
                 })
                 .ToListAsync();
-            var expenses = _context.Expenses.Include(e => e.Client);
-            return View(await expenses.ToListAsync());
+
+            return View(viewModel);
         }
 
-        // POST: Expenses/Create
-        // Creates a new expense and saves it to the database
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("ClientID,Description,UnitAmount,Quantity,TotalAmount")] Expense expense)
@@ -55,10 +85,8 @@ namespace TaskTracker.Controllers
                 TempData["SuccessMessage"] = "Expense created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            // Collect validation errors for display
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
-            // Repopulate ViewBag for form redisplay
             ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
@@ -70,11 +98,10 @@ namespace TaskTracker.Controllers
                     UnitPrice = p.UnitPrice
                 })
                 .ToListAsync();
+            ViewBag.VisibleCreateForm = true; // Keep form visible on error
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: Expenses/Edit/5
-        // Updates an existing expense
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("ExpenseID,ClientID,Description,UnitAmount,Quantity,TotalAmount")] Expense expense)
@@ -101,10 +128,8 @@ namespace TaskTracker.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            // Collect validation errors for display
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = string.Join("; ", errors);
-            // Repopulate ViewBag for form redisplay
             ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
@@ -119,8 +144,6 @@ namespace TaskTracker.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Expenses/Delete/5
-        // Displays the confirmation page for deleting an expense
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -134,7 +157,6 @@ namespace TaskTracker.Controllers
             {
                 return NotFound();
             }
-            // Populate ViewBag for consistency
             ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
@@ -149,8 +171,6 @@ namespace TaskTracker.Controllers
             return View(expense);
         }
 
-        // POST: Expenses/Delete/5
-        // Deletes the specified expense
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -165,7 +185,6 @@ namespace TaskTracker.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Helper method to check if an expense exists
         private bool ExpenseExists(int id)
         {
             return _context.Expenses.Any(e => e.ExpenseID == id);

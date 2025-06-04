@@ -6,19 +6,16 @@
     var divStyle = string.IsNullOrEmpty(displayStyle) ? "margin-bottom: 20px;" : $"{displayStyle} margin-bottom: 20px;";
 }
 <!-- Create form container, hidden by default -->
-<div id="create-form" style="@divStyle">
+<div id="create-form" class="create-form" style="@divStyle">
     <form asp-action="Create" method="post" class="card p-4">
-        <!-- Display validation errors -->
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="row g-3">
-            <!-- Client selection dropdown -->
             <div class="col-md-4">
                 <label asp-for="ClientID" class="form-label">Client</label>
                 <select asp-for="ClientID" class="form-control" asp-items="@ViewBag.ClientList">
                 </select>
                 <span asp-validation-for="ClientID" class="text-danger"></span>
             </div>
-            <!-- Product selection dropdown -->
             <div class="col-md-4">
                 <label class="form-label">Product</label>
                 <select class="form-control product-select" onchange="updateProductFields(this)">
@@ -31,31 +28,26 @@
                     }
                 </select>
             </div>
-            <!-- Description input -->
             <div class="col-md-4">
                 <label asp-for="Description" class="form-label">Description</label>
                 <textarea asp-for="Description" class="form-control description-input" rows="4" placeholder="Expense Description"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
-            <!-- Unit Amount input -->
             <div class="col-md-4">
                 <label asp-for="UnitAmount" class="form-label">Unit Amount</label>
                 <input asp-for="UnitAmount" class="form-control unit-amount-input" type="number" step="0.01" placeholder="0.00" />
                 <span asp-validation-for="UnitAmount" class="text-danger"></span>
             </div>
-            <!-- Quantity input -->
             <div class="col-md-4">
                 <label asp-for="Quantity" class="form-label">Quantity</label>
                 <input asp-for="Quantity" class="form-control quantity-input" type="number" min="1" value="1" />
                 <span asp-validation-for="Quantity" class="text-danger"></span>
             </div>
-            <!-- Total Amount input (read-only) -->
             <div class="col-md-4">
                 <label asp-for="TotalAmount" class="form-label">Total Amount</label>
                 <input asp-for="TotalAmount" class="form-control total-amount-input" type="number" step="0.01" readonly />
                 <span asp-validation-for="TotalAmount" class="text-danger"></span>
             </div>
-            <!-- Form buttons -->
             <div class="col-md-12">
                 <button type="submit" class="btn btn-success create-btn">Create</button>
                 <button type="button" class="btn btn-secondary cancel-create-btn">Cancel</button>

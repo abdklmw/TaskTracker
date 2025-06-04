@@ -1,10 +1,11 @@
-@using TaskTracker.Models.Expense
-@model IEnumerable<Expense>
+@model TaskTracker.Models.ExpenseIndexViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
 @{
     ViewData["Title"] = "Expenses";
+    var hasFilters = Model.SelectedClientID != 0;
+    var showFilterForm = hasFilters;
 }
-<!-- Page title -->
-<h1>Expenses</h1>
 
 <!-- Display success or error messages -->
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
@@ -12,35 +13,119 @@
 <!-- Create form partial, hidden by default -->
 @await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Expense.Expense())
 
-<!-- Button to show the create form -->
-<p>
-    <button id="create-new-btn" class="btn btn-primary">Create New</button>
-</p>
-
-<!-- Header row for the expense list -->
-<div class="row mb-2">
-    <div class="col-md-2"><strong>Client</strong></div>
-    <div class="col-md-3"><strong>Description</strong></div>
-    <div class="col-md-2"><strong>Unit Amount</strong></div>
-    <div class="col-md-1"><strong>Quantity</strong></div>
-    <div class="col-md-2"><strong>Total Amount</strong></div>
-    <div class="col-md-2"><strong>Actions</strong></div>
+<!-- Header with Create New button -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Expenses</h1>
+    <div>
+        <button id="create-new-btn" class="btn btn-primary ml-2">Create New</button>
+    </div>
 </div>
 
-<!-- Loop through expenses to display each row -->
-@{
-    var index = 1;
-}
-@foreach (var expense in Model)
+<!-- Filter Form -->
+<div id="filter-form" class="row mb-3" style="display: @(showFilterForm ? "block" : "none");">
+    <div class="col-12">
+        <form asp-action="Index" method="get">
+            <div class="filter-form-container">
+                <div class="filter-group">
+                    <label for="clientFilter" class="form-label">Filter by Client</label>
+                    <select id="clientFilter" name="clientFilter" class="form-select" asp-items="@Model.ClientFilterOptions">
+                        <option value="0">All Clients</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Apply Filter</button>
+                @if (hasFilters)
+                {
+                    <button type="button" id="clear-filter-btn" class="clear-filter-btn">
+                        <img src="~/images/icons/filter-xmark.svg" alt="Clear Filter" class="filter-icon" />
+                    </button>
+                }
+            </div>
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="recordLimit" value="@Model.RecordLimit" />
+        </form>
+    </div>
+</div>
+
+<!-- Results and Controls -->
+<div class="results-container mb-3">
+    <div>
+        @if (Model.TotalRecords > 0)
+        {
+            <p>Showing @Model.Expenses.Count() of @Model.TotalRecords records</p>
+        }
+        else
+        {
+            <p>No expenses match the selected filter.</p>
+        }
+    </div>
+    <div class="controls-container">
+        <button id="show-filter-btn" class="filter-btn" style="display: @(showFilterForm ? "none" : "inline-block");">
+            <img src="~/images/icons/filter.svg" alt="Show Filter" class="filter-icon" />
+        </button>
+        <form asp-action="Index" method="get" class="records-per-page-form">
+            <label for="recordLimit" class="form-label">Records per page</label>
+            <select id="recordLimit" name="recordLimit" class="form-select" asp-items="@Model.RecordLimitOptions" onchange="this.form.submit()"></select>
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="clientFilter" value="@Model.SelectedClientID" />
+        </form>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (Model.TotalRecords > 0 && Model.TotalPages > 1)
 {
-    var expenseRowViewModel = new ExpenseRowViewModel(expense, index);
-    @await Html.PartialAsync("_DisplayRow", expenseRowViewModel)
-    @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
-    index++;
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="1" asp-route-recordLimit="@Model.RecordLimit" asp-route-clientFilter="@Model.SelectedClientID">First</a>
+                    </li>
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)" asp-route-recordLimit="@Model.RecordLimit" asp-route-clientFilter="@Model.SelectedClientID">Previous</a>
+                    </li>
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-recordLimit="@Model.RecordLimit" asp-route-clientFilter="@Model.SelectedClientID">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)" asp-route-recordLimit="@Model.RecordLimit" asp-route-clientFilter="@Model.SelectedClientID">Next</a>
+                    </li>
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@Model.TotalPages" asp-route-recordLimit="@Model.RecordLimit" asp-route-clientFilter="@Model.SelectedClientID">Last</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
 }
 
-<!-- Scripts for form validation and dynamic behavior -->
+<!-- Header row for the expense list -->
+@if (Model.TotalRecords > 0)
+{
+    <div class="row mb-2">
+        <div class="col-md-2"><strong>Client</strong></div>
+        <div class="col-md-3"><strong>Description</strong></div>
+        <div class="col-md-2"><strong>Unit Amount</strong></div>
+        <div class="col-md-1"><strong>Quantity</strong></div>
+        <div class="col-md-2"><strong>Total Amount</strong></div>
+        <div class="col-md-2"><strong>Actions</strong></div>
+    </div>
+
+    var index = 1;
+    foreach (var expense in Model.Expenses)
+    {
+        var expenseRowViewModel = new TaskTracker.Models.Expense.ExpenseRowViewModel(expense, index);
+        @await Html.PartialAsync("_DisplayRow", expenseRowViewModel)
+        @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
+        index++;
+    }
+}
+
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
-
 }
