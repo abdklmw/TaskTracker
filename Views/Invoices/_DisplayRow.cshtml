@@ -15,7 +15,10 @@
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-info">Send</button>
                 </form>
-                <a asp-action="Paid" asp-route-id="@Model.InvoiceID" class="btn btn-success">Paid</a>
+                <form asp-action="Paid" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success">Paid</button>
+                </form>
                 <a asp-action="Delete" asp-route-id="@Model.InvoiceID" class="btn btn-danger">Delete</a>
             </div>
         </div>
