@@ -1,0 +1,23 @@
+﻿.filter-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+@media (max-width: 576px) {
+    .filter-icon {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+.filter-btn, .clear-filter-btn {
+    border: none;
+    background: none;
+    padding: 5px;
+    cursor: pointer;
+}
+
+    .filter-btn:hover .filter-icon, .clear-filter-btn:hover .filter-icon {
+        opacity: 0.8;
+    }

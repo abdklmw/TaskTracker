@@ -5,7 +5,7 @@ const cleanCSS = require('gulp-clean-css');
 
 // Bundle and minify JavaScript
 gulp.task('js', () => {
-    return gulp.src(['wwwroot/js/site.js', 'wwwroot/js/clock-animation.js', 'wwwroot/js/invoice-creation.js'])
+    return gulp.src(['wwwroot/js/site.js', 'wwwroot/js/clock-animation.js', 'wwwroot/js/invoice-creation.js', 'wwwroot/js/filters.js'])
         .pipe(concat('site.min.js'))
         .pipe(terser({
             mangle: { toplevel: true },
@@ -16,7 +16,7 @@ gulp.task('js', () => {
 
 // Bundle and minify CSS
 gulp.task('css', () => {
-    return gulp.src(['wwwroot/css/site.css', 'wwwroot/css/clock-animation.css', 'wwwroot/css/invoices.css', 'wwwroot/css/layout.css'])
+    return gulp.src(['wwwroot/css/site.css', 'wwwroot/css/clock-animation.css', 'wwwroot/css/invoices.css', 'wwwroot/css/filters.css', 'wwwroot/css/layout.css'])
         .pipe(concat('site.min.css'))
         .pipe(cleanCSS({ compatibility: 'ie8' }))
         .pipe(gulp.dest('wwwroot/css'));

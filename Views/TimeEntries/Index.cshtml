@@ -4,17 +4,21 @@
 @{
     ViewData["Title"] = "Time Entries";
     var timezoneOffset = ViewBag.TimezoneOffset;
+    var hasFilters = Model.SelectedClientID != 0 || Model.SelectedProjectIDs.Any();
+    var showFilterForm = hasFilters; // Show form if filters are applied
 }
 
 <!-- Display success or error messages -->
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Completed time entries</h2>
-    <a id="import-timeentries-btn" class="btn btn-primary" asp-controller="TimeEntries" asp-action="Import">Import</a>
+    <div>
+        <a id="import-timeentries-btn" class="btn btn-primary ml-2" asp-controller="TimeEntries" asp-action="Import">Import</a>
+    </div>
 </div>
 
 <!-- Filter Form -->
-<div class="row mb-3">
+<div id="filter-form" class="row mb-3" style="display: @(showFilterForm ? "block" : "none");">
     <div class="col-12 col-md-6 col-lg-4">
         <form asp-action="Index" method="get">
             <div class="mb-2">
@@ -30,31 +34,36 @@
                 </select>
             </div>
             <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
-            <a asp-action="Index" asp-route-recordLimit="@Model.RecordLimit" class="btn btn-secondary">Clear Filters</a>
+            <button type="button" id="clear-filter-btn" class="clear-filter-btn">
+                <img src="~/images/icons/filter-xmark.svg" alt="Clear Filters" class="filter-icon" />
+            </button>
             <input type="hidden" name="page" value="1" />
             <input type="hidden" name="recordLimit" value="@Model.RecordLimit" />
         </form>
     </div>
 </div>
 
+<!-- Records per page Form -->
+<div class="row mb-3">
+    <div class="col-12 col-md-6 col-lg-4">
+        <button id="show-filter-btn" class="filter-btn" style="display: @(showFilterForm ? "none" : "inline-block");">
+            <img src="~/images/icons/filter.svg" alt="Show Filters" class="filter-icon" />
+        </button>
+        <form asp-action="Index" method="get">
+            <label for="recordLimit" class="form-label">Records per page</label>
+            <select id="recordLimit" name="recordLimit" class="form-select" asp-items="@Model.RecordLimitOptions" onchange="this.form.submit()"></select>
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="clientFilter" value="@Model.SelectedClientID" />
+            @foreach (var projectId in Model.SelectedProjectIDs)
+            {
+                <input type="hidden" name="projectFilter" value="@projectId" />
+            }
+        </form>
+    </div>
+</div>
+
 @if (Model.TotalRecords > 0)
 {
-    <!-- Records per page Form -->
-    <div class="row mb-3">
-        <div class="col-12 col-md-6 col-lg-4">
-            <form asp-action="Index" method="get">
-                <label for="recordLimit" class="form-label">Records per page</label>
-                <select id="recordLimit" name="recordLimit" class="form-select" asp-items="@Model.RecordLimitOptions" onchange="this.form.submit()"></select>
-                <input type="hidden" name="page" value="1" />
-                <input type="hidden" name="clientFilter" value="@Model.SelectedClientID" />
-                @foreach (var projectId in Model.SelectedProjectIDs)
-                {
-                    <input type="hidden" name="projectFilter" value="@projectId" />
-                }
-            </form>
-        </div>
-    </div>
-
     <div class="row mb-3">
         <div class="col-12">
             <p>Showing @Model.TimeEntries.Count() of @Model.TotalRecords records</p>
@@ -101,11 +110,12 @@
         var projectRowViewModel = new TaskTracker.Models.TimeEntries.TimeEntryRowViewModel(timeEntry, index);
         @await Html.PartialAsync("_DisplayRow", projectRowViewModel)
         @await Html.PartialAsync("_EditFormRow", projectRowViewModel)
+        index++;
     }
 }
 else
 {
-    <p>No completed timers</p>
+    <p>No completed time entries match the selected filters.</p>
 }
 
 @section Scripts {
