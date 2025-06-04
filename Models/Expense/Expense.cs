@@ -25,6 +25,6 @@ namespace TaskTracker.Models.Expense
         public DateTime? InvoiceSent { get; set; }
         [Column(TypeName = "date")]
         public DateTime? PaidDate { get; set; }
-        public virtual Client? Client { get; set; }
+        public virtual Client.Client? Client { get; set; }
     }
 }

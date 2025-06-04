@@ -9,10 +9,10 @@ namespace TaskTracker.Models.TimeEntries
         public int TimeEntryID { get; set; }
         [Required]
         public int ProjectID { get; set; }
-        public Project? Project { get; set; }
+        public Project.Project? Project { get; set; }
         [Required]
         public int ClientID { get; set; }
-        public Client? Client { get; set; }
+        public Client.Client? Client { get; set; }
         [Required]
         public string? UserId { get; set; }
         public ApplicationUser? User { get; set; }

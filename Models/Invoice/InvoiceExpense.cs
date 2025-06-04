@@ -53,7 +53,7 @@ namespace TaskTracker.Models.Invoice
                 return Quantity * Product.UnitPrice;
             }
         }
-        public virtual Product? Product { get; set; }
+        public virtual Product.Product? Product { get; set; }
         public DateOnly GetNextChargeDate(int intervals = 1)
         {
             if (!IsRecurring)

@@ -5,7 +5,7 @@
 }
 <h1>Create Project</h1>
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
-@await Html.PartialAsync("_CreateForm", Model ?? new TaskTracker.Models.Project(){Name = "New Project"})
+@await Html.PartialAsync("_CreateForm", Model ?? new TaskTracker.Models.Project.Project() { Name = "New Project" })
 
 @section Scripts {
     @{

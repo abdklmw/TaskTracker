@@ -5,7 +5,7 @@
 }
 <h1>Create Client</h1>
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
-@await Html.PartialAsync("_CreateForm", Model ?? new TaskTracker.Models.Client())
+@await Html.PartialAsync("_CreateForm", Model ?? new TaskTracker.Models.Client.Client())
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

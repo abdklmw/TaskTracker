@@ -6,7 +6,7 @@
 <h1>Clients</h1>
 <!-- Display success or error messages -->
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
-@await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Client())
+@await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Client.Client())
 <p>
     <button id="create-new-btn" class="btn btn-primary">Create New</button>
 </p>

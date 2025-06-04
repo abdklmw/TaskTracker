@@ -26,6 +26,6 @@ namespace TaskTracker.Models.Client
         [Column(TypeName = "decimal(18,2)"), DisplayName("Rate"), Description("Default rate for client. Project specific rate, where provided, will override.")]
         public decimal DefaultRate { get; set; }
 
-        public ICollection<Project>? Projects { get; set; }
+        public ICollection<Project.Project>? Projects { get; set; }
     }
 }

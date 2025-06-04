@@ -1,14 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using TaskTracker.Data;
-using Microsoft.AspNetCore.Identity;
-using TaskTracker.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TaskTracker.Data;
+using TaskTracker.Models;
 using TaskTracker.Models.TimeEntries;
+using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
 {
@@ -40,7 +41,7 @@ namespace TaskTracker.Controllers
             _dropdownService = dropdownService;
         }
 
-        public async Task<IActionResult> Index(int recordLimit = 10, int page = 1)
+        public async Task<IActionResult> Index(int recordLimit = 10, int page = 1, int clientFilter = 0, int[] projectFilter = null)
         {
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId))
@@ -78,12 +79,27 @@ namespace TaskTracker.Controllers
             }
 
             // Get completed time entries (EndDateTime != null and InvoicedDate == null)
-            var completedTimeEntriesQuery = _context.TimeEntries
+            IQueryable<TimeEntry> completedTimeEntriesQuery = _context.TimeEntries
                 .Where(t => t.UserId == userId && t.EndDateTime != null && t.InvoicedDate == null)
                 .Include(t => t.Client)
-                .Include(t => t.Project)
-                .OrderBy(t => t.Client.Name ?? "") // Sort by Client.Name ascending, handle nulls
-                .ThenByDescending(t => t.StartDateTime); // Then sort by StartDateTime descending
+                .Include(t => t.Project);
+
+            // Apply client filter
+            if (clientFilter > 0)
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.ClientID == clientFilter);
+            }
+
+            // Apply project filter
+            if (projectFilter != null && projectFilter.Any() && !projectFilter.Contains(0))
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => projectFilter.Contains(t.ProjectID));
+            }
+
+            // Sort the query
+            completedTimeEntriesQuery = completedTimeEntriesQuery
+                .OrderBy(t => t.Client)
+                .ThenByDescending(t => t.StartDateTime);
 
             var totalRecords = await completedTimeEntriesQuery.CountAsync();
             var viewModel = new TimeEntriesIndexViewModel
@@ -91,7 +107,9 @@ namespace TaskTracker.Controllers
                 TimezoneOffset = timezoneOffset,
                 ReturnTo = "TimeEntries",
                 VisibleCreateForm = false,
-                TotalRecords = totalRecords
+                TotalRecords = totalRecords,
+                SelectedClientID = clientFilter,
+                SelectedProjectIDs = projectFilter?.Where(id => id != 0).ToList() ?? new List<int>()
             };
 
             // Validate recordLimit
@@ -102,18 +120,27 @@ namespace TaskTracker.Controllers
             }
             viewModel.RecordLimit = recordLimit;
 
-            // Populate dropdown options
+            // Populate dropdown options for records per page
             var limitOptions = new[]
             {
-                new { Value = 5, Text = "5" },
-                new { Value = 10, Text = "10" },
-                new { Value = 20, Text = "20" },
-                new { Value = 50, Text = "50" },
-                new { Value = 100, Text = "100" },
-                new { Value = 200, Text = "200" },
-                new { Value = -1, Text = "ALL" }
-            };
+            new { Value = 5, Text = "5" },
+            new { Value = 10, Text = "10" },
+            new { Value = 20, Text = "20" },
+            new { Value = 50, Text = "50" },
+            new { Value = 100, Text = "100" },
+            new { Value = 200, Text = "200" },
+            new { Value = -1, Text = "ALL" }
+        };
             viewModel.RecordLimitOptions = new SelectList(limitOptions, "Value", "Text", recordLimit);
+
+            // Populate filter dropdowns using DropdownService
+            var clientDropdown = await _dropdownService.GetClientDropdownAsync(clientFilter);
+            clientDropdown.RemoveAt(0); // Remove "Select Client" option for filter
+            viewModel.ClientFilterOptions = new SelectList(clientDropdown, "Value", "Text", clientFilter);
+
+            var projectDropdown = await _dropdownService.GetProjectDropdownAsync(0);
+            projectDropdown.RemoveAt(0); // Remove "Select Project" option for filter
+            viewModel.ProjectFilterOptions = new MultiSelectList(projectDropdown, "Value", "Text", viewModel.SelectedProjectIDs);
 
             // Populate create form dropdowns using DropdownService
             viewModel.ClientList = new SelectList(
@@ -151,16 +178,16 @@ namespace TaskTracker.Controllers
                     .ToListAsync();
             }
 
-            ViewBag.VisibleCreateForm = false; // Set form to hidden by default
-            ViewBag.ReturnTo = "TimeEntries"; // Set form redirect target
+            ViewBag.VisibleCreateForm = false;
+            ViewBag.ReturnTo = "TimeEntries";
             ViewBag.TimezoneOffset = timezoneOffset;
 
             // Fetch running timers
-            var runningTimers = _context.TimeEntries
+            var runningTimers = await _context.TimeEntries
                 .Where(t => t.UserId == userId && t.EndDateTime == null)
                 .Include(t => t.Client)
                 .Include(t => t.Project)
-                .ToList();
+                .ToListAsync();
 
             viewModel.RunningTimers = runningTimers;
 
@@ -255,7 +282,7 @@ namespace TaskTracker.Controllers
                     .Where(t => t.UserId == userId && t.EndDateTime != null)
                     .Include(t => t.Client)
                     .Include(t => t.Project)
-                    .OrderBy(t => t.Client.Name ?? "")
+                    .OrderBy(t => t.Client)
                     .ThenByDescending(t => t.StartDateTime)
                     .Take(10)
                     .ToListAsync(),
@@ -341,7 +368,7 @@ namespace TaskTracker.Controllers
                     .Where(t => t.UserId == userId && t.EndDateTime != null)
                     .Include(t => t.Client)
                     .Include(t => t.Project)
-                    .OrderBy(t => t.Client.Name ?? "")
+                    .OrderBy(t => t.Client)
                     .ThenByDescending(t => t.StartDateTime)
                     .Take(10)
                     .ToListAsync(),
