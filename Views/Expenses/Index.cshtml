@@ -22,31 +22,7 @@
 </div>
 
 <!-- Filter Form -->
-<div id="filter-form" class="row mb-3" style="display: @(showFilterForm ? "block" : "none");">
-    <div class="col-12">
-        <form asp-action="Index" method="get">
-            <div class="filter-form-container">
-                <div class="filter-group">
-                    <label for="clientFilter" class="form-label">Filter by Client</label>
-                    <select id="clientFilter" name="clientFilter" class="form-select" asp-items="@Model.ClientFilterOptions">
-                        <option value="0">All Clients</option>
-                    </select>
-                </div>
-            </div>
-            <div class="filter-actions">
-                <button type="submit" class="btn btn-primary">Apply Filter</button>
-                @if (hasFilters)
-                {
-                    <button type="button" id="clear-filter-btn" class="clear-filter-btn">
-                        <img src="~/images/icons/filter-xmark.svg" alt="Clear Filter" class="filter-icon" />
-                    </button>
-                }
-            </div>
-            <input type="hidden" name="page" value="1" />
-            <input type="hidden" name="recordLimit" value="@Model.RecordLimit" />
-        </form>
-    </div>
-</div>
+@await Html.PartialAsync("_ExpensesFiltersPartial", Model)
 
 <!-- Results and Controls -->
 <div class="results-container mb-3">
