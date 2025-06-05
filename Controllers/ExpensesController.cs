@@ -48,6 +48,11 @@ namespace TaskTracker.Controllers
                 TotalRecords = totalRecords,
                 RecordLimit = recordLimit,
                 SelectedClientID = clientFilter,
+                RouteValues = new Dictionary<string, string>
+                {
+                    { "recordLimit", recordLimit.ToString() },
+                    { "clientFilter", clientFilter.ToString() }
+                },
                 ClientFilterOptions = await _dropdownService.GetClientDropdownAsync(clientFilter),
                 RecordLimitOptions = new SelectList(new[]
                 {
@@ -98,7 +103,7 @@ namespace TaskTracker.Controllers
                     UnitPrice = p.UnitPrice
                 })
                 .ToListAsync();
-            ViewBag.VisibleCreateForm = true; // Keep form visible on error
+            ViewBag.VisibleCreateForm = true;
             return RedirectToAction(nameof(Index));
         }
 
