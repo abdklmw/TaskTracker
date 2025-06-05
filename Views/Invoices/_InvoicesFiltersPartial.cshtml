@@ -13,45 +13,47 @@
         <form asp-action="Index" method="get">
             <div class="filter-form-container row g-3">
                 <div class="filter-group col-md-3">
-                    <label asp-for="SelectedClientID" class="form-label">Filter by Client</label>
-                    <select asp-for="SelectedClientID" class="form-select" asp-items="Model.ClientFilterOptions">
+                    <label for="clientFilter" class="form-label">Filter by Client</label>
+                    <select id="clientFilter" name="clientFilter" class="form-select" asp-items="Model.ClientFilterOptions">
                         <option value="0">All Clients</option>
                     </select>
                 </div>
                 <div class="filter-group col-md-3">
-                    <label asp-for="SelectedStatus" class="form-label">Status</label>
-                    <select asp-for="SelectedStatus" class="form-select" asp-items="Model.StatusFilterOptions"></select>
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select id="statusFilter" name="statusFilter" class="form-select" asp-items="Model.StatusFilterOptions"></select>
                 </div>
                 <div class="filter-group col-md-3">
-                    <label asp-for="TotalAmountMin" class="form-label">Amount</label>
-                    <input asp-for="TotalAmountMin" class="form-control filter-invoice-currency-field" placeholder="Min" type="number" step="1.00" />
-                    <span>-</span>
-                    <input asp-for="TotalAmountMax" class="form-control filter-invoice-currency-field" placeholder="Max" type="number" step="1.00" />
+                    <label class="form-label">Amount</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="totalAmountMin" name="totalAmountMin" class="form-control filter-invoice-currency-field" placeholder="Min" type="number" step="1.00" value="@Model.TotalAmountMin" />
+                        <span>-</span>
+                        <input id="totalAmountMax" name="totalAmountMax" class="form-control filter-invoice-currency-field" placeholder="Max" type="number" step="1.00" value="@Model.TotalAmountMax" />
+                    </div>
                 </div>
             </div>
             <div class="filter-form-container row g-3">
                 <div class="filter-group col-md-3">
                     <label class="form-label">Invoice Date</label>
                     <div class="d-flex align-items-center gap-2">
-                        <input asp-for="InvoiceDateStart" class="form-control" type="date" />
+                        <input id="invoiceDateStart" name="invoiceDateStart" class="form-control" type="date" value="@(Model.InvoiceDateStart?.ToString("yyyy-MM-dd"))" />
                         <span>-</span>
-                        <input asp-for="InvoiceDateEnd" class="form-control" type="date" />
+                        <input id="invoiceDateEnd" name="invoiceDateEnd" class="form-control" type="date" value="@(Model.InvoiceDateEnd?.ToString("yyyy-MM-dd"))" />
                     </div>
                 </div>
                 <div class="filter-group col-md-3">
                     <label class="form-label">Sent Date</label>
                     <div class="d-flex align-items-center gap-2">
-                        <input asp-for="InvoiceSentDateStart" class="form-control" type="date" />
+                        <input id="invoiceSentDateStart" name="invoiceSentDateStart" class="form-control" type="date" value="@(Model.InvoiceSentDateStart?.ToString("yyyy-MM-dd"))" />
                         <span>-</span>
-                        <input asp-for="InvoiceSentDateEnd" class="form-control" type="date" />
+                        <input id="invoiceSentDateEnd" name="invoiceSentDateEnd" class="form-control" type="date" value="@(Model.InvoiceSentDateEnd?.ToString("yyyy-MM-dd"))" />
                     </div>
                 </div>
                 <div class="filter-group col-md-3">
                     <label class="form-label">Paid Date</label>
                     <div class="d-flex align-items-center gap-2">
-                        <input asp-for="PaidDateStart" class="form-control" type="date" />
+                        <input id="paidDateStart" name="paidDateStart" class="form-control" type="date" value="@(Model.PaidDateStart?.ToString("yyyy-MM-dd"))" />
                         <span>-</span>
-                        <input asp-for="PaidDateEnd" class="form-control" type="date" />
+                        <input id="paidDateEnd" name="paidDateEnd" class="form-control" type="date" value="@(Model.PaidDateEnd?.ToString("yyyy-MM-dd"))" />
                     </div>
                 </div>
             </div>

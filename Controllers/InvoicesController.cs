@@ -112,14 +112,16 @@ namespace TaskTracker.Controllers
             }
 
             int totalRecords = await query.CountAsync();
-            int totalPages = (int)Math.Ceiling((double)totalRecords / recordLimit);
+            int totalPages = totalRecords > 0 ? (int)Math.Ceiling((double)totalRecords / recordLimit) : 1;
             page = page < 1 ? 1 : page > totalPages ? totalPages : page;
 
-            var invoices = await query
-                .OrderByDescending(i => i.InvoiceDate)
-                .Skip((page - 1) * recordLimit)
-                .Take(recordLimit)
-                .ToListAsync();
+            var invoices = totalRecords > 0
+                ? await query
+                    .OrderByDescending(i => i.InvoiceDate)
+                    .Skip((page - 1) * recordLimit)
+                    .Take(recordLimit)
+                    .ToListAsync()
+                : new List<Invoice>();
 
             var statusOptions = Enum.GetValues(typeof(InvoiceStatus))
                 .Cast<InvoiceStatus>()
