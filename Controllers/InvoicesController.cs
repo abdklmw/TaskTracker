@@ -40,17 +40,139 @@ namespace TaskTracker.Controllers
             _emailService = emailService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int page = 1,
+            int recordLimit = 10,
+            int clientFilter = 0,
+            InvoiceStatus? statusFilter = null,
+            DateTime? paidDateStart = null,
+            DateTime? paidDateEnd = null,
+            DateTime? invoiceDateStart = null,
+            DateTime? invoiceDateEnd = null,
+            DateTime? invoiceSentDateStart = null,
+            DateTime? invoiceSentDateEnd = null,
+            decimal? totalAmountMin = null,
+            decimal? totalAmountMax = null)
         {
-            var invoices = await _context.Invoices.Include(i => i.Client).ToListAsync();
+            _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}, statusFilter={StatusFilter}",
+                page, recordLimit, clientFilter, statusFilter);
+
+            var query = _context.Invoices
+                .Include(i => i.Client)
+                .AsQueryable();
+
+            if (clientFilter != 0)
+            {
+                query = query.Where(i => i.ClientID == clientFilter);
+            }
+
+            if (statusFilter.HasValue)
+            {
+                query = query.Where(i => i.Status == statusFilter.Value);
+            }
+
+            if (paidDateStart.HasValue)
+            {
+                query = query.Where(i => i.PaidDate >= paidDateStart.Value);
+            }
+
+            if (paidDateEnd.HasValue)
+            {
+                query = query.Where(i => i.PaidDate <= paidDateEnd.Value);
+            }
+
+            if (invoiceDateStart.HasValue)
+            {
+                query = query.Where(i => i.InvoiceDate >= invoiceDateStart.Value);
+            }
+
+            if (invoiceDateEnd.HasValue)
+            {
+                query = query.Where(i => i.InvoiceDate <= invoiceDateEnd.Value);
+            }
+
+            if (invoiceSentDateStart.HasValue)
+            {
+                query = query.Where(i => i.InvoiceSentDate >= invoiceSentDateStart.Value);
+            }
+
+            if (invoiceSentDateEnd.HasValue)
+            {
+                query = query.Where(i => i.InvoiceSentDate <= invoiceSentDateEnd.Value);
+            }
+
+            if (totalAmountMin.HasValue)
+            {
+                query = query.Where(i => i.TotalAmount >= totalAmountMin.Value);
+            }
+
+            if (totalAmountMax.HasValue)
+            {
+                query = query.Where(i => i.TotalAmount <= totalAmountMax.Value);
+            }
+
+            int totalRecords = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalRecords / recordLimit);
+            page = page < 1 ? 1 : page > totalPages ? totalPages : page;
+
+            var invoices = await query
+                .OrderByDescending(i => i.InvoiceDate)
+                .Skip((page - 1) * recordLimit)
+                .Take(recordLimit)
+                .ToListAsync();
+
+            var statusOptions = Enum.GetValues(typeof(InvoiceStatus))
+                .Cast<InvoiceStatus>()
+                .Select(s => new SelectListItem
+                {
+                    Value = s.ToString(),
+                    Text = s.ToString()
+                })
+                .Prepend(new SelectListItem { Value = "", Text = "All Statuses" });
+
+            var viewModel = new InvoiceIndexViewModel
+            {
+                Invoices = invoices,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                TotalRecords = totalRecords,
+                RecordLimit = recordLimit,
+                SelectedClientID = clientFilter,
+                SelectedStatus = statusFilter,
+                PaidDateStart = paidDateStart,
+                PaidDateEnd = paidDateEnd,
+                InvoiceDateStart = invoiceDateStart,
+                InvoiceDateEnd = invoiceDateEnd,
+                InvoiceSentDateStart = invoiceSentDateStart,
+                InvoiceSentDateEnd = invoiceSentDateEnd,
+                TotalAmountMin = totalAmountMin,
+                TotalAmountMax = totalAmountMax,
+                RouteValues = new Dictionary<string, string>
+                {
+                    { "recordLimit", recordLimit.ToString() },
+                    { "clientFilter", clientFilter.ToString() },
+                    { "statusFilter", statusFilter?.ToString() ?? "" },
+                    { "paidDateStart", paidDateStart?.ToString("yyyy-MM-dd") ?? "" },
+                    { "paidDateEnd", paidDateEnd?.ToString("yyyy-MM-dd") ?? "" },
+                    { "invoiceDateStart", invoiceDateStart?.ToString("yyyy-MM-dd") ?? "" },
+                    { "invoiceDateEnd", invoiceDateEnd?.ToString("yyyy-MM-dd") ?? "" },
+                    { "invoiceSentDateStart", invoiceSentDateStart?.ToString("yyyy-MM-dd") ?? "" },
+                    { "invoiceSentDateEnd", invoiceSentDateEnd?.ToString("yyyy-MM-dd") ?? "" },
+                    { "totalAmountMin", totalAmountMin?.ToString() ?? "" },
+                    { "totalAmountMax", totalAmountMax?.ToString() ?? "" }
+                },
+                ClientFilterOptions = await _dropdownService.GetClientDropdownAsync(clientFilter),
+                StatusFilterOptions = statusOptions
+            };
+
             var createModel = new InvoiceCreateViewModel
             {
                 Clients = await _dropdownService.GetClientDropdownAsync(0)
             };
             ViewBag.CreateModel = createModel;
-            var clientList = await _dropdownService.GetClientDropdownAsync(0);
-            ViewData["ClientID"] = new SelectList(clientList, "Value", "Text");
-            return View(invoices);
+            ViewData["ClientID"] = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text");
+
+            return View(viewModel);
         }
 
         [HttpGet]
@@ -65,8 +187,8 @@ namespace TaskTracker.Controllers
                     .Select(t => new TimeEntryViewModel
                     {
                         TimeEntryID = t.TimeEntryID,
-                        HourlyRate = t.HourlyRate ?? 0m, // Use TimeEntry.HourlyRate if set
-                        RateSource = "", // Will be set below
+                        HourlyRate = t.HourlyRate ?? 0m,
+                        RateSource = "",
                         HoursSpent = t.HoursSpent ?? 0m,
                         Description = t.Description ?? "",
                         StartDateTime = t.StartDateTime,
@@ -78,17 +200,14 @@ namespace TaskTracker.Controllers
 
                 foreach (var entry in timeEntries)
                 {
-                    // If TimeEntry.HourlyRate is set and non-zero, use it and mark source as "TimeEntry"
                     if (entry.HourlyRate > 0m)
                     {
                         entry.RateSource = "TimeEntry";
                     }
                     else
                     {
-                        // Otherwise, use RateCalculationService
                         entry.HourlyRate = await _rateService.GetHourlyRateAsync(entry.ProjectID, entry.ClientID);
 
-                        // Determine RateSource
                         if (entry.ProjectID.HasValue)
                         {
                             var project = await _context.Projects
@@ -162,7 +281,6 @@ namespace TaskTracker.Controllers
                     decimal totalAmount = 0m;
                     foreach (var timeEntry in timeEntries)
                     {
-                        // Calculate and update HourlyRate using RateCalculationService
                         var hourlyRate = await _rateService.GetHourlyRateAsync(timeEntry.ProjectID, timeEntry.ClientID);
                         timeEntry.HourlyRate = hourlyRate;
                         totalAmount += (hourlyRate * (timeEntry.HoursSpent ?? 0m));
@@ -248,7 +366,7 @@ namespace TaskTracker.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("InvoiceID,ClientID,InvoiceDate,DueDate,TotalAmount,Status")] Invoice invoice)
+        public async Task<IActionResult> Edit(int id, [Bind("InvoiceID,ClientID,InvoiceDate,InvoiceSentDate,PaidDate,TotalAmount,Status")] Invoice invoice)
         {
             if (id != invoice.InvoiceID)
             {
@@ -292,9 +410,7 @@ namespace TaskTracker.Controllers
                 .Include(i => i.Client)
                 .FirstOrDefaultAsync(m => m.InvoiceID == id);
             if (invoice == null)
-            {
                 return NotFound();
-            }
 
             return View(invoice);
         }
@@ -311,9 +427,7 @@ namespace TaskTracker.Controllers
                     .FirstOrDefaultAsync(i => i.InvoiceID == id);
 
                 if (invoice == null)
-                {
                     return NotFound();
-                }
 
                 var timeEntryIds = invoice.InvoiceTimeEntries.Select(ite => ite.TimeEntryID).ToList();
                 var timeEntries = await _context.TimeEntries
@@ -488,9 +602,7 @@ namespace TaskTracker.Controllers
                     .FirstOrDefaultAsync(i => i.InvoiceID == id);
 
                 if (invoice == null)
-                {
                     return NotFound();
-                }
 
                 invoice.PaidDate = DateTime.Today;
                 invoice.Status = InvoiceStatus.Paid;
