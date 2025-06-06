@@ -14,13 +14,11 @@
                 <div class="filter-group">
                     <label for="clientFilter" class="form-label">Filter by Client</label>
                     <select id="clientFilter" name="clientFilter" class="form-select" asp-items="@Model.ClientFilterOptions">
-                        <option value="0">All Clients</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label for="projectFilter" class="form-label">Filter by Projects</label>
                     <select id="projectFilter" name="projectFilter" class="form-select" multiple asp-items="@Model.ProjectFilterOptions">
-                        <option value="0">All Projects</option>
                     </select>
                 </div>
             </div>
