@@ -389,7 +389,6 @@ namespace TaskTracker.Controllers
             ViewBag.ProjectID = viewModel.ProjectList;
             ViewBag.VisibleCreateForm = true;
             ViewBag.ReturnTo = ViewBag.ReturnTo as string ?? "TimeEntries";
-            ViewBag.TimezoneOffset = timezoneOffset;
 
             return View("Index", viewModel);
         }

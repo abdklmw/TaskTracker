@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+@inject TaskTracker.Services.IUserService UserService
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -8,6 +10,10 @@
         window.AppSettings = window.AppSettings || {};
         window.AppSettings.GetUnpaidItemsUrl = '@Url.Action("GetUnpaidItems", "Invoices")';
         window.AppSettings.BasePath = '@Context.Request.PathBase'; // e.g., "/subfolder" or ""
+        @if (User != null && User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            @:window.userTimezoneOffset = @(await UserService.GetUserTimezoneOffsetAsync(User.FindFirst(ClaimTypes.NameIdentifier)?.Value));
+        }
     </script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
@@ -68,7 +74,6 @@
             @RenderBody()
         </main>
     </div>
-
     <footer class="border-top footer text-muted">
         <div class="container">
             &copy; 2025 - TaskTracker - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>

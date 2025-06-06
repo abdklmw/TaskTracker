@@ -59,6 +59,9 @@ builder.Services.AddScoped<DropdownService>();
 // Register EmailService
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Register UserService
+builder.Services.AddScoped<IUserService, UserService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
