@@ -37,7 +37,17 @@ namespace TaskTracker.Controllers
             _dropdownService = dropdownService;
         }
 
-        public async Task<IActionResult> Index(int recordLimit = 10, int page = 1, int clientFilter = 0, int[] projectFilter = null)
+        public async Task<IActionResult> Index(
+                int recordLimit = 10,
+                int page = 1,
+                int clientFilter = 0,
+                int[] projectFilter = null,
+                DateTime? invoicedDateStart = null,
+                DateTime? invoicedDateEnd = null,
+                DateTime? paidDateStart = null,
+                DateTime? paidDateEnd = null,
+                DateTime? invoiceSentDateStart = null,
+                DateTime? invoiceSentDateEnd = null)
         {
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId))
@@ -74,22 +84,58 @@ namespace TaskTracker.Controllers
                 timezoneOffset = 0; // Fallback to UTC
             }
 
-            // Get completed time entries (EndDateTime != null and InvoicedDate == null)
+            // Get completed time entries (EndDateTime != null)
             IQueryable<TimeEntry> completedTimeEntriesQuery = _context.TimeEntries
-                .Where(t => t.UserId == userId && t.EndDateTime != null && t.InvoicedDate == null)
+                .Where(t => t.UserId == userId && t.EndDateTime != null)
                 .Include(t => t.Client)
                 .Include(t => t.Project);
 
-            // Apply client filter
+            // Apply default filter for InvoicedDate == null if no filters are set
+            bool hasFilters = clientFilter != 0 ||
+                              (projectFilter != null && projectFilter.Any() && !projectFilter.Contains(0)) ||
+                              invoicedDateStart.HasValue || invoicedDateEnd.HasValue ||
+                              paidDateStart.HasValue || paidDateEnd.HasValue ||
+                              invoiceSentDateStart.HasValue || invoiceSentDateEnd.HasValue;
+
+            if (!hasFilters)
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoicedDate == null);
+            }
+
+            // Apply explicit filters
             if (clientFilter > 0)
             {
                 completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.ClientID == clientFilter);
             }
 
-            // Apply project filter
             if (projectFilter != null && projectFilter.Any() && !projectFilter.Contains(0))
             {
                 completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => projectFilter.Contains(t.ProjectID));
+            }
+
+            if (invoicedDateStart.HasValue)
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoicedDate >= invoicedDateStart.Value);
+            }
+            if (invoicedDateEnd.HasValue)
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoicedDate <= invoicedDateEnd.Value);
+            }
+            if (paidDateStart.HasValue)
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.PaidDate >= paidDateStart.Value);
+            }
+            if (paidDateEnd.HasValue)
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.PaidDate <= paidDateEnd.Value);
+            }
+            if (invoiceSentDateStart.HasValue)
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoiceSent >= invoiceSentDateStart.Value);
+            }
+            if (invoiceSentDateEnd.HasValue)
+            {
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoiceSent <= invoiceSentDateEnd.Value);
             }
 
             // Sort the query
@@ -97,23 +143,73 @@ namespace TaskTracker.Controllers
                 .OrderBy(t => t.Client)
                 .ThenByDescending(t => t.StartDateTime);
 
-            // Debug: Log parameters
-            _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}, projectFilter={ProjectFilter}", page, recordLimit, clientFilter, projectFilter != null ? string.Join(",", projectFilter) : "null");
+            // Debug: Log parameters and query count
+            _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}, projectFilter={ProjectFilter}, invoicedDateStart={InvoicedDateStart}, invoicedDateEnd={InvoicedDateEnd}, paidDateStart={PaidDateStart}, paidDateEnd={PaidDateEnd}, invoiceSentDateStart={InvoiceSentDateStart}, invoiceSentDateEnd={InvoiceSentDateEnd}, hasFilters={HasFilters}",
+                page, recordLimit, clientFilter, projectFilter != null ? string.Join(",", projectFilter) : "null",
+                invoicedDateStart, invoicedDateEnd, paidDateStart, paidDateEnd, invoiceSentDateStart, invoiceSentDateEnd, hasFilters);
 
             var totalRecords = await completedTimeEntriesQuery.CountAsync();
+            _logger.LogInformation("Total records after filters: {TotalRecords}", totalRecords);
+
+            // Ensure valid recordLimit
+            var validLimits = new[] { 5, 10, 20, 50, 100, 200, -1 }; // -1 represents ALL
+            if (!validLimits.Contains(recordLimit))
+            {
+                recordLimit = 10; // Default to 10 if invalid
+            }
+
+            int totalPages = totalRecords > 0 ? (int)Math.Ceiling((double)totalRecords / (recordLimit == -1 ? 200 : recordLimit)) : 1;
+            page = page < 1 ? 1 : page > totalPages ? totalPages : page;
+
+            // Fetch time entries with pagination
+            List<TimeEntry> timeEntries;
+            if (recordLimit == -1)
+            {
+                const int pageSize = 200;
+                timeEntries = await completedTimeEntriesQuery
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+            }
+            else
+            {
+                timeEntries = await completedTimeEntriesQuery
+                    .Skip((page - 1) * recordLimit)
+                    .Take(recordLimit)
+                    .ToListAsync();
+            }
+
+            _logger.LogInformation("Fetched {Count} time entries for page {Page}", timeEntries.Count, page);
+
             var viewModel = new TimeEntriesIndexViewModel
             {
+                TimeEntries = timeEntries,
                 TimezoneOffset = timezoneOffset,
                 ReturnTo = "TimeEntries",
                 VisibleCreateForm = false,
                 TotalRecords = totalRecords,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                RecordLimit = recordLimit,
                 SelectedClientID = clientFilter,
                 SelectedProjectIDs = projectFilter?.Where(id => id != 0).ToList() ?? new List<int>(),
+                InvoicedDateStart = invoicedDateStart,
+                InvoicedDateEnd = invoicedDateEnd,
+                PaidDateStart = paidDateStart,
+                PaidDateEnd = paidDateEnd,
+                InvoiceSentDateStart = invoiceSentDateStart,
+                InvoiceSentDateEnd = invoiceSentDateEnd,
                 RouteValues = new Dictionary<string, string>
-                {
-                    { "recordLimit", recordLimit.ToString() },
-                    { "clientFilter", clientFilter.ToString() }
-                }
+            {
+                { "recordLimit", recordLimit.ToString() },
+                { "clientFilter", clientFilter.ToString() },
+                { "invoicedDateStart", invoicedDateStart?.ToString("yyyy-MM-dd") ?? "" },
+                { "invoicedDateEnd", invoicedDateEnd?.ToString("yyyy-MM-dd") ?? "" },
+                { "paidDateStart", paidDateStart?.ToString("yyyy-MM-dd") ?? "" },
+                { "paidDateEnd", paidDateEnd?.ToString("yyyy-MM-dd") ?? "" },
+                { "invoiceSentDateStart", invoiceSentDateStart?.ToString("yyyy-MM-dd") ?? "" },
+                { "invoiceSentDateEnd", invoiceSentDateEnd?.ToString("yyyy-MM-dd") ?? "" }
+            }
             };
 
             // Add projectFilter values to RouteValues as repeated keys
@@ -125,25 +221,17 @@ namespace TaskTracker.Controllers
                 }
             }
 
-            // Validate recordLimit
-            var validLimits = new[] { 5, 10, 20, 50, 100, 200, -1 }; // -1 represents ALL
-            if (!validLimits.Contains(recordLimit))
-            {
-                recordLimit = 10; // Default to 10 if invalid
-            }
-            viewModel.RecordLimit = recordLimit;
-
             // Populate dropdown options for records per page
             var limitOptions = new[]
             {
-                new { Value = 5, Text = "5" },
-                new { Value = 10, Text = "10" },
-                new { Value = 20, Text = "20" },
-                new { Value = 50, Text = "50" },
-                new { Value = 100, Text = "100" },
-                new { Value = 200, Text = "200" },
-                new { Value = -1, Text = "ALL" }
-            };
+            new { Value = 5, Text = "5" },
+            new { Value = 10, Text = "10" },
+            new { Value = 20, Text = "20" },
+            new { Value = 50, Text = "50" },
+            new { Value = 100, Text = "100" },
+            new { Value = 200, Text = "200" },
+            new { Value = -1, Text = "ALL" }
+        };
             viewModel.RecordLimitOptions = new SelectList(limitOptions, "Value", "Text", recordLimit);
 
             // Populate filter dropdowns using DropdownService
@@ -170,30 +258,6 @@ namespace TaskTracker.Controllers
             );
             ViewBag.ClientID = viewModel.ClientList;
             ViewBag.ProjectID = viewModel.ProjectList;
-
-            // Apply pagination
-            viewModel.CurrentPage = page < 1 ? 1 : page;
-            if (recordLimit == -1)
-            {
-                const int pageSize = 200;
-                viewModel.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-                viewModel.TimeEntries = await completedTimeEntriesQuery
-                    .Skip((viewModel.CurrentPage - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
-            }
-            else
-            {
-                viewModel.TotalPages = (int)Math.Ceiling((double)totalRecords / recordLimit);
-                viewModel.TimeEntries = await completedTimeEntriesQuery
-                    .Skip((viewModel.CurrentPage - 1) * recordLimit)
-                    .Take(recordLimit)
-                    .ToListAsync();
-            }
-
-            ViewBag.VisibleCreateForm = false;
-            ViewBag.ReturnTo = "TimeEntries";
-            ViewBag.TimezoneOffset = timezoneOffset;
 
             // Fetch running timers
             var runningTimers = await _context.TimeEntries

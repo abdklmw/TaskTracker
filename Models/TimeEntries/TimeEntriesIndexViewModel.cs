@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
 using System.Collections.Generic;
-using TaskTracker.Models.TimeEntries;
 
 namespace TaskTracker.Models
 {
     public class TimeEntriesIndexViewModel : IPaginationViewModel
     {
-        public IEnumerable<TimeEntry> TimeEntries { get; set; } = new List<TimeEntry>();
-        public IEnumerable<TimeEntry> RunningTimers { get; set; } = new List<TimeEntry>();
+        public IEnumerable<TimeEntries.TimeEntry> TimeEntries { get; set; } = new List<TimeEntries.TimeEntry>();
+        public IEnumerable<TimeEntries.TimeEntry> RunningTimers { get; set; } = new List<TimeEntries.TimeEntry>();
         public int TimezoneOffset { get; set; } = 0;
         public bool VisibleCreateForm { get; set; } = false;
         public string ReturnTo { get; set; } = "TimeEntries";
@@ -23,5 +23,11 @@ namespace TaskTracker.Models
         public List<int> SelectedProjectIDs { get; set; } = new List<int>();
         public IEnumerable<SelectListItem> ClientFilterOptions { get; set; } = new List<SelectListItem>();
         public IEnumerable<SelectListItem> ProjectFilterOptions { get; set; } = new List<SelectListItem>();
+        public DateTime? InvoicedDateStart { get; set; }
+        public DateTime? InvoicedDateEnd { get; set; }
+        public DateTime? PaidDateStart { get; set; }
+        public DateTime? PaidDateEnd { get; set; }
+        public DateTime? InvoiceSentDateStart { get; set; }
+        public DateTime? InvoiceSentDateEnd { get; set; }
     }
 }

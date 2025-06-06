@@ -7,7 +7,7 @@
     }
 
     var TimeEntry = Model.TimeEntry;
-    int timezoneOffset = (int)ViewBag.TimezoneOffset;
+    int timezoneOffset = Model.TimezoneOffset;
     var startLocal = TimeEntry.StartDateTime.AddMinutes(timezoneOffset);
     var endLocal = TimeEntry.EndDateTime;
     if (endLocal.HasValue)
