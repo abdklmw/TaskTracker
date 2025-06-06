@@ -47,7 +47,10 @@ namespace TaskTracker.Controllers
                 DateTime? paidDateStart = null,
                 DateTime? paidDateEnd = null,
                 DateTime? invoiceSentDateStart = null,
-                DateTime? invoiceSentDateEnd = null)
+                DateTime? invoiceSentDateEnd = null,
+                bool invoicedDateAny = false,
+                bool paidDateAny = false,
+                bool invoiceSentDateAny = false)
         {
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId))
@@ -95,7 +98,8 @@ namespace TaskTracker.Controllers
                               (projectFilter != null && projectFilter.Any() && !projectFilter.Contains(0)) ||
                               invoicedDateStart.HasValue || invoicedDateEnd.HasValue ||
                               paidDateStart.HasValue || paidDateEnd.HasValue ||
-                              invoiceSentDateStart.HasValue || invoiceSentDateEnd.HasValue;
+                              invoiceSentDateStart.HasValue || invoiceSentDateEnd.HasValue ||
+                              invoicedDateAny || paidDateAny || invoiceSentDateAny;
 
             if (!hasFilters)
             {
@@ -113,29 +117,53 @@ namespace TaskTracker.Controllers
                 completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => projectFilter.Contains(t.ProjectID));
             }
 
-            if (invoicedDateStart.HasValue)
+            // Apply date filters
+            if (invoicedDateAny)
             {
-                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoicedDate >= invoicedDateStart.Value);
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoicedDate != null);
             }
-            if (invoicedDateEnd.HasValue)
+            else
             {
-                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoicedDate <= invoicedDateEnd.Value);
+                if (invoicedDateStart.HasValue)
+                {
+                    completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoicedDate >= invoicedDateStart.Value);
+                }
+                if (invoicedDateEnd.HasValue)
+                {
+                    completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoicedDate <= invoicedDateEnd.Value);
+                }
             }
-            if (paidDateStart.HasValue)
+
+            if (paidDateAny)
             {
-                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.PaidDate >= paidDateStart.Value);
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.PaidDate != null);
             }
-            if (paidDateEnd.HasValue)
+            else
             {
-                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.PaidDate <= paidDateEnd.Value);
+                if (paidDateStart.HasValue)
+                {
+                    completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.PaidDate >= paidDateStart.Value);
+                }
+                if (paidDateEnd.HasValue)
+                {
+                    completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.PaidDate <= paidDateEnd.Value);
+                }
             }
-            if (invoiceSentDateStart.HasValue)
+
+            if (invoiceSentDateAny)
             {
-                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoiceSent >= invoiceSentDateStart.Value);
+                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoiceSent != null);
             }
-            if (invoiceSentDateEnd.HasValue)
+            else
             {
-                completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoiceSent <= invoiceSentDateEnd.Value);
+                if (invoiceSentDateStart.HasValue)
+                {
+                    completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoiceSent >= invoiceSentDateStart.Value);
+                }
+                if (invoiceSentDateEnd.HasValue)
+                {
+                    completedTimeEntriesQuery = completedTimeEntriesQuery.Where(t => t.InvoiceSent <= invoiceSentDateEnd.Value);
+                }
             }
 
             // Sort the query
@@ -144,9 +172,10 @@ namespace TaskTracker.Controllers
                 .ThenByDescending(t => t.StartDateTime);
 
             // Debug: Log parameters and query count
-            _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}, projectFilter={ProjectFilter}, invoicedDateStart={InvoicedDateStart}, invoicedDateEnd={InvoicedDateEnd}, paidDateStart={PaidDateStart}, paidDateEnd={PaidDateEnd}, invoiceSentDateStart={InvoiceSentDateStart}, invoiceSentDateEnd={InvoiceSentDateEnd}, hasFilters={HasFilters}",
+            _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}, projectFilter={ProjectFilter}, invoicedDateStart={InvoicedDateStart}, invoicedDateEnd={InvoicedDateEnd}, paidDateStart={PaidDateStart}, paidDateEnd={PaidDateEnd}, invoiceSentDateStart={InvoiceSentDateStart}, invoiceSentDateEnd={InvoiceSentDateEnd}, invoicedDateAny={InvoicedDateAny}, paidDateAny={PaidDateAny}, invoiceSentDateAny={InvoiceSentDateAny}, hasFilters={HasFilters}",
                 page, recordLimit, clientFilter, projectFilter != null ? string.Join(",", projectFilter) : "null",
-                invoicedDateStart, invoicedDateEnd, paidDateStart, paidDateEnd, invoiceSentDateStart, invoiceSentDateEnd, hasFilters);
+                invoicedDateStart, invoicedDateEnd, paidDateStart, paidDateEnd, invoiceSentDateStart, invoiceSentDateEnd,
+                invoicedDateAny, paidDateAny, invoiceSentDateAny, hasFilters);
 
             var totalRecords = await completedTimeEntriesQuery.CountAsync();
             _logger.LogInformation("Total records after filters: {TotalRecords}", totalRecords);
@@ -199,6 +228,9 @@ namespace TaskTracker.Controllers
                 PaidDateEnd = paidDateEnd,
                 InvoiceSentDateStart = invoiceSentDateStart,
                 InvoiceSentDateEnd = invoiceSentDateEnd,
+                InvoicedDateAny = invoicedDateAny,
+                PaidDateAny = paidDateAny,
+                InvoiceSentDateAny = invoiceSentDateAny,
                 RouteValues = new Dictionary<string, string>
             {
                 { "recordLimit", recordLimit.ToString() },
@@ -208,7 +240,10 @@ namespace TaskTracker.Controllers
                 { "paidDateStart", paidDateStart?.ToString("yyyy-MM-dd") ?? "" },
                 { "paidDateEnd", paidDateEnd?.ToString("yyyy-MM-dd") ?? "" },
                 { "invoiceSentDateStart", invoiceSentDateStart?.ToString("yyyy-MM-dd") ?? "" },
-                { "invoiceSentDateEnd", invoiceSentDateEnd?.ToString("yyyy-MM-dd") ?? "" }
+                { "invoiceSentDateEnd", invoiceSentDateEnd?.ToString("yyyy-MM-dd") ?? "" },
+                { "invoicedDateAny", invoicedDateAny.ToString().ToLower() },
+                { "paidDateAny", paidDateAny.ToString().ToLower() },
+                { "invoiceSentDateAny", invoiceSentDateAny.ToString().ToLower() }
             }
             };
 
@@ -236,7 +271,6 @@ namespace TaskTracker.Controllers
 
             // Populate filter dropdowns using DropdownService
             var clientDropdown = await _dropdownService.GetClientDropdownAsync(clientFilter);
-            clientDropdown.RemoveAt(0); // Remove "Select Client" option for filter
             viewModel.ClientFilterOptions = new SelectList(clientDropdown, "Value", "Text", clientFilter);
 
             var projectDropdown = await _dropdownService.GetProjectDropdownAsync(0);

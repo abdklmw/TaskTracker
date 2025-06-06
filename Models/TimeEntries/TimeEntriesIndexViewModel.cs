@@ -29,5 +29,8 @@ namespace TaskTracker.Models
         public DateTime? PaidDateEnd { get; set; }
         public DateTime? InvoiceSentDateStart { get; set; }
         public DateTime? InvoiceSentDateEnd { get; set; }
+        public bool InvoicedDateAny { get; set; } = false;
+        public bool PaidDateAny { get; set; } = false;
+        public bool InvoiceSentDateAny { get; set; } = false;
     }
 }
