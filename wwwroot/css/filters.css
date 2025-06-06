@@ -78,3 +78,8 @@
     gap: 0.5rem;
     margin-top: 1.5rem;
 }
+
+.filter-invoice-currency-field{
+    width: 5em;
+    display: inline;
+}

@@ -1,36 +1,85 @@
-﻿@using TaskTracker.Models.Invoice
-@model IEnumerable<Invoice>
+﻿@using TaskTracker.Models
+@using TaskTracker.Models.Invoice
+@model InvoiceIndexViewModel
 @{
     ViewData["Title"] = "Invoices";
-    var createModel = ViewBag.CreateModel as InvoiceCreateViewModel ?? new TaskTracker.Models.Invoice.InvoiceCreateViewModel();
+    var createModel = ViewBag.CreateModel as InvoiceCreateViewModel ?? new InvoiceCreateViewModel();
+    var hasFilters = Model.SelectedClientID != 0 || Model.SelectedStatus.HasValue || Model.PaidDateStart.HasValue ||
+                     Model.PaidDateEnd.HasValue || Model.InvoiceDateStart.HasValue || Model.InvoiceDateEnd.HasValue ||
+                     Model.InvoiceSentDateStart.HasValue || Model.InvoiceSentDateEnd.HasValue ||
+                     Model.TotalAmountMin.HasValue || Model.TotalAmountMax.HasValue;
+    var showFilterForm = hasFilters;
 }
-<h1>Invoices</h1>
+<!-- Display success or error messages -->
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
+
+<!-- Create form partial, hidden by default -->
 @await Html.PartialAsync("_CreateForm", createModel)
-<p>
-    <button id="create-new-btn" class="btn btn-primary">Create New</button>
-</p>
-@if (!Model.Any())
-{
-    <p>No invoices found. Click "Create New" to add an invoice.</p>
-}
-else
+
+<!-- Header with Create New button -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Invoices</h1>
+    <div>
+        <button id="create-new-btn" class="btn btn-primary ml-2">Create New</button>
+    </div>
+</div>
+
+<!-- Filter Form -->
+@await Html.PartialAsync("_InvoicesFiltersPartial", Model)
+
+<!-- Results and Controls -->
+<div class="results-container mb-3">
+    <div>
+        @if (Model.TotalRecords > 0)
+        {
+            <p>Showing @Model.Invoices.Count() of @Model.TotalRecords records</p>
+        }
+        else
+        {
+            <p>No invoices match the selected filter.</p>
+        }
+    </div>
+    <div class="controls-container">
+        <button id="show-filter-btn" class="filter-btn" style="display: @(showFilterForm ? "none" : "inline-block");">
+            <img src="~/images/icons/filter.svg" alt="Show Filter" class="filter-icon" />
+        </button>
+        <form asp-action="Index" method="get" class="records-per-page-form">
+            <label for="recordLimit" class="form-label">Records per page</label>
+            <select id="recordLimit" name="recordLimit" class="form-select" asp-items="Model.RecordLimitOptions" onchange="this.form.submit()"></select>
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="clientFilter" value="@Model.SelectedClientID" />
+            <input type="hidden" name="statusFilter" value="@Model.SelectedStatus" />
+            <input type="hidden" name="paidDateStart" value="@(Model.PaidDateStart?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="paidDateEnd" value="@(Model.PaidDateEnd?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="invoiceDateStart" value="@(Model.InvoiceDateStart?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="invoiceDateEnd" value="@(Model.InvoiceDateEnd?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="invoiceSentDateStart" value="@(Model.InvoiceSentDateStart?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="invoiceSentDateEnd" value="@(Model.InvoiceSentDateEnd?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="totalAmountMin" value="@Model.TotalAmountMin" />
+            <input type="hidden" name="totalAmountMax" value="@Model.TotalAmountMax" />
+        </form>
+    </div>
+</div>
+
+<!-- Pagination -->
+@await Html.PartialAsync("_PaginationPartial", Model)
+
+<!-- Header row for the invoice list -->
+@if (Model.TotalRecords > 0)
 {
     <div class="row mb-2">
-        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.InvoiceDate)</strong></div>
-        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.TotalAmount)</strong></div>
-        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Status)</strong></div>
-        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Client)</strong></div>
+        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Invoices.First().InvoiceDate)</strong></div>
+        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Invoices.First().TotalAmount)</strong></div>
+        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Invoices.First().Status)</strong></div>
+        <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Invoices.First().Client)</strong></div>
     </div>
-    @foreach (var item in Model)
+    @foreach (var item in Model.Invoices)
     {
         @await Html.PartialAsync("_DisplayRow", item)
         @await Html.PartialAsync("_EditFormRow", item)
     }
 }
+
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 }

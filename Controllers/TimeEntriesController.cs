@@ -2,10 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TaskTracker.Data;
 using TaskTracker.Models;
 using TaskTracker.Models.TimeEntries;
@@ -101,6 +97,9 @@ namespace TaskTracker.Controllers
                 .OrderBy(t => t.Client)
                 .ThenByDescending(t => t.StartDateTime);
 
+            // Debug: Log parameters
+            _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}, projectFilter={ProjectFilter}", page, recordLimit, clientFilter, projectFilter != null ? string.Join(",", projectFilter) : "null");
+
             var totalRecords = await completedTimeEntriesQuery.CountAsync();
             var viewModel = new TimeEntriesIndexViewModel
             {
@@ -109,8 +108,22 @@ namespace TaskTracker.Controllers
                 VisibleCreateForm = false,
                 TotalRecords = totalRecords,
                 SelectedClientID = clientFilter,
-                SelectedProjectIDs = projectFilter?.Where(id => id != 0).ToList() ?? new List<int>()
+                SelectedProjectIDs = projectFilter?.Where(id => id != 0).ToList() ?? new List<int>(),
+                RouteValues = new Dictionary<string, string>
+                {
+                    { "recordLimit", recordLimit.ToString() },
+                    { "clientFilter", clientFilter.ToString() }
+                }
             };
+
+            // Add projectFilter values to RouteValues as repeated keys
+            if (projectFilter != null && projectFilter.Any() && !projectFilter.Contains(0))
+            {
+                foreach (var projectId in projectFilter)
+                {
+                    viewModel.RouteValues.Add("projectFilter", projectId.ToString());
+                }
+            }
 
             // Validate recordLimit
             var validLimits = new[] { 5, 10, 20, 50, 100, 200, -1 }; // -1 represents ALL
@@ -123,14 +136,14 @@ namespace TaskTracker.Controllers
             // Populate dropdown options for records per page
             var limitOptions = new[]
             {
-            new { Value = 5, Text = "5" },
-            new { Value = 10, Text = "10" },
-            new { Value = 20, Text = "20" },
-            new { Value = 50, Text = "50" },
-            new { Value = 100, Text = "100" },
-            new { Value = 200, Text = "200" },
-            new { Value = -1, Text = "ALL" }
-        };
+                new { Value = 5, Text = "5" },
+                new { Value = 10, Text = "10" },
+                new { Value = 20, Text = "20" },
+                new { Value = 50, Text = "50" },
+                new { Value = 100, Text = "100" },
+                new { Value = 200, Text = "200" },
+                new { Value = -1, Text = "ALL" }
+            };
             viewModel.RecordLimitOptions = new SelectList(limitOptions, "Value", "Text", recordLimit);
 
             // Populate filter dropdowns using DropdownService
@@ -234,7 +247,7 @@ namespace TaskTracker.Controllers
             if (action == "StartTimer")
             {
                 // Set StartDateTime to current UTC time, rounded to the most recent quarter hour
-                var currentUtc = DateTime.UtcNow; // Renamed to avoid conflict
+                var currentUtc = DateTime.UtcNow;
                 var minutes = currentUtc.Minute;
                 var quarterHours = (int)Math.Floor(minutes / 15.0) * 15;
                 timeEntry.StartDateTime = new DateTime(currentUtc.Year, currentUtc.Month, currentUtc.Day, currentUtc.Hour, quarterHours, 0, DateTimeKind.Utc);
@@ -301,7 +314,7 @@ namespace TaskTracker.Controllers
                 ProjectList = new SelectList(projectList, "Value", "Text", timeEntry.ProjectID),
                 TimezoneOffset = timezoneOffset,
                 VisibleCreateForm = true,
-                ReturnTo = ViewBag.ReturnTo ?? "TimeEntries",
+                ReturnTo = ViewBag.ReturnTo as string ?? "TimeEntries",
                 CurrentPage = 1,
                 TotalPages = 1,
                 TotalRecords = await _context.TimeEntries.CountAsync(t => t.UserId == userId && t.EndDateTime != null)
@@ -311,7 +324,7 @@ namespace TaskTracker.Controllers
             ViewBag.ClientID = viewModel.ClientList;
             ViewBag.ProjectID = viewModel.ProjectList;
             ViewBag.VisibleCreateForm = true;
-            ViewBag.ReturnTo = ViewBag.ReturnTo ?? "TimeEntries";
+            ViewBag.ReturnTo = ViewBag.ReturnTo as string ?? "TimeEntries";
             ViewBag.TimezoneOffset = timezoneOffset;
 
             return View("Index", viewModel);
@@ -324,7 +337,7 @@ namespace TaskTracker.Controllers
             var userId = _userManager.GetUserId(User);
             timeEntry.UserId = userId;
             // Set StartDateTime to current UTC time, rounded to the most recent quarter hour
-            var currentUtc = DateTime.UtcNow; // Renamed to avoid conflict
+            var currentUtc = DateTime.UtcNow;
             var minutes = currentUtc.Minute;
             var quarterHours = (int)Math.Floor(minutes / 15.0) * 15;
             timeEntry.StartDateTime = new DateTime(currentUtc.Year, currentUtc.Month, currentUtc.Day, currentUtc.Hour, quarterHours, 0, DateTimeKind.Utc);

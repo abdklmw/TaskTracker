@@ -1,0 +1,73 @@
+﻿@model InvoiceIndexViewModel
+
+@{
+    var hasFilters = Model.SelectedClientID != 0 || Model.SelectedStatus.HasValue || Model.PaidDateStart.HasValue ||
+                     Model.PaidDateEnd.HasValue || Model.InvoiceDateStart.HasValue || Model.InvoiceDateEnd.HasValue ||
+                     Model.InvoiceSentDateStart.HasValue || Model.InvoiceSentDateEnd.HasValue ||
+                     Model.TotalAmountMin.HasValue || Model.TotalAmountMax.HasValue;
+    var showFilterForm = hasFilters;
+}
+
+<div id="filter-form" class="row mb-3" style="display: @(showFilterForm ? "block" : "none");">
+    <div class="col-12">
+        <form asp-action="Index" method="get">
+            <div class="filter-form-container row g-3">
+                <div class="filter-group col-md-3">
+                    <label for="clientFilter" class="form-label">Filter by Client</label>
+                    <select id="clientFilter" name="clientFilter" class="form-select" asp-items="Model.ClientFilterOptions">
+                        <option value="0">All Clients</option>
+                    </select>
+                </div>
+                <div class="filter-group col-md-3">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select id="statusFilter" name="statusFilter" class="form-select" asp-items="Model.StatusFilterOptions"></select>
+                </div>
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Amount</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="totalAmountMin" name="totalAmountMin" class="form-control filter-invoice-currency-field" placeholder="Min" type="number" step="1.00" value="@Model.TotalAmountMin" />
+                        <span>-</span>
+                        <input id="totalAmountMax" name="totalAmountMax" class="form-control filter-invoice-currency-field" placeholder="Max" type="number" step="1.00" value="@Model.TotalAmountMax" />
+                    </div>
+                </div>
+            </div>
+            <div class="filter-form-container row g-3">
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Invoice Date</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="invoiceDateStart" name="invoiceDateStart" class="form-control" type="date" value="@(Model.InvoiceDateStart?.ToString("yyyy-MM-dd"))" />
+                        <span>-</span>
+                        <input id="invoiceDateEnd" name="invoiceDateEnd" class="form-control" type="date" value="@(Model.InvoiceDateEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Sent Date</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="invoiceSentDateStart" name="invoiceSentDateStart" class="form-control" type="date" value="@(Model.InvoiceSentDateStart?.ToString("yyyy-MM-dd"))" />
+                        <span>-</span>
+                        <input id="invoiceSentDateEnd" name="invoiceSentDateEnd" class="form-control" type="date" value="@(Model.InvoiceSentDateEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Paid Date</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="paidDateStart" name="paidDateStart" class="form-control" type="date" value="@(Model.PaidDateStart?.ToString("yyyy-MM-dd"))" />
+                        <span>-</span>
+                        <input id="paidDateEnd" name="paidDateEnd" class="form-control" type="date" value="@(Model.PaidDateEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+            </div>
+            <div class="filter-actions mt-3">
+                <button type="submit" class="btn btn-primary">Apply Filter</button>
+                @if (hasFilters)
+                {
+                    <button type="button" id="clear-filter-btn" class="clear-filter-btn">
+                        <img src="~/images/icons/filter-xmark.svg" alt="Clear Filter" class="filter-icon" />
+                    </button>
+                }
+            </div>
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="recordLimit" value="@Model.RecordLimit" />
+        </form>
+    </div>
+</div>
