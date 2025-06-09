@@ -1,21 +1,32 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Serilog; // Add Serilog
 using TaskTracker.Data;
 using TaskTracker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration) // Read from appsettings.json
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext();
+    // Log the environment for debugging
+    configuration.WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} ({Environment}){NewLine}{Exception}");
+});
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<AppDbContext>();
-
 builder.Services.AddControllersWithViews(options =>
 {
     // Add global authorization filter with exclusions
@@ -38,7 +49,6 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AllowAnonymousIdentity", policy =>
         policy.Requirements.Add(new AllowAnonymousRequirement()));
 });
-
 builder.Services.AddSingleton<IAuthorizationHandler, AllowAnonymousHandler>();
 
 // Register SetupService
@@ -62,6 +72,11 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 // Register UserService
 builder.Services.AddScoped<IUserService, UserService>();
 
+// Add Data Protection Configuration
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "data/keys")))
+    .ProtectKeysWithDpapi(); // Encrypt keys with Windows DPAPI
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -77,9 +92,7 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -93,11 +106,13 @@ app.UseEndpoints(endpoints =>
         .WithMetadata(new AllowAnonymousAttribute()); // Allow anonymous access to all Razor Pages (Identity)
 });
 
+// Log application startup
+app.Logger.LogInformation("Application started in {Environment} environment", app.Environment.EnvironmentName);
+
 app.Run();
 
 // Custom authorization handler to allow anonymous access to specific routes
 public class AllowAnonymousRequirement : IAuthorizationRequirement { }
-
 public class AllowAnonymousHandler : AuthorizationHandler<AllowAnonymousRequirement>
 {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, AllowAnonymousRequirement requirement)
