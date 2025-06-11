@@ -94,15 +94,13 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Override authorization for Identity routes
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}");
-    endpoints.MapRazorPages()
-        .WithMetadata(new AllowAnonymousAttribute()); // Allow anonymous access to all Razor Pages (Identity)
-});
+// Replace the app.UseEndpoints block with top-level route registrations
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapRazorPages()
+    .WithMetadata(new AllowAnonymousAttribute()); // Allow anonymous access to all Razor Pages (Identity)
 
 // Log application startup
 app.Logger.LogInformation("Application started in {Environment} environment", app.Environment.EnvironmentName);
