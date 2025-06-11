@@ -54,6 +54,9 @@ builder.Services.AddSingleton<IAuthorizationHandler, AllowAnonymousHandler>();
 // Register SetupService
 builder.Services.AddScoped<SetupService>();
 
+// Register ClientService
+builder.Services.AddScoped<ClientService>();
+
 // Register PdfService
 builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
 

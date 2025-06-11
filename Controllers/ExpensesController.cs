@@ -12,16 +12,16 @@ namespace TaskTracker.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ILogger<ExpensesController> _logger;
-        private readonly DropdownService _dropdownService;
+        private readonly ClientService _clientService;
 
         public ExpensesController(
             AppDbContext context,
             ILogger<ExpensesController> logger,
-            DropdownService dropdownService)
+            ClientService clientService)
         {
             _context = context;
             _logger = logger;
-            _dropdownService = dropdownService;
+            _clientService = clientService;
         }
 
         public async Task<IActionResult> Index(int page = 1, int recordLimit = 10, int clientFilter = 0)
@@ -61,7 +61,7 @@ namespace TaskTracker.Controllers
                     { "recordLimit", recordLimit.ToString() },
                     { "clientFilter", clientFilter.ToString() }
                 },
-                ClientFilterOptions = await _dropdownService.GetClientDropdownAsync(clientFilter),
+                ClientFilterOptions = await _clientService.GetClientDropdownAsync(clientFilter),
                 RecordLimitOptions = new SelectList(new[]
                 {
                     new { Value = "5", Text = "5" },
@@ -72,7 +72,7 @@ namespace TaskTracker.Controllers
                 }, "Value", "Text", recordLimit.ToString())
             };
 
-            ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
+            ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
                 .Select(p => new
@@ -101,7 +101,7 @@ namespace TaskTracker.Controllers
             }
 
             TempData["ErrorMessage"] = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-            ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
+            ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
                 .Select(p => new
@@ -146,7 +146,7 @@ namespace TaskTracker.Controllers
             }
 
             TempData["ErrorMessage"] = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-            ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
+            ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
                 .Select(p => new
@@ -177,7 +177,7 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
 
-            ViewBag.ClientList = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text", 0);
+            ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
             ViewBag.ProductList = await _context.Products
                 .OrderBy(p => p.ProductSku)
                 .Select(p => new

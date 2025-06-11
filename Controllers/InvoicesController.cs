@@ -16,7 +16,8 @@ namespace TaskTracker.Controllers
         private readonly RateCalculationService _rateService;
         private readonly DropdownService _dropdownService;
         private readonly TimeEntryImportService _importService;
-        private readonly IEmailService _emailService;
+		private readonly ClientService _clientService;
+		private readonly IEmailService _emailService;
 
         public InvoicesController(
             AppDbContext context,
@@ -25,6 +26,7 @@ namespace TaskTracker.Controllers
             RateCalculationService rateService,
             DropdownService dropdownService,
             TimeEntryImportService importService,
+			ClientService clientService,
             IEmailService emailService)
         {
             _context = context;
@@ -33,7 +35,8 @@ namespace TaskTracker.Controllers
             _rateService = rateService;
             _dropdownService = dropdownService;
             _importService = importService;
-            _emailService = emailService;
+			_clientService = clientService;
+			_emailService = emailService;
         }
 
         public async Task<IActionResult> Index(
@@ -159,16 +162,16 @@ namespace TaskTracker.Controllers
                     { "totalAmountMin", totalAmountMin?.ToString() ?? "" },
                     { "totalAmountMax", totalAmountMax?.ToString() ?? "" }
                 },
-                ClientFilterOptions = await _dropdownService.GetClientDropdownAsync(clientFilter),
+                ClientFilterOptions = await _clientService.GetClientDropdownAsync(clientFilter),
                 StatusFilterOptions = statusOptions
             };
 
             var createModel = new InvoiceCreateViewModel
             {
-                Clients = await _dropdownService.GetClientDropdownAsync(0)
+                Clients = await _clientService.GetClientDropdownAsync(0)
             };
             ViewBag.CreateModel = createModel;
-            ViewData["ClientID"] = new SelectList(await _dropdownService.GetClientDropdownAsync(0), "Value", "Text");
+            ViewData["ClientID"] = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text");
 
             return View(viewModel);
         }
@@ -357,7 +360,7 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
 
-            var clientList = await _dropdownService.GetClientDropdownAsync(invoice.ClientID);
+            var clientList = await _clientService.GetClientDropdownAsync(invoice.ClientID);
             ViewData["ClientID"] = new SelectList(clientList, "Value", "Text", invoice.ClientID);
             return View(invoice);
         }
@@ -392,7 +395,7 @@ namespace TaskTracker.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var clientList = await _dropdownService.GetClientDropdownAsync(invoice.ClientID);
+            var clientList = await _clientService.GetClientDropdownAsync(invoice.ClientID);
             ViewData["ClientID"] = new SelectList(clientList, "Value", "Text", invoice.ClientID);
             return View(invoice);
         }
