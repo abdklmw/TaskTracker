@@ -14,7 +14,7 @@ namespace TaskTracker.Controllers
         private readonly ILogger<InvoicesController> _logger;
         private readonly IInvoicePdfService _pdfService;
         private readonly RateCalculationService _rateService;
-        private readonly DropdownService _dropdownService;
+        private readonly ProjectService _projectService;
         private readonly TimeEntryImportService _importService;
 		private readonly ClientService _clientService;
 		private readonly IEmailService _emailService;
@@ -24,7 +24,7 @@ namespace TaskTracker.Controllers
             ILogger<InvoicesController> logger,
             IInvoicePdfService pdfService,
             RateCalculationService rateService,
-            DropdownService dropdownService,
+            ProjectService projectService,
             TimeEntryImportService importService,
 			ClientService clientService,
             IEmailService emailService)
@@ -33,7 +33,7 @@ namespace TaskTracker.Controllers
             _logger = logger;
             _pdfService = pdfService;
             _rateService = rateService;
-            _dropdownService = dropdownService;
+            _projectService = projectService;
             _importService = importService;
 			_clientService = clientService;
 			_emailService = emailService;

@@ -57,6 +57,9 @@ builder.Services.AddScoped<SetupService>();
 // Register ClientService
 builder.Services.AddScoped<ClientService>();
 
+// Register ProjectService
+builder.Services.AddScoped<ProjectService>();
+
 // Register PdfService
 builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
 
@@ -65,9 +68,6 @@ builder.Services.AddScoped<RateCalculationService>();
 
 // Register TimeEntryImportService
 builder.Services.AddScoped<TimeEntryImportService>();
-
-// Register DropdownService
-builder.Services.AddScoped<DropdownService>();
 
 // Register EmailService
 builder.Services.AddScoped<IEmailService, EmailService>();

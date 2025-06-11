@@ -17,7 +17,7 @@ namespace TaskTracker.Controllers
         private readonly SetupService _setupService;
         private readonly RateCalculationService _rateService;
         private readonly TimeEntryImportService _importService;
-        private readonly DropdownService _dropdownService;
+        private readonly ProjectService _projectService;
 		private readonly ClientService _clientService;
 
 		public TimeEntriesController(
@@ -27,7 +27,7 @@ namespace TaskTracker.Controllers
             SetupService setupService,
             RateCalculationService rateService,
             TimeEntryImportService importService,
-            DropdownService dropdownService,
+            ProjectService projectService,
             ClientService clientService)
         {
             _context = context;
@@ -36,7 +36,7 @@ namespace TaskTracker.Controllers
             _setupService = setupService;
             _rateService = rateService;
             _importService = importService;
-            _dropdownService = dropdownService;
+            _projectService = projectService;
             _clientService = clientService;
         }
 
@@ -276,7 +276,7 @@ namespace TaskTracker.Controllers
             var clientDropdown = await _clientService.GetClientDropdownAsync(clientFilter);
             viewModel.ClientFilterOptions = new SelectList(clientDropdown, "Value", "Text", clientFilter);
 
-            var projectDropdown = await _dropdownService.GetProjectDropdownAsync(0);
+            var projectDropdown = await _projectService.GetProjectDropdownAsync(0);
             projectDropdown.RemoveAt(0); // Remove "Select Project" option for filter
             viewModel.ProjectFilterOptions = new MultiSelectList(projectDropdown, "Value", "Text", viewModel.SelectedProjectIDs);
 
@@ -288,7 +288,7 @@ namespace TaskTracker.Controllers
                 0
             );
             viewModel.ProjectList = new SelectList(
-                await _dropdownService.GetProjectDropdownAsync(0),
+                await _projectService.GetProjectDropdownAsync(0),
                 "Value",
                 "Text",
                 0
@@ -388,7 +388,7 @@ namespace TaskTracker.Controllers
 
             // Repopulate view model for error case
             var clientList = await _clientService.GetClientDropdownAsync(timeEntry.ClientID);
-            var projectList = await _dropdownService.GetProjectDropdownAsync(timeEntry.ProjectID);
+            var projectList = await _projectService.GetProjectDropdownAsync(timeEntry.ProjectID);
 
             var viewModel = new TimeEntriesIndexViewModel
             {
@@ -473,7 +473,7 @@ namespace TaskTracker.Controllers
             }
 
             var clientList = await _clientService.GetClientDropdownAsync(timeEntry.ClientID);
-            var projectList = await _dropdownService.GetProjectDropdownAsync(timeEntry.ProjectID);
+            var projectList = await _projectService.GetProjectDropdownAsync(timeEntry.ProjectID);
 
             var viewModel = new TimeEntriesIndexViewModel
             {
@@ -595,7 +595,7 @@ namespace TaskTracker.Controllers
             var clientList = await _clientService.GetClientDropdownAsync(timeEntry.ClientID);
             ViewBag.ClientID = new SelectList(clientList, "Value", "Text", timeEntry.ClientID);
 
-            var projectList = await _dropdownService.GetProjectDropdownAsync(timeEntry.ProjectID);
+            var projectList = await _projectService.GetProjectDropdownAsync(timeEntry.ProjectID);
             ViewBag.ProjectID = new SelectList(projectList, "Value", "Text", timeEntry.ProjectID);
 
             return View(timeEntry);
@@ -644,7 +644,7 @@ namespace TaskTracker.Controllers
             var clientList = await _clientService.GetClientDropdownAsync(timeEntry.ClientID);
             ViewBag.ClientID = new SelectList(clientList, "Value", "Text", timeEntry.ClientID);
 
-            var projectList = await _dropdownService.GetProjectDropdownAsync(timeEntry.ProjectID);
+            var projectList = await _projectService.GetProjectDropdownAsync(timeEntry.ProjectID);
             ViewBag.ProjectID = new SelectList(projectList, "Value", "Text", timeEntry.ProjectID);
 
             // Calculate dynamic offset for view
@@ -783,7 +783,7 @@ namespace TaskTracker.Controllers
         private async Task<TimeEntryImportViewModel> PopulateImportViewModelAsync(TimeEntryImportViewModel model)
         {
             model.Clients = await _clientService.GetClientDropdownAsync(model.ClientID);
-            model.Projects = await _dropdownService.GetProjectDropdownAsync(model.ProjectID);
+            model.Projects = await _projectService.GetProjectDropdownAsync(model.ProjectID);
             return model;
         }
     }

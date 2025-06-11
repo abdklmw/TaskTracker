@@ -16,14 +16,14 @@ namespace TaskTracker.Controllers
 		private readonly UserManager<ApplicationUser> _userManager;
 		private readonly SetupService _setupService;
 		private readonly ClientService _clientService;
-		private readonly DropdownService _dropdownService;
+		private readonly ProjectService _projectService;
 
 		public HomeController(
 			AppDbContext context,
 			UserManager<ApplicationUser> userManager,
 			ILogger<HomeController> logger,
 			SetupService setupService,
-			DropdownService dropdownService,
+			ProjectService projectService,
 			ClientService clientService)
 		{
 			_logger = logger;
@@ -31,7 +31,7 @@ namespace TaskTracker.Controllers
 			_userManager = userManager;
 			_setupService = setupService;
 			_clientService = clientService;
-			_dropdownService = dropdownService;
+			_projectService = projectService;
 		}
 
 		public async Task<IActionResult> Index()
@@ -87,7 +87,7 @@ namespace TaskTracker.Controllers
 				ViewBag.ClientID = new SelectList(clientList, "Value", "Text", 0);
 
 				// Populate ProjectID dropdown
-				var projectList = await _dropdownService.GetProjectDropdownAsync(0);
+				var projectList = await _projectService.GetProjectDropdownAsync(0);
 				ViewBag.ProjectID = new SelectList(projectList, "Value", "Text", 0);
 
 				// Set form visibility and return target

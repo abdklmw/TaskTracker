@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Services;
 using Microsoft.AspNetCore.Identity;
@@ -9,16 +8,16 @@ namespace TaskTracker.Controllers
 {
     public class ProjectsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ProjectService _projectService;
         private readonly SetupService _setupService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public ProjectsController(
-            AppDbContext context,
+            ProjectService projectService,
             SetupService setupService,
             UserManager<ApplicationUser> userManager)
         {
-            _context = context;
+            _projectService = projectService;
             _setupService = setupService;
             _userManager = userManager;
         }
@@ -39,35 +38,37 @@ namespace TaskTracker.Controllers
                     return setupResult;
                 }
             }
-            return View(await _context.Projects.OrderBy(p => p.Name).ToListAsync());
+            return View(await _projectService.GetAllProjectsAsync());
         }
 
-        // GET: Projects/Create
         public IActionResult Create()
         {
-            ViewBag.VisibleCreateForm = true; // Ensure form is visible
+            ViewBag.VisibleCreateForm = true;
             return View();
         }
 
-        // POST: Projects/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Name,Description,Rate")] Project project)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(project);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Project created successfully.";
-                return RedirectToAction(nameof(Index));
+                var (success, error) = await _projectService.CreateProjectAsync(project);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Project created successfully.";
+                    return RedirectToAction(nameof(Index));
+                }
+                TempData["ErrorMessage"] = error;
             }
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            TempData["ErrorMessage"] = string.Join("; ", errors);
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                TempData["ErrorMessage"] = string.Join("; ", errors);
+            }
             return RedirectToAction(nameof(Index));
-            return View(project);
         }
 
-        // POST: Projects/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("ProjectID,Name,Description,Rate")] Project project)
@@ -79,32 +80,22 @@ namespace TaskTracker.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                var (success, error) = await _projectService.UpdateProjectAsync(project);
+                if (success)
                 {
-                    _context.Update(project);
-                    await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Project updated successfully.";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProjectExists(project.ProjectID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = error ?? "Project not found.";
             }
-
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            TempData["ErrorMessage"] = string.Join("; ", errors);
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                TempData["ErrorMessage"] = string.Join("; ", errors);
+            }
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Projects/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -112,8 +103,7 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
 
-            var project = await _context.Projects
-                .FirstOrDefaultAsync(m => m.ProjectID == id);
+            var project = await _projectService.GetProjectByIdAsync(id.Value);
             if (project == null)
             {
                 return NotFound();
@@ -122,24 +112,12 @@ namespace TaskTracker.Controllers
             return View(project);
         }
 
-        // POST: Projects/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var project = await _context.Projects.FindAsync(id);
-            if (project != null)
-            {
-                _context.Projects.Remove(project);
-            }
-
-            await _context.SaveChangesAsync();
+            await _projectService.DeleteProjectAsync(id);
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ProjectExists(int id)
-        {
-            return _context.Projects.Any(e => e.ProjectID == id);
         }
     }
 }
