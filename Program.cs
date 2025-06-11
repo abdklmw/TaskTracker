@@ -73,9 +73,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 // Add Data Protection Configuration
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "data/keys")))
-    .ProtectKeysWithDpapi(); // Encrypt keys with Windows DPAPI
+builder.Services.AddDataProtection();
 
 var app = builder.Build();
 
@@ -90,7 +88,7 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
