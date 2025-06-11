@@ -13,9 +13,8 @@ namespace TaskTracker.Controllers
         private readonly AppDbContext _context;
         private readonly ILogger<InvoicesController> _logger;
         private readonly IInvoicePdfService _pdfService;
-        private readonly RateCalculationService _rateService;
         private readonly ProjectService _projectService;
-        private readonly TimeEntryImportService _importService;
+        private readonly TimeEntryService _timeEntryService;
 		private readonly ClientService _clientService;
 		private readonly IEmailService _emailService;
 
@@ -23,18 +22,16 @@ namespace TaskTracker.Controllers
             AppDbContext context,
             ILogger<InvoicesController> logger,
             IInvoicePdfService pdfService,
-            RateCalculationService rateService,
             ProjectService projectService,
-            TimeEntryImportService importService,
+			TimeEntryService timeEntryService,
 			ClientService clientService,
             IEmailService emailService)
         {
             _context = context;
             _logger = logger;
             _pdfService = pdfService;
-            _rateService = rateService;
             _projectService = projectService;
-            _importService = importService;
+            _timeEntryService = timeEntryService;
 			_clientService = clientService;
 			_emailService = emailService;
         }
@@ -207,7 +204,7 @@ namespace TaskTracker.Controllers
                     }
                     else
                     {
-                        entry.HourlyRate = await _rateService.GetHourlyRateAsync(entry.ProjectID, entry.ClientID);
+                        entry.HourlyRate = await _timeEntryService.GetHourlyRateAsync(entry.ProjectID, entry.ClientID);
 
                         if (entry.ProjectID.HasValue)
                         {
@@ -282,7 +279,7 @@ namespace TaskTracker.Controllers
                     decimal totalAmount = 0m;
                     foreach (var timeEntry in timeEntries)
                     {
-                        var hourlyRate = await _rateService.GetHourlyRateAsync(timeEntry.ProjectID, timeEntry.ClientID);
+                        var hourlyRate = await _timeEntryService.GetHourlyRateAsync(timeEntry.ProjectID, timeEntry.ClientID);
                         timeEntry.HourlyRate = hourlyRate;
                         totalAmount += (hourlyRate * (timeEntry.HoursSpent ?? 0m));
                     }
