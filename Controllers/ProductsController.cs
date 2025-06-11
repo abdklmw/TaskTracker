@@ -1,43 +1,46 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models.Product;
+using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ProductService _productService;
 
-        public ProductsController(AppDbContext context)
+        public ProductsController(ProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
 
-        // GET: Products
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Products.OrderBy(p => p.ProductSku).ToListAsync());
+            return View(await _productService.GetAllProductsAsync());
         }
 
-        // POST: Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Name,Description,UnitPrice,ProductSku")] Product product)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Product created successfully.";
-                return RedirectToAction(nameof(Index));
+                var (success, error) = await _productService.CreateProductAsync(product);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Product created successfully.";
+                    return RedirectToAction(nameof(Index));
+                }
+                TempData["ErrorMessage"] = error;
             }
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            TempData["ErrorMessage"] = string.Join("; ", errors);
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                TempData["ErrorMessage"] = string.Join("; ", errors);
+            }
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("ProductID,Name,Description,UnitPrice,ProductSku")] Product product)
@@ -49,30 +52,22 @@ namespace TaskTracker.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                var (success, error) = await _productService.UpdateProductAsync(product);
+                if (success)
                 {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Product updated successfully.";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductExists(product.ProductID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                        throw;
-                }
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = error ?? "Product not found.";
             }
-
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            TempData["ErrorMessage"] = string.Join("; ", errors);
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                TempData["ErrorMessage"] = string.Join("; ", errors);
+            }
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Products/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -80,9 +75,7 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .OrderBy(p => p.ProductSku)
-                .FirstOrDefaultAsync(m => m.ProductID == id);
+            var product = await _productService.GetProductByIdAsync(id.Value);
             if (product == null)
             {
                 return NotFound();
@@ -91,24 +84,13 @@ namespace TaskTracker.Controllers
             return View(product);
         }
 
-        // POST: Products/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product != null)
-            {
-                _context.Products.Remove(product);
-            }
-
-            await _context.SaveChangesAsync();
+            await _productService.DeleteProductAsync(id);
+            TempData["SuccessMessage"] = "Product deleted successfully.";
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.ProductID == id);
         }
     }
 }

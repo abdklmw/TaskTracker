@@ -89,19 +89,5 @@ namespace TaskTracker.Services
         {
             return await _context.Expenses.AnyAsync(e => e.ExpenseID == id);
         }
-
-        public async Task<List<object>> GetProductDropdownAsync()
-        {
-            return await _context.Products
-                .OrderBy(p => p.ProductSku)
-                .Select(p => new
-                {
-                    ProductID = p.ProductID.ToString(),
-                    ProductSku = p.ProductSku,
-                    Name = p.Name,
-                    UnitPrice = p.UnitPrice
-                })
-                .ToListAsync<object>();
-        }
     }
 }

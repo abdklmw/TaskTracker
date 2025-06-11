@@ -12,14 +12,17 @@ namespace TaskTracker.Controllers
         private readonly ExpenseService _expenseService;
         private readonly ClientService _clientService;
         private readonly ILogger<ExpensesController> _logger;
+        private readonly ProductService _productService;
 
         public ExpensesController(
             ExpenseService expenseService,
             ClientService clientService,
+            ProductService productService,
             ILogger<ExpensesController> logger)
         {
             _expenseService = expenseService;
             _clientService = clientService;
+            _productService = productService;
             _logger = logger;
         }
 
@@ -54,7 +57,7 @@ namespace TaskTracker.Controllers
             };
 
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
-            ViewBag.ProductList = await _expenseService.GetProductDropdownAsync();
+            ViewBag.ProductList = await _productService.GetProductDropdownAsync();
 
             return View(viewModel);
         }
@@ -80,7 +83,7 @@ namespace TaskTracker.Controllers
             }
 
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
-            ViewBag.ProductList = await _expenseService.GetProductDropdownAsync();
+            ViewBag.ProductList = await _productService.GetProductDropdownAsync();
             ViewBag.VisibleCreateForm = true;
             return RedirectToAction(nameof(Index));
         }
@@ -111,7 +114,7 @@ namespace TaskTracker.Controllers
             }
 
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
-            ViewBag.ProductList = await _expenseService.GetProductDropdownAsync();
+            ViewBag.ProductList = await _productService.GetProductDropdownAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -130,7 +133,7 @@ namespace TaskTracker.Controllers
             }
 
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
-            ViewBag.ProductList = await _expenseService.GetProductDropdownAsync();
+            ViewBag.ProductList = await _productService.GetProductDropdownAsync();
             return View(expense);
         }
 
