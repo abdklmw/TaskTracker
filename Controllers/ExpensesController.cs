@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models;
 using TaskTracker.Models.Expense;
@@ -10,43 +9,25 @@ namespace TaskTracker.Controllers
 {
     public class ExpensesController : Controller
     {
-        private readonly AppDbContext _context;
-        private readonly ILogger<ExpensesController> _logger;
+        private readonly ExpenseService _expenseService;
         private readonly ClientService _clientService;
+        private readonly ILogger<ExpensesController> _logger;
 
         public ExpensesController(
-            AppDbContext context,
-            ILogger<ExpensesController> logger,
-            ClientService clientService)
+            ExpenseService expenseService,
+            ClientService clientService,
+            ILogger<ExpensesController> logger)
         {
-            _context = context;
-            _logger = logger;
+            _expenseService = expenseService;
             _clientService = clientService;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index(int page = 1, int recordLimit = 10, int clientFilter = 0)
         {
             _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}", page, recordLimit, clientFilter);
 
-            var query = _context.Expenses
-                .Where(e => e.InvoicedDate == null)
-                .Include(e => e.Client)
-                .AsQueryable();
-
-            if (clientFilter != 0)
-            {
-                query = query.Where(e => e.ClientID == clientFilter);
-            }
-
-            int totalRecords = await query.CountAsync();
-            int totalPages = (int)Math.Ceiling((double)totalRecords / recordLimit);
-            page = page < 1 ? 1 : page > totalPages ? totalPages : page;
-
-            var expenses = await query
-                .OrderByDescending(e => e.InvoicedDate)
-                .Skip((page - 1) * recordLimit)
-                .Take(recordLimit)
-                .ToListAsync();
+            var (expenses, totalRecords, totalPages) = await _expenseService.GetExpensesAsync(page, recordLimit, clientFilter);
 
             var viewModel = new ExpenseIndexViewModel
             {
@@ -73,16 +54,7 @@ namespace TaskTracker.Controllers
             };
 
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
-            ViewBag.ProductList = await _context.Products
-                .OrderBy(p => p.ProductSku)
-                .Select(p => new
-                {
-                    ProductID = p.ProductID.ToString(),
-                    ProductSku = p.ProductSku,
-                    Name = p.Name,
-                    UnitPrice = p.UnitPrice
-                })
-                .ToListAsync();
+            ViewBag.ProductList = await _expenseService.GetProductDropdownAsync();
 
             return View(viewModel);
         }
@@ -93,25 +65,22 @@ namespace TaskTracker.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(expense);
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("Expense created, ExpenseID: {ExpenseID}", expense.ExpenseID);
-                TempData["SuccessMessage"] = "Expense created successfully.";
-                return RedirectToAction(nameof(Index));
+                var (success, error) = await _expenseService.CreateExpenseAsync(expense);
+                if (success)
+                {
+                    _logger.LogInformation("Expense created, ExpenseID: {ExpenseID}", expense.ExpenseID);
+                    TempData["SuccessMessage"] = "Expense created successfully.";
+                    return RedirectToAction(nameof(Index));
+                }
+                TempData["ErrorMessage"] = error;
+            }
+            else
+            {
+                TempData["ErrorMessage"] = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             }
 
-            TempData["ErrorMessage"] = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
-            ViewBag.ProductList = await _context.Products
-                .OrderBy(p => p.ProductSku)
-                .Select(p => new
-                {
-                    ProductID = p.ProductID.ToString(),
-                    ProductSku = p.ProductSku,
-                    Name = p.Name,
-                    UnitPrice = p.UnitPrice
-                })
-                .ToListAsync();
+            ViewBag.ProductList = await _expenseService.GetProductDropdownAsync();
             ViewBag.VisibleCreateForm = true;
             return RedirectToAction(nameof(Index));
         }
@@ -127,36 +96,22 @@ namespace TaskTracker.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                var (success, error) = await _expenseService.UpdateExpenseAsync(expense);
+                if (success)
                 {
-                    _context.Update(expense);
-                    await _context.SaveChangesAsync();
                     _logger.LogInformation("Expense updated, ExpenseID: {ExpenseID}", expense.ExpenseID);
                     TempData["SuccessMessage"] = "Expense updated successfully.";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ExpenseExists(expense.ExpenseID))
-                    {
-                        return NotFound();
-                    }
-                    throw;
-                }
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = error ?? "Expense not found.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             }
 
-            TempData["ErrorMessage"] = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
-            ViewBag.ProductList = await _context.Products
-                .OrderBy(p => p.ProductSku)
-                .Select(p => new
-                {
-                    ProductID = p.ProductID.ToString(),
-                    ProductSku = p.ProductSku,
-                    Name = p.Name,
-                    UnitPrice = p.UnitPrice
-                })
-                .ToListAsync();
+            ViewBag.ProductList = await _expenseService.GetProductDropdownAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -167,10 +122,7 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
 
-            var expense = await _context.Expenses
-                .Include(e => e.Client)
-                .FirstOrDefaultAsync(e => e.ExpenseID == id);
-
+            var expense = await _expenseService.GetExpenseByIdAsync(id.Value);
             if (expense == null)
             {
                 _logger.LogWarning("Expense {ExpenseID} not found", id);
@@ -178,16 +130,7 @@ namespace TaskTracker.Controllers
             }
 
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
-            ViewBag.ProductList = await _context.Products
-                .OrderBy(p => p.ProductSku)
-                .Select(p => new
-                {
-                    ProductID = p.ProductID.ToString(),
-                    ProductSku = p.ProductSku,
-                    Name = p.Name,
-                    UnitPrice = p.UnitPrice
-                })
-                .ToListAsync();
+            ViewBag.ProductList = await _expenseService.GetProductDropdownAsync();
             return View(expense);
         }
 
@@ -195,24 +138,18 @@ namespace TaskTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var expense = await _context.Expenses.FindAsync(id);
-            if (expense == null)
+            var (success, error) = await _expenseService.DeleteExpenseAsync(id);
+            if (success)
+            {
+                _logger.LogInformation("Expense deleted, ExpenseID: {ExpenseID}", id);
+                TempData["SuccessMessage"] = "Expense deleted successfully.";
+            }
+            else
             {
                 _logger.LogWarning("Expense {ExpenseID} not found", id);
-                TempData["ErrorMessage"] = "Expense not found.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = error;
             }
-
-            _context.Expenses.Remove(expense);
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Expense deleted, ExpenseID: {ExpenseID}", id);
-            TempData["SuccessMessage"] = "Expense deleted successfully.";
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ExpenseExists(int id)
-        {
-            return _context.Expenses.Any(e => e.ExpenseID == id);
         }
     }
 }

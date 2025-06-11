@@ -60,6 +60,9 @@ builder.Services.AddScoped<ClientService>();
 // Register ProjectService
 builder.Services.AddScoped<ProjectService>();
 
+// Register ExpenseService
+builder.Services.AddScoped<ExpenseService>();
+
 // Register PdfService
 builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
 
