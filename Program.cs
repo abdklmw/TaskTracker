@@ -66,10 +66,10 @@ builder.Services.AddScoped<ExpenseService>();
 // Register ProductService
 builder.Services.AddScoped<ProductService>();
 
-// Register PdfService
-builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
+// Register InvoiceService
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
-// Register TimeEntryImportService
+// Register TimeEntryService
 builder.Services.AddScoped<TimeEntryService>();
 
 // Register EmailService
