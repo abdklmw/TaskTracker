@@ -30,7 +30,6 @@
 	<ItemGroup>
 		<Folder Include="Data\log\" />
 		<Folder Include="Data\keys\" />
-		<Folder Include="api\" />
 		<Folder Include="wwwroot\images\icons\" />
 	</ItemGroup>
 </Project>
