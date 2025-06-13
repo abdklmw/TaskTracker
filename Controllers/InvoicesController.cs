@@ -120,7 +120,7 @@ namespace TaskTracker.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(InvoiceCreateViewModel model)
 		{
-			var (success, error) = await _invoiceService.CreateInvoiceAsync(model);
+			var (success, error, createdInvoice) = await _invoiceService.CreateInvoiceAsync(model);
 			if (success)
 			{
 				TempData["SuccessMessage"] = "Invoice created successfully.";

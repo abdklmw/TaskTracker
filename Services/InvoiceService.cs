@@ -16,7 +16,7 @@ namespace TaskTracker.Services
             DateTime? invoiceSentDateStart, DateTime? invoiceSentDateEnd,
             decimal? totalAmountMin, decimal? totalAmountMax);
         Task<(List<TimeEntryViewModel> TimeEntries, List<ExpenseViewModel> Expenses)> GetUnpaidItemsAsync(int clientId);
-        Task<(bool Success, string? ErrorMessage)> CreateInvoiceAsync(InvoiceCreateViewModel model);
+        Task<(bool Success, string? ErrorMessage, Invoice? Invoice)> CreateInvoiceAsync(InvoiceCreateViewModel model);
         Task<Invoice?> GetInvoiceByIdAsync(int id);
         Task<(bool Success, string? ErrorMessage)> UpdateInvoiceAsync(Invoice invoice);
         Task<(bool Success, string? ErrorMessage)> DeleteInvoiceAsync(int id);
@@ -44,11 +44,11 @@ namespace TaskTracker.Services
             _timeEntryService = timeEntryService;
             _clientService = clientService;
         }
-        public async Task<(bool Success, string? ErrorMessage)> CreateInvoiceAsync(InvoiceCreateViewModel model)
+        public async Task<(bool Success, string? ErrorMessage, Invoice? Invoice)> CreateInvoiceAsync(InvoiceCreateViewModel model)
         {
             if (model.ClientID <= 0 || (model.SelectedTimeEntryIDs == null || !model.SelectedTimeEntryIDs.Any()) && (model.SelectedExpenseIDs == null || !model.SelectedExpenseIDs.Any()))
             {
-                return (false, "Invalid client or no items selected.");
+                return (false, "Invalid client or no items selected.", null);
             }
 
             try
@@ -80,7 +80,7 @@ namespace TaskTracker.Services
                     if (expense.Product == null || !await _context.Products.AnyAsync(p => p.ProductID == expense.ProductID))
                     {
                         _logger.LogError("Expense ID {ExpenseId} has invalid or missing ProductID {ProductId}.", expense.ExpenseID, expense.ProductID);
-                        return (false, $"Expense ID {expense.ExpenseID} is linked to an invalid or missing product.");
+                        return (false, $"Expense ID {expense.ExpenseID} is linked to an invalid or missing product.", null);
                     }
 
                     if (expense.TotalAmount != expense.UnitAmount * expense.Quantity)
@@ -129,12 +129,12 @@ namespace TaskTracker.Services
                 }
 
                 await _context.SaveChangesAsync();
-                return (true, null);
+                return (true, null, invoice);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating invoice for client ID {ClientId}", model.ClientID);
-                return (false, "An error occurred while creating the invoice.");
+                return (false, "An error occurred while creating the invoice.", null);
             }
         }
         public async Task<(List<TimeEntryViewModel> TimeEntries, List<ExpenseViewModel> Expenses)> GetUnpaidItemsAsync(int clientId)
