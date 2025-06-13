@@ -373,3 +373,4 @@ FodyWeavers.xsd
 /wwwroot/js/site.min.js
 /package-lock.json
 /CombinedFiles/CombinedServices.txt
+/CombinedFiles/CombinedApiControllers.txt
