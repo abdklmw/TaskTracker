@@ -1,13 +1,33 @@
 ﻿@using TaskTracker.Models.Invoice
 @model Invoice
+@{
+    if (Model.Client == null)
+    {
+        return;
+    }
+}
 
 <div id="display-row-@Model.InvoiceID" class="display-mode card mb-2 invoice-display-row">
     <div class="avenir-light card-body">
         <div class="row">
-            <div class="col-md-3">@Model.InvoiceDate.ToString("d")</div>
-            <div class="col-md-3">$@Model.TotalAmount.ToString("N2")</div>
-            <div class="col-md-3">@Model.Status</div>
-            <div class="col-md-3">@Model.Client.Name</div>
+            <div class="col-md-4">@Model.Client.Name</div>
+            <div class="col-md-4">@Model.Status</div>
+            <div class="col-md-4">$@Model.TotalAmount.ToString("N2")</div>
+            <div class="col-md-4">
+                <abbr title="Invoice date">
+                    @Model.InvoiceDate.ToString("d")
+                </abbr>
+            </div>
+            <div class="col-md-4">
+                <abbr title="Sent date">
+                    @(Model.InvoiceSentDate.HasValue? Model.InvoiceSentDate.Value.ToString("d") : "-")
+                </abbr>
+            </div>
+            <div class="col-md-4">
+                <abbr title="Sent date">
+                    @(Model.PaidDate.HasValue? Model.PaidDate.Value.ToString("d") : "-")
+                </abbr>
+            </div>
         </div>
         <div class="row mt-2">
             <div class="col-md-12 d-flex justify-content-between">
