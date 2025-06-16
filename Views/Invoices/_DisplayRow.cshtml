@@ -10,21 +10,22 @@
             <div class="col-md-3">@Model.Client.Name</div>
         </div>
         <div class="row mt-2">
-            <div class="col-md-12">
-                <button class="btn btn-primary edit-btn" data-Id="@Model.InvoiceID">Edit</button>
-                <form asp-action="Send" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-info">
-                        @(Model.InvoiceSentDate.HasValue ? "Resend" : "Send")
-                    </button>
-                </form>
-                <form asp-action="Paid" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-success"
-                            disabled="@(Model.PaidDate.HasValue ? "disabled" : null)">
-                        Paid
-                    </button>
-                </form>
+            <div class="col-md-12 d-flex justify-content-between">
+                <div>
+                    <button class="btn btn-primary edit-btn" data-Id="@Model.InvoiceID">Edit</button>
+                    <form asp-action="Send" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-info">
+                            @(Model.InvoiceSentDate.HasValue ? "Resend" : "Send")
+                        </button>
+                    </form>
+                    <form asp-action="Paid" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success" disabled="@(Model.PaidDate.HasValue ? "disabled" : null)">
+                            Paid
+                        </button>
+                    </form>
+                </div>
                 <a asp-action="Delete" asp-route-id="@Model.InvoiceID" class="btn btn-danger">Delete</a>
             </div>
         </div>
