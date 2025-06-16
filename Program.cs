@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Serilog; // Add Serilog
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using TaskTracker.Data;
 using TaskTracker.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,29 +25,35 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<AppDbContext>();
-builder.Services.AddControllersWithViews(options =>
-{
-    // Add global authorization filter with exclusions
-    options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build()));
-});
+builder.Services.AddControllersWithViews();
 
-// Configure authentication to ensure login path and allow anonymous access to Identity pages
-builder.Services.ConfigureApplicationCookie(options =>
+// Add JWT Authentication
+builder.Services.AddAuthentication(options =>
 {
-    options.LoginPath = "/Identity/Account/Login";
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+})
+.AddCookie(options =>
+{
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
-});
-
-// Allow anonymous access to Identity pages
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AllowAnonymousIdentity", policy =>
-        policy.Requirements.Add(new AllowAnonymousRequirement()));
+    options.SlidingExpiration = true;
+    options.LoginPath = "/Identity/Account/Login";
 });
 builder.Services.AddSingleton<IAuthorizationHandler, AllowAnonymousHandler>();
 
@@ -94,16 +100,18 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 //app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Replace the app.UseEndpoints block with top-level route registrations
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

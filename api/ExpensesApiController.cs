@@ -7,7 +7,7 @@ namespace TaskTracker.Controllers.Api
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class ExpensesApiController : ControllerBase
     {
         private readonly ExpenseService _expenseService;

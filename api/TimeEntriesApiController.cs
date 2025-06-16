@@ -9,7 +9,7 @@ namespace TaskTracker.Controllers.Api
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class TimeEntriesApiController : ControllerBase
     {
         private readonly TimeEntryService _timeEntryService;

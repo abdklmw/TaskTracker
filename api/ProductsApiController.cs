@@ -7,7 +7,7 @@ namespace TaskTracker.Controllers.Api
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class ProductsApiController : ControllerBase
     {
         private readonly ProductService _productService;

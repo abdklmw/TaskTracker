@@ -9,7 +9,7 @@ namespace TaskTracker.Controllers.Api
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class ProjectsApiController : ControllerBase
     {
         private readonly ProjectService _projectService;
