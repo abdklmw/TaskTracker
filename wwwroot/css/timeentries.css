@@ -1,0 +1,14 @@
+﻿.client-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.client-title-line {
+    flex-grow: 1;
+    height: 1px;
+    background-color: #B5B5B5;
+    margin-left: 10px;
+}

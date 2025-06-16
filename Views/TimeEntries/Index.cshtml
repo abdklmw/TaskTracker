@@ -55,34 +55,40 @@
     ViewData["recordLimit"] = Model.RecordLimit;
     ViewData["clientFilter"] = Model.SelectedClientID;
     ViewData["projectFilter"] = Model.SelectedProjectIDs;
-@await Html.PartialAsync("_PaginationPartial", Model)
+    @await Html.PartialAsync("_PaginationPartial", Model)
 }
 
 <!-- Time Entries Table -->
 @if (Model.TotalRecords > 0)
 {
-    <div class="row mb-2">
-        <div class="col-md-2"><strong>Client</strong></div>
-        <div class="col-md-2"><strong>Project</strong></div>
-        <div class="col-md-2"><strong>Start Date/Time</strong></div>
-        <div class="col-md-2"><strong>End Date/Time</strong></div>
-        <div class="col-md-2"><strong>Hours Spent</strong></div>
-        <div class="col-md-2"><strong>Description</strong></div>
-    </div>
 
+    var groupedEntries = Model.TimeEntries
+        .Where(t => t.EndDateTime != null)
+        .GroupBy(t => t.Client?.Name ?? "No Client")
+        .OrderBy(g => g.Key);
     var index = 1;
 
-    @foreach (var timeEntry in Model.TimeEntries.Where(t => t.EndDateTime != null))
+    @foreach (var group in groupedEntries)
     {
-        var projectRowViewModel = new TaskTracker.Models.TimeEntries.TimeEntryRowViewModel(timeEntry, index, timezoneOffset);
-        @await Html.PartialAsync("_DisplayRow", projectRowViewModel)
-        @await Html.PartialAsync("_EditFormRow", projectRowViewModel)
-        index++;
+        <div class="client-group mb-4">
+            <h3 class="client-title">
+                @group.Key
+                <span class="client-title-line"></span>
+            </h3>
+            <div class="row mb-2">
+                <div class="col-md-2"><strong>Project</strong></div>
+                <div class="col-md-2"><strong>Start Date/Time</strong></div>
+                <div class="col-md-2"><strong>End Date/Time</strong></div>
+                <div class="col-md-2"><strong>Hours Spent</strong></div>
+                <div class="col-md-2"><strong>Description</strong></div>
+            </div>
+            @foreach (var timeEntry in group)
+            {
+                var projectRowViewModel = new TaskTracker.Models.TimeEntries.TimeEntryRowViewModel(timeEntry, index, timezoneOffset);
+                @await Html.PartialAsync("_DisplayRow", projectRowViewModel)
+                @await Html.PartialAsync("_EditFormRow", projectRowViewModel)
+                index++;
+            }
+        </div>
     }
-}
-
-@section Scripts {
-    <script>
-        var userTimezoneOffset = @timezoneOffset;
-    </script>
 }

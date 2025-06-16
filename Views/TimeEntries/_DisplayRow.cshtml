@@ -15,7 +15,6 @@
 <div id="display-row-@timeEntry.TimeEntryID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body">
         <div class="row">
-            <div class="col-md-2" data-field="Client">@timeEntry.Client?.Name</div>
             <div class="col-md-2" data-field="Project">@timeEntry.Project?.Name</div>
             <div class="col-md-2" data-field="StartDateTime">@startLocal.ToString("g")</div>
             <div class="col-md-2" data-field="EndDateTime">@(endLocal.HasValue ? endLocal.Value.ToString("g") : "")</div>
