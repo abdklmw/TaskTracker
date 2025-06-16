@@ -12,9 +12,9 @@
                 <span asp-validation-for="ClientID" class="text-danger"></span>
             </div>
             <div class="col-md-4">
-                <label asp-for="InvoiceDate" class="form-label">Invoice Date</label>
-                <input asp-for="InvoiceDate" class="form-control" type="date" />
-                <span asp-validation-for="InvoiceDate" class="text-danger"></span>
+                <label asp-for="Status" class="form-label">Status</label>
+                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<InvoiceStatus>()"></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
             </div>
             <div class="col-md-4">
                 <label asp-for="TotalAmount" class="form-label">Total Amount</label>
@@ -22,9 +22,19 @@
                 <span asp-validation-for="TotalAmount" class="text-danger"></span>
             </div>
             <div class="col-md-4">
-                <label asp-for="Status" class="form-label">Status</label>
-                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<InvoiceStatus>()"></select>
-                <span asp-validation-for="Status" class="text-danger"></span>
+                <label asp-for="InvoiceDate" class="form-label">Invoice Date</label>
+                <input asp-for="InvoiceDate" class="form-control" type="date" />
+                <span asp-validation-for="InvoiceDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="InvoiceSentDate" class="form-label">Sent Date</label>
+                <input asp-for="InvoiceSentDate" class="form-control" type="date" />
+                <span asp-validation-for="InvoiceSentDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="PaidDate" class="form-label">Paid Date</label>
+                <input asp-for="PaidDate" class="form-control" type="date" />
+                <span asp-validation-for="PaidDate" class="text-danger"></span>
             </div>
             <div class="col-md-12">
                 <button type="submit" class="btn btn-success save-btn">Save</button>
