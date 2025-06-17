@@ -11,7 +11,6 @@
 <div id="display-row-@expense.ExpenseID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body">
         <div class="row">
-            <div class="col-md-2" data-field="Client">@expense.Client?.Name</div>
             <div class="col-md-3" data-field="Description">@expense.Description</div>
             <div class="col-md-2" data-field="UnitAmount">$@expense.UnitAmount.ToString("N2")</div>
             <div class="col-md-1" data-field="Quantity">@expense.Quantity</div>

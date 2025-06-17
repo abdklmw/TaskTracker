@@ -52,28 +52,35 @@
 <!-- Pagination -->
 @await Html.PartialAsync("_PaginationPartial", Model)
 
-<!-- Header row for the expense list -->
-@if (Model.TotalRecords > 0)
-{
-    <div class="row mb-2">
-        <div class="col-md-2"><strong>Client</strong></div>
-        <div class="col-md-3"><strong>Description</strong></div>
-        <div class="col-md-2"><strong>Unit Amount</strong></div>
-        <div class="col-md-1"><strong>Quantity</strong></div>
-        <div class="col-md-2"><strong>Total Amount</strong></div>
-        <div class="col-md-2"><strong>Actions</strong></div>
-    </div>
-
-    var index = 1;
-    foreach (var expense in Model.Expenses)
+<!-- Expense List -->
+@{
+    if (Model.TotalRecords > 0)
     {
-        var expenseRowViewModel = new TaskTracker.Models.Expense.ExpenseRowViewModel(expense, index);
-        @await Html.PartialAsync("_DisplayRow", expenseRowViewModel)
-        @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
-        index++;
+
+        var groupedExpenses = Model.Expenses
+            .Where(e => e.Client != null)
+            .GroupBy(e => e.Client.Name ?? "No Client")
+            .OrderBy(g => g.Key);
+        var index = 1;
+
+        @foreach (var group in groupedExpenses)
+        {
+            <div class="client-group mb-4">
+                <h3 class="client-title">
+                    @group.Key
+                    <span class="client-title-line"></span>
+                </h3>
+                @foreach (var expense in group)
+                {
+                    var expenseRowViewModel = new TaskTracker.Models.Expense.ExpenseRowViewModel(expense, index);
+                    @await Html.PartialAsync("_DisplayRow", expenseRowViewModel)
+                    @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
+                    index++;
+                }
+            </div>
+        }
     }
 }
-
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
 }
