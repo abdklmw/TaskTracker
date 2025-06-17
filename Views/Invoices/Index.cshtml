@@ -64,13 +64,29 @@
 <!-- Pagination -->
 @await Html.PartialAsync("_PaginationPartial", Model)
 
-<!-- Header row for the invoice list -->
-@if (Model.TotalRecords > 0)
-{
-    @foreach (var item in Model.Invoices)
+<!-- Invoice List -->
+@{
+    if (Model.TotalRecords > 0)
     {
-        @await Html.PartialAsync("_DisplayRow", item)
-        @await Html.PartialAsync("_EditFormRow", item)
+        var groupedInvoices = Model.Invoices
+            .Where(i => i.Client != null)
+            .GroupBy(i => i.Client?.Name ?? "No Client")
+            .OrderBy(g => g.Key);
+
+        @foreach (var group in groupedInvoices)
+        {
+            <div class="client-group mb-4">
+                <h3 class="client-title">
+                    @group.Key
+                    <span class="client-title-line"></span>
+                </h3>
+                @foreach (var item in group)
+                {
+                    @await Html.PartialAsync("_DisplayRow", item)
+                    @await Html.PartialAsync("_EditFormRow", item)
+                }
+            </div>
+        }
     }
 }
 
