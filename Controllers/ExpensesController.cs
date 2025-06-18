@@ -41,19 +41,19 @@ namespace TaskTracker.Controllers
                 RecordLimit = recordLimit,
                 SelectedClientID = clientFilter,
                 RouteValues = new Dictionary<string, string>
-                {
-                    { "recordLimit", recordLimit.ToString() },
-                    { "clientFilter", clientFilter.ToString() }
-                },
+            {
+                { "recordLimit", recordLimit.ToString() },
+                { "clientFilter", clientFilter.ToString() }
+            },
                 ClientFilterOptions = await _clientService.GetClientDropdownAsync(clientFilter),
                 RecordLimitOptions = new SelectList(new[]
                 {
-                    new { Value = "5", Text = "5" },
-                    new { Value = "10", Text = "10" },
-                    new { Value = "25", Text = "25" },
-                    new { Value = "50", Text = "50" },
-                    new { Value = "100", Text = "100" }
-                }, "Value", "Text", recordLimit.ToString())
+                new { Value = "5", Text = "5" },
+                new { Value = "10", Text = "10" },
+                new { Value = "25", Text = "25" },
+                new { Value = "50", Text = "50" },
+                new { Value = "100", Text = "100" }
+            }, "Value", "Text", recordLimit.ToString())
             };
 
             ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
@@ -64,7 +64,7 @@ namespace TaskTracker.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,Description,UnitAmount,Quantity,TotalAmount,ExpenseDateTime")] Expense expense)
+        public async Task<IActionResult> Create([Bind("ClientID,Description,UnitAmount,Quantity,TotalAmount,ExpenseDateTime,ProductID")] Expense expense)
         {
             if (ModelState.IsValid)
             {
@@ -90,7 +90,7 @@ namespace TaskTracker.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ExpenseID,ClientID,Description,UnitAmount,Quantity,TotalAmount,ExpenseDateTime")] Expense expense)
+        public async Task<IActionResult> Edit(int id, [Bind("ExpenseID,ClientID,Description,UnitAmount,Quantity,TotalAmount,ExpenseDateTime,ProductID")] Expense expense)
         {
             if (id != expense.ExpenseID)
             {

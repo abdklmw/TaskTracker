@@ -22,7 +22,10 @@
                     <option value="">Select a product</option>
                     @foreach (var product in ViewBag.ProductList)
                     {
-                        <option value="@product.ProductID" data-sku="@product.ProductSku" data-name="@product.Name" data-price="@product.UnitPrice.ToString("F2")">
+                        <option value="@product.ProductID"
+                                data-sku="@product.ProductSku"
+                                data-name="@product.Name"
+                                data-price="@product.UnitPrice.ToString("F2")">
                             @product.ProductSku
                         </option>
                     }

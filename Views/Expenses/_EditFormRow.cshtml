@@ -23,12 +23,18 @@
             </div>
             <!-- Product selection dropdown -->
             <div class="col-md-2">
-                <label class="form-label">Product</label>
-                <select class="form-control product-select" onchange="updateProductFields(this)">
+                <label asp-for="Expense.ProductID" class="form-label">Product</label>
+                <select class="form-control product-select" asp-for="Expense.ProductID"
+                        onchange="updateProductFields(this)">
                     <option value="">Select a product</option>
                     @foreach (var product in ViewBag.ProductList)
                     {
-                        <option value="@product.ProductID" data-sku="@product.ProductSku" data-name="@product.Name" data-price="@product.UnitPrice.ToString("F2")">
+                        int? productId = int.TryParse(product.ProductID, out int id) ? id : (int?)null;
+                        <option value="@product.ProductID"
+                                data-sku="@product.ProductSku"
+                                data-name="@product.Name"
+                                data-price="@product.UnitPrice.ToString("F2")"
+                                selected="@(productId == Model.Expense.ProductID ? "selected" : null)">
                             @product.ProductSku
                         </option>
                     }
