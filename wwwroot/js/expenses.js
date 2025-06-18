@@ -41,7 +41,7 @@
     // Consolidated validation function for expense create and edit forms
     function validateExpenseForm(form, formType) {
         const isCreateForm = formType === 'create';
-        const clientSelect = form.querySelector('select[name="ClientID"]');
+        const clientSelect = form.querySelector('select[name="Expense.ClientID"]');
         const descriptionInput = form.querySelector('.description-input');
         const unitAmountInput = form.querySelector('.unit-amount-input');
         const quantityInput = form.querySelector('.quantity-input');
