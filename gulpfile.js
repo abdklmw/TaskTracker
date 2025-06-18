@@ -5,7 +5,7 @@ const cleanCSS = require('gulp-clean-css');
 
 // Bundle and minify JavaScript
 gulp.task('js', () => {
-    return gulp.src(['wwwroot/js/site.js', 'wwwroot/js/clock-animation.js', 'wwwroot/js/invoice-creation.js', 'wwwroot/js/filters.js'])
+    return gulp.src(['wwwroot/js/site.js', 'wwwroot/js/clock-animation.js', 'wwwroot/js/invoice-creation.js', 'wwwroot/js/filters.js', 'wwwroot/js/expenses.js', 'wwwroot/js/timeentries.js'])
         .pipe(concat('site.min.js'))
         .pipe(terser({
             mangle: { toplevel: true },
