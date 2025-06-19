@@ -34,12 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mutation.addedNodes.length) {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.classList.contains('clock-icon')) {
-                            console.log('Found clock-icon', node);
+                        if (node.classList.contains('clock-icon-animated')) {
+                            console.log('Found clock-icon-animated', node);
                             animateClock(node);
                         }
-                        node.querySelectorAll('.clock-icon').forEach((el) => {
-                            console.log('Found nested clock-icon', el);
+                        node.querySelectorAll('.clock-icon-animated').forEach((el) => {
+                            console.log('Found nested clock-icon-animated', el);
                             animateClock(el);
                         });
                     }
@@ -55,9 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
         subtree: true
     });
 
-    // Initial check for existing .clock-icon elements
-    document.querySelectorAll('.clock-icon').forEach((el) => {
-        console.log('Initial clock-icon', el);
+    // Initial check for existing .clock-icon-animated elements
+    document.querySelectorAll('.clock-icon-animated').forEach((el) => {
+        console.log('Initial clock-icon-animated', el);
         animateClock(el);
     });
 });
