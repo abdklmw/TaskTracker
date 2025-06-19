@@ -9,15 +9,38 @@
 }
 <!-- Display row for an expense -->
 <div id="display-row-@expense.ExpenseID" class="display-mode card mb-2 @(Model.Parity)-row">
-    <div class="card-body">
+    <div class="card-body position-relative">
         <div class="row">
-            <div class="col-md-3" data-field="Description">@expense.Description</div>
-            <div class="col-md-2" data-field="UnitAmount">$@expense.UnitAmount.ToString("N2")</div>
-            <div class="col-md-1" data-field="Quantity">@expense.Quantity</div>
-            <div class="col-md-2" data-field="TotalAmount">$@expense.TotalAmount.ToString("N2")</div>
-            <div class="col-md-2">
-                <button class="btn btn-primary edit-btn" data-id="@expense.ExpenseID">Edit</button>
-                <a asp-action="Delete" asp-route-id="@expense.ExpenseID" class="btn btn-danger">Delete</a>
+            <div class="col-md-5" data-field="Description">@expense.Description</div>
+            <div class="col-md-2" data-field="UnitAmount">
+                <abbr title="Unit amount">
+                    $@expense.UnitAmount.ToString("N2")
+                </abbr>
+            </div>
+            <div class="col-md-2" data-field="Quantity">
+                <abbr title="Quantity">
+                    @expense.Quantity
+                </abbr>
+            </div>
+            <div class="col-md-2" data-field="TotalAmount">
+                <abbr title="Total amount">
+                    $@expense.TotalAmount.ToString("N2")
+                </abbr>
+            </div>
+        </div>
+        <div class="dropdown-container position-absolute top-0 end-0 mt-2 me-2">
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-primary dropdown-toggle dropdown-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions">
+                    <img src="/images/icons/action-menu.svg" alt="Dropdown" class="dropdown-icon" />
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <button class="dropdown-item edit-btn" data-id="@expense.ExpenseID">Edit</button>
+                    </li>
+                    <li>
+                        <a class="dropdown-item delete-action-link" asp-action="Delete" asp-route-id="@expense.ExpenseID">Delete</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
