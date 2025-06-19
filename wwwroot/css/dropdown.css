@@ -1,0 +1,53 @@
+﻿/* Style for the dropdown toggle button */
+.dropdown-icon-btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: 38px; /* Match Bootstrap button height */
+    width: 38px; /* Square button */
+    padding: 0; /* Remove padding for compact icon */
+    vertical-align: middle;
+    border-radius: 4px; /* Match Bootstrap button */
+    line-height: 1; /* Prevent line-height issues */
+}
+
+    /* Remove Bootstrap's default dropdown triangle */
+    .dropdown-icon-btn.dropdown-toggle::after {
+        display: none; /* Hide the triangle icon */
+    }
+
+/* Style for the dropdown icon */
+.dropdown-icon {
+    width: 24px;
+    height: 24px;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Style for the start timer dropdown item */
+.start-timer-item {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between text and icon */
+}
+
+/* Reuse existing clock-icon styles */
+.clock-icon {
+    stroke: #fff;
+    width: 24px;
+    height: 24px;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Ensure dropdown menu items align properly */
+.dropdown-menu {
+    min-width: 150px; /* Ensure enough width for text */
+}
+
+    /* Ensure form in dropdown doesn't affect layout */
+    .dropdown-menu form {
+        display: inline-block;
+        margin: 0;
+        padding: 0;
+    }
