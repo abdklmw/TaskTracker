@@ -3,6 +3,11 @@
     vertical-align: middle;
 }
 
+.clock-icon {
+    width: 20px;
+    height: 20px;
+}
+
 @media (max-width: 576px) {
     .clock-icon {
         width: 16px;

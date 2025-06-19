@@ -7,7 +7,7 @@
     }
 
     var timeEntry = Model.TimeEntry;
-    int timezoneOffset = Model.TimezoneOffset ;
+    int timezoneOffset = Model.TimezoneOffset;
     var startLocal = timeEntry.StartDateTime.AddMinutes(timezoneOffset);
     var endLocal = timeEntry.EndDateTime is DateTime ? timeEntry.EndDateTime.Value.AddMinutes(timezoneOffset) : (DateTime?)null;
 }
@@ -17,12 +17,22 @@
         <div class="row">
             <div class="col-md-2" data-field="Project">@timeEntry.Project?.Name</div>
             <div class="col-md-2" data-field="StartDateTime">@startLocal.ToString("g")</div>
-            <div class="col-md-2" data-field="EndDateTime">@(endLocal.HasValue ? endLocal.Value.ToString("g") : "")</div>
+            <div class="col-md-2" data-field="EndDateTime">@(endLocal.HasValue? endLocal.Value.ToString("g") : "")</div>
             <div class="col-md-2" data-field="HoursSpent">@(timeEntry.HoursSpent is decimal ? timeEntry.HoursSpent.Value.ToString("F2") : "")</div>
-            <div class="col-md-2" data-field="Description">@timeEntry.Description</div>
-            <div class="col-md-2">
+            <div class="col-md-4" data-field="Description">@timeEntry.Description</div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
                 <button class="btn btn-primary edit-btn" data-id="@timeEntry.TimeEntryID">Edit</button>
                 <a asp-action="Delete" asp-route-id="@timeEntry.TimeEntryID" class="btn btn-danger">Delete</a>
+                <form asp-controller="TimeEntries" asp-action="StartTimer" method="post" style="display: inline-block;">
+                    <input type="hidden" name="ClientID" value="@timeEntry.ClientID" />
+                    <input type="hidden" name="ProjectID" value="@timeEntry.ProjectID" />
+                    <input type="hidden" name="Description" value="@timeEntry.Description" />
+                    <button type="submit" class="btn btn-primary start-timer-icon-btn">
+                        <img src="/images/icons/new-timer.svg" alt="Clock" class="clock-icon" />
+                    </button>
+                </form>
             </div>
         </div>
     </div>
