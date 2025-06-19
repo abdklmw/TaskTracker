@@ -10,11 +10,13 @@
     int timezoneOffset = Model.TimezoneOffset;
     var startLocal = timeEntry.StartDateTime.AddMinutes(timezoneOffset);
     var endLocal = timeEntry.EndDateTime is DateTime ? timeEntry.EndDateTime.Value.AddMinutes(timezoneOffset) : (DateTime?)null;
+    var status = timeEntry.PaidDate.HasValue ? "Paid" : (timeEntry.InvoiceSent.HasValue ? "Invoice Sent" : (timeEntry.InvoicedDate.HasValue ? "Invoiced" : (timeEntry.EndDateTime.HasValue ? "Competed" : "Running")));
 }
 
 <div id="display-row-@timeEntry.TimeEntryID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body">
         <div class="row">
+            <div class="col-md-2" data-field="Status">@status</div>
             <div class="col-md-2" data-field="Project">@timeEntry.Project?.Name</div>
             <div class="col-md-2" data-field="StartDateTime">@startLocal.ToString("g")</div>
             <div class="col-md-2" data-field="EndDateTime">@(endLocal.HasValue? endLocal.Value.ToString("g") : "")</div>
