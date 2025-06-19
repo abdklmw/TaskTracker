@@ -14,7 +14,8 @@
 }
 
 <div id="display-row-@timeEntry.TimeEntryID" class="display-mode card mb-2 @(Model.Parity)-row">
-    <div class="card-body">
+    <div class="card-body position-relative">
+        <!-- Added position-relative -->
         <div class="row">
             <div class="col-md-2" data-field="Status">@status</div>
             <div class="col-md-2" data-field="Project">@timeEntry.Project?.Name</div>
@@ -23,18 +24,29 @@
             <div class="col-md-2" data-field="HoursSpent">@(timeEntry.HoursSpent is decimal ? timeEntry.HoursSpent.Value.ToString("F2") : "")</div>
             <div class="col-md-4" data-field="Description">@timeEntry.Description</div>
         </div>
-        <div class="row">
-            <div class="col-md-12">
-                <button class="btn btn-primary edit-btn" data-id="@timeEntry.TimeEntryID">Edit</button>
-                <a asp-action="Delete" asp-route-id="@timeEntry.TimeEntryID" class="btn btn-danger">Delete</a>
-                <form asp-controller="TimeEntries" asp-action="StartTimer" method="post" style="display: inline-block;">
-                    <input type="hidden" name="ClientID" value="@timeEntry.ClientID" />
-                    <input type="hidden" name="ProjectID" value="@timeEntry.ProjectID" />
-                    <input type="hidden" name="Description" value="@timeEntry.Description" />
-                    <button type="submit" class="btn btn-primary start-timer-icon-btn">
-                        <img src="/images/icons/new-timer.svg" alt="Clock" class="clock-icon" />
-                    </button>
-                </form>
+        <div class="dropdown-container position-absolute top-0 end-0 mt-2 me-2">
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-primary dropdown-toggle dropdown-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions">
+                    <img src="/images/icons/action-menu.svg" alt="Dropdown" class="dropdown-icon" />
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <button class="dropdown-item edit-btn" data-id="@timeEntry.TimeEntryID">Edit</button>
+                    </li>
+                    <li>
+                        <form asp-controller="TimeEntries" asp-action="StartTimer" method="post" class="d-inline-block">
+                            <input type="hidden" name="ClientID" value="@timeEntry.ClientID" />
+                            <input type="hidden" name="ProjectID" value="@timeEntry.ProjectID" />
+                            <input type="hidden" name="Description" value="@timeEntry.Description" />
+                            <button type="submit" class="dropdown-item start-timer-item">
+                                Start New Timer
+                            </button>
+                        </form>
+                    </li>
+                    <li>
+                        <a class="dropdown-item delete-action-link" asp-action="Delete" asp-route-id="@timeEntry.TimeEntryID">Delete</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>

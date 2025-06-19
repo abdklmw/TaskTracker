@@ -94,3 +94,10 @@ abbr[title] {
 .ml-5 {
     margin-left: 2em;
 }
+
+.delete-action-link {
+    color: #dc3545; /* Bootstrap's danger color for delete actions */
+    margin-top: 0.5em; /* Extra space above */
+    padding-top: 0.5em; /* Additional padding for spacing */
+    border-top: 1px solid #dee2e6; /* Gray horizontal line above delete link */
+}
