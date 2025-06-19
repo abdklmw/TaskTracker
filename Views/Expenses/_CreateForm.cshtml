@@ -18,7 +18,9 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label">Product</label>
-                <select class="form-control product-select" onchange="updateProductFields(this)">
+                <select class="form-control product-select"
+                        asp-for="ProductID"
+                        onchange="updateProductFields(this)">
                     <option value="">Select a product</option>
                     @foreach (var product in ViewBag.ProductList)
                     {
