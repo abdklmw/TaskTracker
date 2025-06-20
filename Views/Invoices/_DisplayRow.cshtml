@@ -8,7 +8,7 @@
 }
 
 <div id="display-row-@Model.InvoiceID" class="display-mode card mb-2 invoice-display-row">
-    <div class="avenir-light card-body">
+    <div class="avenir-light card-body position-relative">
         <div class="row">
             <div class="col-md-4">@Model.Status</div>
             <div class="col-md-4">$@Model.TotalAmount.ToString("N2")</div>
@@ -28,24 +28,37 @@
                 </abbr>
             </div>
         </div>
-        <div class="row mt-2">
-            <div class="col-md-12 d-flex justify-content-between">
-                <div>
-                    <button class="btn btn-primary edit-btn" data-Id="@Model.InvoiceID">Edit</button>
-                    <form asp-action="Send" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-info">
-                            @(Model.InvoiceSentDate.HasValue ? "Resend" : "Send")
-                        </button>
-                    </form>
-                    <form asp-action="Paid" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-success" disabled="@(Model.PaidDate.HasValue ? "disabled" : null)">
-                            Paid
-                        </button>
-                    </form>
-                </div>
-                <a asp-action="Delete" asp-route-id="@Model.InvoiceID" class="btn btn-danger">Delete</a>
+        <div class="dropdown-container position-absolute top-0 end-0 mt-2 me-2">
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-primary dropdown-toggle dropdown-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions">
+                    <img src="/images/icons/action-menu.svg" alt="Dropdown" class="dropdown-icon" />
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <button class="dropdown-item edit-btn" data-Id="@Model.InvoiceID">Edit</button>
+                    </li>
+                    <li>
+                        <form asp-action="Send" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item">
+                                @(Model.InvoiceSentDate.HasValue ? "Resend" : "Send")
+                            </button>
+                        </form>
+                    </li>
+                    <li>
+                        <form asp-action="Paid" asp-route-id="@Model.InvoiceID" method="post" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item" disabled="@(Model.PaidDate.HasValue ? "disabled" : null)">
+                                Paid
+                            </button>
+                        </form>
+                    </li>
+                    <li>
+                        <a class="dropdown-item delete-action-link"
+                           asp-action="Delete"
+                           asp-route-id="@Model.InvoiceID">Delete</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
