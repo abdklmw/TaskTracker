@@ -9,16 +9,29 @@
     var project = Model.Project;
 }
 <div id="display-row-@project.ProjectID" class="display-mode card mb-2 @(Model.Parity)-row">
-    <div class="card-body">
+    <div class="card-body position-relative">
         <div class="row">
             <div class="col-md-4" data-field="Name">@project.Name</div>
-            <div class="col-md-4" data-field="Description">@project.Description</div>
             <div class="col-md-2" data-field="Rate">
                 @(project.Rate is decimal rate ? $"${rate:F2}" : "")
             </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary edit-btn" data-id="@project.ProjectID">Edit</button>
-                <a asp-action="Delete" asp-route-id="@project.ProjectID" class="btn btn-danger">Delete</a>
+            <div class="col-md-6" data-field="Description">@project.Description</div>
+        </div>
+        <div class="dropdown-container position-absolute top-0 end-0 mt-2 me-2">
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-primary dropdown-toggle dropdown-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions">
+                    <img src="/images/icons/action-menu.svg" alt="Dropdown" class="dropdown-icon" />
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <button class="dropdown-item edit-btn" data-id="@project.ProjectID">Edit</button>
+                    </li>
+                    <li>
+                        <a class="dropdown-item delete-action-link"
+                           asp-action="Delete"
+                           asp-route-id="@project.ProjectID">Delete</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
