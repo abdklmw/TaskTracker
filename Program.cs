@@ -54,6 +54,9 @@ builder.Services.AddSingleton<IAuthorizationHandler, AllowAnonymousHandler>();
 // Register SetupService
 builder.Services.AddScoped<SetupService>();
 
+// Register SettingsService
+builder.Services.AddScoped<ISettingsService, SettingsService>();
+
 // Register ClientService
 builder.Services.AddScoped<ClientService>();
 

@@ -1,33 +1,29 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TaskTracker.Data;
 using TaskTracker.Models;
-using Microsoft.EntityFrameworkCore;
+using TaskTracker.Services;
 
 namespace TaskTracker.Controllers
 {
     [Authorize]
     public class SettingsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ISettingsService _settingsService;
 
-        public SettingsController(AppDbContext context)
+        public SettingsController(ISettingsService settingsService)
         {
-            _context = context;
+            _settingsService = settingsService;
         }
 
         // GET: /Settings
         public async Task<IActionResult> Index()
         {
-            var settings = await _context.Settings.FirstOrDefaultAsync();
-            if (settings == null)
+            var settings = await _settingsService.GetSettingsAsync();
+            var (success, error) = await _settingsService.EnsureDefaultSettingsAsync();
+            if (!success)
             {
-                settings = new Settings
-                {
-                    CompanyName = "Default Company"
-                };
-                _context.Settings.Add(settings);
-                await _context.SaveChangesAsync();
+                TempData["ErrorMessage"] = error ?? "Failed to ensure default settings.";
+                settings = new Settings { CompanyName = "Default Company" };
             }
             return View(settings);
         }
@@ -39,33 +35,13 @@ namespace TaskTracker.Controllers
         {
             if (ModelState.IsValid)
             {
-                var existingSettings = await _context.Settings.FirstOrDefaultAsync();
-                if (existingSettings == null)
+                var (success, error) = await _settingsService.UpdateSettingsAsync(settings);
+                if (success)
                 {
-                    // This should never happen with proper seeding, but handle it
-                    _context.Settings.Add(settings);
+                    TempData["SuccessMessage"] = "Settings updated successfully.";
+                    return RedirectToAction(nameof(Index));
                 }
-                else
-                {
-                    // Update existing record
-                    existingSettings.CompanyName = settings.CompanyName;
-                    existingSettings.AccountsReceivableAddress = settings.AccountsReceivableAddress;
-                    existingSettings.AccountsReceivablePhone = settings.AccountsReceivablePhone;
-                    existingSettings.AccountsReceivableEmail = settings.AccountsReceivableEmail;
-                    existingSettings.PaymentInformation = settings.PaymentInformation;
-                    existingSettings.ThankYouMessage = settings.ThankYouMessage;
-                    existingSettings.DefaultHourlyRate = settings.DefaultHourlyRate;
-                    existingSettings.SmtpServer = settings.SmtpServer;
-                    existingSettings.SmtpPort = settings.SmtpPort;
-                    existingSettings.SmtpSenderEmail = settings.SmtpSenderEmail;
-                    existingSettings.SmtpUsername = settings.SmtpUsername;
-                    existingSettings.SmtpPassword = settings.SmtpPassword;
-                    existingSettings.InvoiceTemplate = settings.InvoiceTemplate;
-                    _context.Update(existingSettings);
-                }
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Settings updated successfully.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = error ?? "Error updating settings.";
             }
             return View("Index", settings);
         }
