@@ -23,7 +23,7 @@ namespace TaskTracker.Controllers
             if (!success)
             {
                 TempData["ErrorMessage"] = error ?? "Failed to ensure default settings.";
-                settings = new Settings { CompanyName = "Default Company" };
+                settings = new Settings { CompanyName = "Default Company", SingletonGuard = 0 };
             }
             return View(settings);
         }
