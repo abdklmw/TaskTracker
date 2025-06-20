@@ -4,6 +4,7 @@ using iText.Layout;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models.Invoice;
+using TaskTracker.Models.TimeEntries;
 
 namespace TaskTracker.Services
 {
@@ -44,6 +45,7 @@ namespace TaskTracker.Services
             _timeEntryService = timeEntryService;
             _clientService = clientService;
         }
+
         public async Task<(bool Success, string? ErrorMessage)> CreateInvoiceAsync(InvoiceCreateViewModel model)
         {
             if (model.ClientID <= 0 || (model.SelectedTimeEntryIDs == null || !model.SelectedTimeEntryIDs.Any()) && (model.SelectedExpenseIDs == null || !model.SelectedExpenseIDs.Any()))
@@ -122,7 +124,7 @@ namespace TaskTracker.Services
                     _context.InvoiceExpenses.Add(new InvoiceExpense
                     {
                         InvoiceID = invoice.InvoiceID,
-                        ProductID = expense.ProductID, // Corrected to use ProductID
+                        ProductID = expense.ProductID,
                         ProductInvoiceDate = DateOnly.FromDateTime(DateTime.Today),
                         Quantity = expense.Quantity
                     });
@@ -137,6 +139,7 @@ namespace TaskTracker.Services
                 return (false, "An error occurred while creating the invoice.");
             }
         }
+
         public async Task<(List<TimeEntryViewModel> TimeEntries, List<ExpenseViewModel> Expenses)> GetUnpaidItemsAsync(int clientId)
         {
             try
@@ -218,7 +221,6 @@ namespace TaskTracker.Services
             }
         }
 
-
         public async Task<Invoice?> GetInvoiceByIdAsync(int id)
         {
             return await _context.Invoices
@@ -230,7 +232,36 @@ namespace TaskTracker.Services
         {
             try
             {
-                _context.Update(invoice);
+                // Fetch the invoice with its associated time entries and expenses
+                var existingInvoice = await _context.Invoices
+                    .Include(i => i.InvoiceTimeEntries)
+                    .ThenInclude(ite => ite.TimeEntry)
+                    .Include(i => i.InvoiceExpenses)
+                    .FirstOrDefaultAsync(i => i.InvoiceID == invoice.InvoiceID);
+
+                if (existingInvoice == null)
+                {
+                    return (false, "Invoice not found.");
+                }
+
+                // Update invoice properties
+                existingInvoice.ClientID = invoice.ClientID;
+                existingInvoice.InvoiceDate = invoice.InvoiceDate;
+                existingInvoice.InvoiceSentDate = invoice.InvoiceSentDate;
+                existingInvoice.PaidDate = invoice.PaidDate;
+                existingInvoice.TotalAmount = invoice.TotalAmount;
+                existingInvoice.Status = invoice.Status;
+
+                // Update associated time entries' date fields
+                foreach (var invoiceTimeEntry in existingInvoice.InvoiceTimeEntries)
+                {
+                    var timeEntry = invoiceTimeEntry.TimeEntry;
+                    timeEntry.InvoicedDate = invoice.InvoiceDate;
+                    timeEntry.InvoiceSent = invoice.InvoiceSentDate;
+                    timeEntry.PaidDate = invoice.PaidDate;
+                }
+
+                _context.Update(existingInvoice);
                 await _context.SaveChangesAsync();
                 return (true, null);
             }
@@ -242,7 +273,13 @@ namespace TaskTracker.Services
                 }
                 throw;
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating invoice ID {InvoiceId}", invoice.InvoiceID);
+                return (false, "An error occurred while updating the invoice.");
+            }
         }
+
         public async Task<(List<Invoice> Invoices, int TotalRecords, int TotalPages)> GetInvoicesAsync(
             int page, int recordLimit, int clientFilter, InvoiceStatus? statusFilter,
             DateTime? paidDateStart, DateTime? paidDateEnd,
@@ -331,6 +368,7 @@ namespace TaskTracker.Services
                 throw;
             }
         }
+
         public async Task<(bool Success, string? ErrorMessage)> DeleteInvoiceAsync(int id)
         {
             try
@@ -349,16 +387,19 @@ namespace TaskTracker.Services
                 var timeEntries = await _context.TimeEntries
                     .Where(t => timeEntryIds.Contains(t.TimeEntryID))
                     .ToListAsync();
+
                 foreach (var timeEntry in timeEntries)
                 {
                     timeEntry.InvoicedDate = null;
                     timeEntry.InvoiceSent = null;
+                    timeEntry.PaidDate = null;
                 }
 
                 var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
                 var expenses = await _context.Expenses
                     .Where(e => expenseIds.Contains(e.ExpenseID))
                     .ToListAsync();
+
                 foreach (var expense in expenses)
                 {
                     expense.InvoicedDate = null;
@@ -395,7 +436,6 @@ namespace TaskTracker.Services
                 }
 
                 var pdfBytes = await GenerateInvoicePdfAsync(id);
-
                 invoice.InvoiceSentDate = DateTime.Today;
                 invoice.Status = invoice.Status == InvoiceStatus.Draft ? InvoiceStatus.Sent : invoice.Status;
 
@@ -403,6 +443,7 @@ namespace TaskTracker.Services
                 var timeEntries = await _context.TimeEntries
                     .Where(t => timeEntryIds.Contains(t.TimeEntryID))
                     .ToListAsync();
+
                 foreach (var timeEntry in timeEntries)
                 {
                     timeEntry.InvoiceSent = DateTime.Today;
@@ -412,6 +453,7 @@ namespace TaskTracker.Services
                 var expenses = await _context.Expenses
                     .Where(e => expenseIds.Contains(e.ExpenseID))
                     .ToListAsync();
+
                 foreach (var expense in expenses)
                 {
                     expense.InvoiceSent = DateTime.Today;
@@ -448,6 +490,7 @@ namespace TaskTracker.Services
                 var timeEntries = await _context.TimeEntries
                     .Where(t => timeEntryIds.Contains(t.TimeEntryID))
                     .ToListAsync();
+
                 foreach (var timeEntry in timeEntries)
                 {
                     timeEntry.PaidDate = DateTime.Today;
@@ -457,6 +500,7 @@ namespace TaskTracker.Services
                 var expenses = await _context.Expenses
                     .Where(e => expenseIds.Contains(e.ExpenseID))
                     .ToListAsync();
+
                 foreach (var expense in expenses)
                 {
                     expense.PaidDate = DateTime.Today;
@@ -529,7 +573,7 @@ namespace TaskTracker.Services
                     .Replace("{{AccountsReceivableAddress}}", settings.AccountsReceivableAddress ?? "")
                     .Replace("{{AccountsReceivablePhone}}", settings.AccountsReceivablePhone ?? "")
                     .Replace("{{AccountsReceivableEmail}}", settings.AccountsReceivableEmail ?? "")
-                    .Replace("{{InvoiceID}}}", invoiceId.ToString())
+                    .Replace("{{InvoiceID}}", invoiceId.ToString())
                     .Replace("{{AccountsReceivableName}}", invoice.Client?.AccountsReceivableName ?? "")
                     .Replace("{{ClientName}}", invoice.Client?.Name ?? "")
                     .Replace("{{InvoiceDate}}", invoice.InvoiceDate.ToString("M dd, yyyy"))
