@@ -53,12 +53,14 @@ namespace TaskTracker.Services
                     existingSettings.PaymentInformation = settings.PaymentInformation;
                     existingSettings.ThankYouMessage = settings.ThankYouMessage;
                     existingSettings.DefaultHourlyRate = settings.DefaultHourlyRate;
+                    existingSettings.BCCAddress = settings.BCCAddress;
                     existingSettings.SmtpServer = settings.SmtpServer;
                     existingSettings.SmtpPort = settings.SmtpPort;
                     existingSettings.SmtpSenderEmail = settings.SmtpSenderEmail;
                     existingSettings.SmtpUsername = settings.SmtpUsername;
                     existingSettings.SmtpPassword = settings.SmtpPassword;
                     existingSettings.InvoiceTemplate = settings.InvoiceTemplate;
+                    existingSettings.SingletonGuard = settings.SingletonGuard;
                     _context.Update(existingSettings);
                 }
                 await _context.SaveChangesAsync();
@@ -88,7 +90,8 @@ namespace TaskTracker.Services
                 {
                     settings = new Settings
                     {
-                        CompanyName = "Default Company"
+                        CompanyName = "Default Company",
+                        SingletonGuard = 0
                     };
                     _context.Settings.Add(settings);
                     await _context.SaveChangesAsync();

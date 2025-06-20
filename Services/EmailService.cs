@@ -1,8 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
-using System.Net.Mail;
+﻿using System.Net.Mail;
 using System.Net;
-using System.Threading.Tasks;
 using TaskTracker.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +9,7 @@ namespace TaskTracker.Services
     {
         Task SendEmailAsync(string toEmail, string subject, string body, byte[] attachment = null, string attachmentFileName = null);
     }
+
     public class EmailService : IEmailService
     {
         private readonly AppDbContext _context;
@@ -54,6 +52,20 @@ namespace TaskTracker.Services
 
                 mailMessage.To.Add(toEmail);
 
+                // Add BCC address if specified
+                if (!string.IsNullOrWhiteSpace(settings.BCCAddress))
+                {
+                    try
+                    {
+                        mailMessage.Bcc.Add(settings.BCCAddress);
+                        _logger.LogInformation("Added BCC address {BCCAddress} to email.", settings.BCCAddress);
+                    }
+                    catch (FormatException ex)
+                    {
+                        _logger.LogWarning(ex, "Invalid BCC address format: {BCCAddress}. Skipping BCC.", settings.BCCAddress);
+                    }
+                }
+
                 MemoryStream stream = null;
                 if (attachment != null && !string.IsNullOrWhiteSpace(attachmentFileName))
                 {
@@ -68,12 +80,10 @@ namespace TaskTracker.Services
                 }
                 finally
                 {
-                    // Dispose of the stream and attachments after sending
                     if (stream != null)
                     {
                         stream.Dispose();
                     }
-                    // Attachments are disposed with mailMessage
                 }
             }
             catch (SmtpException ex)

@@ -40,6 +40,11 @@ namespace TaskTracker.Models
         public decimal DefaultHourlyRate { get; set; }
 
         [StringLength(100)]
+        [DisplayName("BCC Address")]
+        [EmailAddress]
+        public string? BCCAddress { get; set; }
+
+        [StringLength(100)]
         [DisplayName("SMTP Server")]
         public string? SmtpServer { get; set; }
 
