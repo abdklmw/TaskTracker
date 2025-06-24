@@ -24,6 +24,14 @@
                 <input asp-for="Client.Email" class="form-control" type="email" placeholder="Email" />
                 <span asp-validation-for="Client.Email" class="text-danger"></span>
             </div>
+            <div class="col-md-3">
+                <input asp-for="Client.CC" class="form-control" placeholder="email1@example.com;email2@example.com" data-bs-toggle="tooltip" data-bs-placement="top" title="Enter a semi-colon separated list of email addresses (e.g., email1@example.com;email2@example.com)" />
+                <span asp-validation-for="Client.CC" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <input asp-for="Client.BCC" class="form-control" placeholder="email1@example.com;email2@example.com" data-bs-toggle="tooltip" data-bs-placement="top" title="Enter a semi-colon separated list of email addresses (e.g., email1@example.com;email2@example.com)" />
+                <span asp-validation-for="Client.BCC" class="text-danger"></span>
+            </div>
             <div class="col-md-2">
                 <input asp-for="Client.Phone" class="form-control" placeholder="Phone" />
                 <span asp-validation-for="Client.Phone" class="text-danger"></span>
