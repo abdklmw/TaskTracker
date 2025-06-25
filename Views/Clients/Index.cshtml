@@ -14,6 +14,8 @@
     <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Name)</strong></div>
     <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.AccountsReceivableName)</strong></div>
     <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.Email)</strong></div>
+    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.CC)</strong></div>
+    <div class="col-md-3"><strong>@Html.DisplayNameFor(model => model.BCC)</strong></div>
     <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Phone)</strong></div>
     <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.Address)</strong></div>
     <div class="col-md-2"><strong>@Html.DisplayNameFor(model => model.DefaultRate)</strong></div>
@@ -32,4 +34,13 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        // Enable tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
 }

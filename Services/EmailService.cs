@@ -1,13 +1,16 @@
-﻿using System.Net.Mail;
+﻿using System;
+using System.Net.Mail;
 using System.Net;
+using System.Threading.Tasks;
 using TaskTracker.Data;
 using Microsoft.EntityFrameworkCore;
+using TaskTracker.Models.Client;
 
 namespace TaskTracker.Services
 {
     public interface IEmailService
     {
-        Task SendEmailAsync(string toEmail, string subject, string body, byte[] attachment = null, string attachmentFileName = null);
+        Task SendEmailAsync(string toEmail, string subject, string body, Client client, byte[] attachment = null, string attachmentFileName = null);
     }
 
     public class EmailService : IEmailService
@@ -21,7 +24,10 @@ namespace TaskTracker.Services
             _logger = logger;
         }
 
-        public async Task SendEmailAsync(string toEmail, string subject, string body, byte[] attachment = null, string attachmentFileName = null)
+        // <summary>
+        // Sends an email with the specified parameters.
+        // </summary>
+        public async Task SendEmailAsync(string toEmail, string subject, string body, Client client, byte[] attachment = null, string attachmentFileName = null)
         {
             try
             {
@@ -32,7 +38,7 @@ namespace TaskTracker.Services
                     throw new InvalidOperationException("SMTP settings are not configured.");
                 }
 
-                using var client = new SmtpClient(settings.SmtpServer, settings.SmtpPort.Value)
+                using var smtpClient = new SmtpClient(settings.SmtpServer, settings.SmtpPort.Value)
                 {
                     Credentials = string.IsNullOrWhiteSpace(settings.SmtpUsername) || string.IsNullOrWhiteSpace(settings.SmtpPassword)
                         ? null
@@ -52,17 +58,61 @@ namespace TaskTracker.Services
 
                 mailMessage.To.Add(toEmail);
 
-                // Add BCC address if specified
+                // Add client CC address(es) if specified
+                if (client != null && !string.IsNullOrWhiteSpace(client.CC))
+                {
+                    var ccAddresses = client.CC.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var ccAddress in ccAddresses)
+                    {
+                        try
+                        {
+                            var trimmedCc = ccAddress.Trim();
+                            if (!string.IsNullOrWhiteSpace(trimmedCc))
+                            {
+                                mailMessage.CC.Add(trimmedCc);
+                                _logger.LogInformation("Added CC address {CCAddress} to email.", trimmedCc);
+                            }
+                        }
+                        catch (FormatException ex)
+                        {
+                            _logger.LogWarning(ex, "Invalid CC address format: {CCAddress}. Skipping CC.", ccAddress);
+                        }
+                    }
+                }
+
+                // Add client BCC addresses if specified
+                if (client != null && !string.IsNullOrWhiteSpace(client.BCC))
+                {
+                    var bccAddresses = client.BCC.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var bccAddress in bccAddresses)
+                    {
+                        try
+                        {
+                            var trimmedBcc = bccAddress.Trim();
+                            if (!string.IsNullOrWhiteSpace(trimmedBcc))
+                            {
+                                mailMessage.Bcc.Add(trimmedBcc);
+                                _logger.LogInformation("Added BCC address {BCCAddress} to email.", trimmedBcc);
+                            }
+                        }
+                        catch (FormatException ex)
+                        {
+                            _logger.LogWarning(ex, "Invalid BCC address format: {BCCAddress}. Skipping BCC.", bccAddress);
+                        }
+                    }
+                }
+
+                // Add global settings BCC address if specified
                 if (!string.IsNullOrWhiteSpace(settings.BCCAddress))
                 {
                     try
                     {
                         mailMessage.Bcc.Add(settings.BCCAddress);
-                        _logger.LogInformation("Added BCC address {BCCAddress} to email.", settings.BCCAddress);
+                        _logger.LogInformation("Added global BCC address {BCCAddress} to email.", settings.BCCAddress);
                     }
                     catch (FormatException ex)
                     {
-                        _logger.LogWarning(ex, "Invalid BCC address format: {BCCAddress}. Skipping BCC.", settings.BCCAddress);
+                        _logger.LogWarning(ex, "Invalid global BCC address format: {BCCAddress}. Skipping BCC.", settings.BCCAddress);
                     }
                 }
 
@@ -75,7 +125,7 @@ namespace TaskTracker.Services
 
                 try
                 {
-                    await client.SendMailAsync(mailMessage);
+                    await smtpClient.SendMailAsync(mailMessage);
                     _logger.LogInformation("Email sent successfully to {ToEmail} with subject {Subject}.", toEmail, subject);
                 }
                 finally
