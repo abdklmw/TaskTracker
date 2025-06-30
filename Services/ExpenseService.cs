@@ -29,6 +29,12 @@ namespace TaskTracker.Services
             }
 
             int totalRecords = await query.CountAsync();
+
+            if (totalRecords == 0)
+            {
+                return (new List<Expense>(), 0, 0);
+            }
+
             int totalPages = (int)Math.Ceiling((double)totalRecords / recordLimit);
             page = page < 1 ? 1 : page > totalPages ? totalPages : page;
 
