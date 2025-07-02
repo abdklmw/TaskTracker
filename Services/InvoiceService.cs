@@ -540,30 +540,81 @@ namespace TaskTracker.Services
 
                 // Build Time Entries Table HTML
                 string timeEntriesTable = "";
+                decimal hoursTotal = 0, timeEntriesSubtotal = 0;
                 if (invoice.InvoiceTimeEntries.Any())
                 {
-                    timeEntriesTable = "<table><tr><th>Project</th><th>Description</th><th>Hours</th><th>Rate</th><th>Total</th></tr>";
+                    timeEntriesTable = @"
+                        <table>
+                            <tr>
+                                <th>Date</th>
+                                <th>Project</th>
+                                <th>Description</th>
+                                <th>Hours</th>
+                                <th>Rate</th>
+                                <th>Total</th>
+                            </tr>";
                     foreach (var entry in invoice.InvoiceTimeEntries)
                     {
                         var timeEntry = entry.TimeEntry;
                         var rate = timeEntry.HourlyRate.HasValue ? timeEntry.HourlyRate.Value :
                             timeEntry.Project != null ? timeEntry.Project.Rate :
                             invoice.Client.DefaultRate;
-                        timeEntriesTable += $"<tr><td>{(timeEntry.Project?.Name ?? "N/A")}</td><td>{(timeEntry.Description ?? "N/A")}</td><td>{timeEntry.HoursSpent:F2}</td><td>${rate:N2}</td><td>${(timeEntry.HoursSpent * rate):N2}</td></tr>";
+                        var timeentryCharge = timeEntry.HoursSpent * rate;
+                        hoursTotal += timeEntry.HoursSpent ?? 0;
+                        timeEntriesSubtotal += timeentryCharge ?? 0;
+                        timeEntriesTable += @$"
+                            <tr>
+                                <td>{timeEntry.StartDateTime.Date}</td>
+                                <td>{(timeEntry.Project?.Name ?? "N/A")}</td>
+                                <td>{(timeEntry.Description ?? "N/A")}</td>
+                                <td>{timeEntry.HoursSpent:F2}</td>
+                                <td>${rate:N2}</td>
+                                <td>${timeentryCharge:N2}</td>
+                            </tr>";
                     }
+                    timeEntriesTable += @$"
+                        <tr>
+                            <td colspan='3'><b>Sub total</b></td>
+                            <td>{hoursTotal:F2}</td>
+                            <td>-</td>
+                            <td>${(timeEntriesSubtotal):N2}</td>
+                        </tr>";
                     timeEntriesTable += "</table>";
                 }
 
                 // Build Expenses Table HTML
                 string expensesTable = "";
+                decimal expensesSubtotal = 0;
                 if (invoice.InvoiceExpenses.Any())
                 {
-                    expensesTable = "<table><tr><th>Description</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr>";
+                    expensesTable = @"
+                        <table>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                            </tr>";
                     foreach (var expense in invoice.InvoiceExpenses)
                     {
                         var product = expense.Product;
-                        expensesTable += $"<tr><td>{(product?.Description ?? "N/A")}</td><td>{expense.Quantity}</td><td>${(product?.UnitPrice ?? 0):N2}</td><td>${((product?.UnitPrice ?? 0) * expense.Quantity):N2}</td></tr>";
+                        var expenseCharge = (product?.UnitPrice ?? 0) * expense.Quantity;
+                        expensesTable += @$"
+                            <tr>
+                                <td>{expense.ProductInvoiceDate}</td>
+                                <td>{(product?.Description ?? "N/A")}</td>
+                                <td>{expense.Quantity}</td>
+                                <td>${(product?.UnitPrice ?? 0):N2}</td>
+                                <td>${(expenseCharge):N2}</td>
+                            </tr>";
+                        expensesSubtotal += expenseCharge;
                     }
+                    expensesTable += @$"
+                            <tr>
+                                <td colspan='4'><b>Sub total</b></td>
+                                <td>${(expensesSubtotal):N2}</td>
+                            </tr>";
                     expensesTable += "</table>";
                 }
 
