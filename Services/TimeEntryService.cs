@@ -42,7 +42,7 @@ namespace TaskTracker.Services
             bool invoiceSentDateAny)
         {
             IQueryable<TimeEntry> query = _context.TimeEntries
-                .Where(t => t.UserId == userId && t.EndDateTime != null)
+                .Where(t => t.UserId == userId)
                 .Include(t => t.Client)
                 .Include(t => t.Project);
 
@@ -63,7 +63,6 @@ namespace TaskTracker.Services
             if (clientFilter != 0)
             {
                 query = query.Where(t => t.ClientID == clientFilter);
-
             }
 
             if (projectFilter != null && projectFilter.Any() && !projectFilter.Any())
