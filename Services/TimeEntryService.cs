@@ -16,13 +16,16 @@ namespace TaskTracker.Services
     {
         private readonly AppDbContext _context;
         private readonly ILogger<TimeEntryService> _logger;
+        private readonly IUserService _userService;
 
         public TimeEntryService(
             AppDbContext context,
-            ILogger<TimeEntryService> logger)
+            ILogger<TimeEntryService> logger,
+            IUserService userService)
         {
             _context = context;
             _logger = logger;
+            _userService = userService;
         }
 
         public async Task<(List<TimeEntry> TimeEntries, int TotalRecords, int TotalPages)> GetTimeEntriesAsync(
@@ -72,7 +75,7 @@ namespace TaskTracker.Services
 
             if (invoicedDateAny)
             {
-                query = query = query.Where(t => t.InvoicedDate != null);
+                query = query.Where(t => t.InvoicedDate != null);
             }
             else
             {
@@ -170,6 +173,27 @@ namespace TaskTracker.Services
             {
                 timeEntry.HourlyRate = await GetHourlyRateAsync(timeEntry.ProjectID, timeEntry.ClientID);
             }
+
+            // Convert dates to UTC
+            int offsetMinutes = await _userService.GetUserTimezoneOffsetAsync(timeEntry.UserId);
+            timeEntry.StartDateTime = ToUtc(timeEntry.StartDateTime, offsetMinutes);
+            if (timeEntry.EndDateTime.HasValue)
+            {
+                timeEntry.EndDateTime = ToUtc(timeEntry.EndDateTime.Value, offsetMinutes);
+            }
+            if (timeEntry.InvoicedDate.HasValue)
+            {
+                timeEntry.InvoicedDate = ToUtc(timeEntry.InvoicedDate.Value, offsetMinutes);
+            }
+            if (timeEntry.PaidDate.HasValue)
+            {
+                timeEntry.PaidDate = ToUtc(timeEntry.PaidDate.Value, offsetMinutes);
+            }
+            if (timeEntry.InvoiceSent.HasValue)
+            {
+                timeEntry.InvoiceSent = ToUtc(timeEntry.InvoiceSent.Value, offsetMinutes);
+            }
+
             _context.Add(timeEntry);
             await _context.SaveChangesAsync();
             return (true, null);
@@ -221,6 +245,26 @@ namespace TaskTracker.Services
                 return (false, "User does not own this time entry.");
             }
 
+            // Convert dates to UTC
+            int offsetMinutes = await _userService.GetUserTimezoneOffsetAsync(timeEntry.UserId);
+            timeEntry.StartDateTime = ToUtc(timeEntry.StartDateTime, offsetMinutes);
+            if (timeEntry.EndDateTime.HasValue)
+            {
+                timeEntry.EndDateTime = ToUtc(timeEntry.EndDateTime.Value, offsetMinutes);
+            }
+            if (timeEntry.InvoicedDate.HasValue)
+            {
+                timeEntry.InvoicedDate = ToUtc(timeEntry.InvoicedDate.Value, offsetMinutes);
+            }
+            if (timeEntry.PaidDate.HasValue)
+            {
+                timeEntry.PaidDate = ToUtc(timeEntry.PaidDate.Value, offsetMinutes);
+            }
+            if (timeEntry.InvoiceSent.HasValue)
+            {
+                timeEntry.InvoiceSent = ToUtc(timeEntry.InvoiceSent.Value, offsetMinutes);
+            }
+
             try
             {
                 _context.Update(timeEntry);
@@ -263,6 +307,7 @@ namespace TaskTracker.Services
         {
             var timeEntries = new List<TimeEntry>();
             var errors = new List<string>();
+            int offsetMinutes = await _userService.GetUserTimezoneOffsetAsync(userId);
 
             try
             {
@@ -303,14 +348,14 @@ namespace TaskTracker.Services
                             !startDateStr.Contains("PM", StringComparison.OrdinalIgnoreCase) &&
                             !startDateStr.Contains(":"))
                         {
-                            startDate = new DateTime(startDate.Year, startDate.Month, startDate.Day, 12, 0, 0, DateTimeKind.Utc);
+                            startDate = new DateTime(startDate.Year, startDate.Month, startDate.Day, 12, 0, 0);
                         }
-                        timeEntry.StartDateTime = startDate.ToUniversalTime();
+                        timeEntry.StartDateTime = ToUtc(startDate, offsetMinutes);
 
                         // Parse EndDateTime (optional)
                         if (csv.TryGetField<DateTime>("EndDateTime", out var endDate))
                         {
-                            timeEntry.EndDateTime = endDate.ToUniversalTime();
+                            timeEntry.EndDateTime = ToUtc(endDate, offsetMinutes);
                         }
 
                         // Parse HoursSpent (optional)
@@ -330,7 +375,7 @@ namespace TaskTracker.Services
                             timeEntry.HoursSpent = Convert.ToDecimal((timeEntry.EndDateTime.Value - timeEntry.StartDateTime).TotalHours);
                         }
 
-                        // Parse HourlyRate (use CSV value if valid and non-zero, otherwise use rate calculation)
+                        // Parse HourlyRate (optional)
                         if (csv.TryGetField<decimal>("HourlyRate", out var csvHourlyRate) && csvHourlyRate > 0m)
                         {
                             timeEntry.HourlyRate = csvHourlyRate;
@@ -350,13 +395,13 @@ namespace TaskTracker.Services
                         // Parse InvoicedDate (optional)
                         if (csv.TryGetField<DateTime>("InvoicedDate", out var invoicedDate))
                         {
-                            timeEntry.InvoicedDate = invoicedDate.Date;
+                            timeEntry.InvoicedDate = ToUtc(invoicedDate, offsetMinutes);
                         }
 
                         // Parse PaidDate (optional)
                         if (csv.TryGetField<DateTime>("PaidDate", out var paidDate))
                         {
-                            timeEntry.PaidDate = paidDate.Date;
+                            timeEntry.PaidDate = ToUtc(paidDate, offsetMinutes);
                         }
 
                         timeEntries.Add(timeEntry);
@@ -381,6 +426,13 @@ namespace TaskTracker.Services
             }
 
             return (timeEntries, errors);
+        }
+
+        private DateTime ToUtc(DateTime localDateTime, int offsetMinutes)
+        {
+            // Assume localDateTime is in the user's local time zone and convert to UTC
+            var offset = TimeSpan.FromMinutes(-offsetMinutes); // Negate because offset is user's local time relative to UTC
+            return localDateTime.Add(offset);
         }
 
         public async Task<decimal> GetHourlyRateAsync(int? projectId, int? clientId)
