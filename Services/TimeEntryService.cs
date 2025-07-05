@@ -201,10 +201,23 @@ namespace TaskTracker.Services
 
         public async Task<(bool Success, string? ErrorMessage)> StartTimerAsync(TimeEntry timeEntry)
         {
-            var currentUtc = DateTime.UtcNow;
-            var minutes = currentUtc.Minute;
-            var quarterHours = (int)Math.Floor(minutes / 15.0) * 15;
-            timeEntry.StartDateTime = new DateTime(currentUtc.Year, currentUtc.Month, currentUtc.Day, currentUtc.Hour, quarterHours, 0, DateTimeKind.Utc);
+            int offsetMinutes = 0;
+            if (timeEntry.UserId != null) offsetMinutes = await _userService.GetUserTimezoneOffsetAsync(timeEntry.UserId);
+
+            if (timeEntry.StartDateTime != default(DateTime))
+            {
+                // Convert supplied StartDateTime to UTC
+                timeEntry.StartDateTime = ToUtc(timeEntry.StartDateTime, offsetMinutes);
+            }
+            else
+            {
+                // Use current UTC time, rounded to the nearest 15-minute interval
+                var currentUtc = DateTime.UtcNow;
+                var minutes = currentUtc.Minute;
+                var quarterHours = (int)Math.Floor(minutes / 15.0) * 15;
+                timeEntry.StartDateTime = new DateTime(currentUtc.Year, currentUtc.Month, currentUtc.Day, currentUtc.Hour, quarterHours, 0, DateTimeKind.Utc);
+            }
+
             timeEntry.EndDateTime = null;
             timeEntry.HoursSpent = null;
             timeEntry.HourlyRate = await GetHourlyRateAsync(timeEntry.ProjectID, timeEntry.ClientID);
