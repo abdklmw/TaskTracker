@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using TaskTracker.Data;
 using TaskTracker.Models;
 using TaskTracker.Models.Invoice;
 using TaskTracker.Services;
@@ -12,17 +14,20 @@ namespace TaskTracker.Controllers
     public class InvoicesController : Controller
     {
         private readonly IInvoiceService _invoiceService;
-        private readonly ILogger<InvoicesController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<InvoiceService> _logger;
         private readonly ClientService _clientService;
         private readonly IEmailService _emailService;
 
         public InvoicesController(
             IInvoiceService invoiceService,
-            ILogger<InvoicesController> logger,
+            UserManager<ApplicationUser> userManager,
+            ILogger<InvoiceService> logger,
             ClientService clientService,
             IEmailService emailService)
         {
             _invoiceService = invoiceService;
+            _userManager = userManager;
             _logger = logger;
             _clientService = clientService;
             _emailService = emailService;
@@ -209,7 +214,14 @@ namespace TaskTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Send(int id)
         {
-            var (success, error, pdfBytes) = await _invoiceService.SendInvoiceAsync(id);
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogError("User ID could not be retrieved for authenticated user.");
+                return RedirectToAction("Login", "Account");
+            }
+
+            var (success, error, pdfBytes) = await _invoiceService.SendInvoiceAsync(id, userId);
             if (!success)
             {
                 TempData["ErrorMessage"] = error;

@@ -1,6 +1,7 @@
 ﻿using iText.Html2pdf;
 using iText.Kernel.Pdf;
 using iText.Layout;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models.Invoice;
@@ -21,26 +22,29 @@ namespace TaskTracker.Services
         Task<Invoice?> GetInvoiceByIdAsync(int id);
         Task<(bool Success, string? ErrorMessage)> UpdateInvoiceAsync(Invoice invoice);
         Task<(bool Success, string? ErrorMessage)> DeleteInvoiceAsync(int id);
-        Task<(bool Success, string? ErrorMessage, byte[]? PdfBytes)> SendInvoiceAsync(int id);
+        Task<(bool Success, string? ErrorMessage, byte[]? PdfBytes)> SendInvoiceAsync(int id, string userId);
         Task<(bool Success, string? ErrorMessage)> MarkInvoiceAsPaidAsync(int id);
-        Task<byte[]> GenerateInvoicePdfAsync(int invoiceId);
+        Task<byte[]> GenerateInvoicePdfAsync(int invoiceId, string userId);
         Task<Models.Settings?> GetEmailSettingsAsync();
     }
 
     public class InvoiceService : IInvoiceService
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<InvoiceService> _logger;
         private readonly TimeEntryService _timeEntryService;
         private readonly ClientService _clientService;
 
         public InvoiceService(
             AppDbContext context,
+            UserManager<ApplicationUser> userManager,
             ILogger<InvoiceService> logger,
             TimeEntryService timeEntryService,
             ClientService clientService)
         {
             _context = context;
+            _userManager = userManager;
             _logger = logger;
             _timeEntryService = timeEntryService;
             _clientService = clientService;
@@ -419,7 +423,7 @@ namespace TaskTracker.Services
             }
         }
 
-        public async Task<(bool Success, string? ErrorMessage, byte[]? PdfBytes)> SendInvoiceAsync(int id)
+        public async Task<(bool Success, string? ErrorMessage, byte[]? PdfBytes)> SendInvoiceAsync(int id, string userId)
         {
             try
             {
@@ -435,7 +439,7 @@ namespace TaskTracker.Services
                     return (false, "Invoice not found.", null);
                 }
 
-                var pdfBytes = await GenerateInvoicePdfAsync(id);
+                var pdfBytes = await GenerateInvoicePdfAsync(id, userId);
                 invoice.InvoiceSentDate = DateTime.Today;
                 invoice.Status = invoice.Status == InvoiceStatus.Draft ? InvoiceStatus.Sent : invoice.Status;
 
@@ -516,7 +520,7 @@ namespace TaskTracker.Services
             }
         }
 
-        public async Task<byte[]> GenerateInvoicePdfAsync(int invoiceId)
+        public async Task<byte[]> GenerateInvoicePdfAsync(int invoiceId,string userId)
         {
             try
             {
@@ -539,6 +543,26 @@ namespace TaskTracker.Services
                 }
 
                 // Build Time Entries Table HTML
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogError("User not found for ID {UserId}", userId);
+                }
+
+                int timezoneOffset = 0;
+                if (!string.IsNullOrEmpty(user?.TimeZoneId))
+                {
+                    try
+                    {
+                        var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+                        timezoneOffset = (int)userTimeZone.GetUtcOffset(DateTime.UtcNow).TotalMinutes;
+                    }
+                    catch (TimeZoneNotFoundException)
+                    {
+                        _logger.LogWarning("Invalid TimeZoneId {TimeZoneId} for user {UserId}", user.TimeZoneId, userId);
+                    }
+                }
+
                 string timeEntriesTable = "";
                 decimal hoursTotal = 0, timeEntriesSubtotal = 0;
                 if (invoice.InvoiceTimeEntries.Any())
@@ -564,7 +588,7 @@ namespace TaskTracker.Services
                         timeEntriesSubtotal += timeentryCharge ?? 0;
                         timeEntriesTable += @$"
                             <tr>
-                                <td>{timeEntry.StartDateTime.Date}</td>
+                                <td>{DateOnly.FromDateTime(timeEntry.StartDateTime.AddMinutes(timezoneOffset))}</td>
                                 <td>{(timeEntry.Project?.Name ?? "N/A")}</td>
                                 <td>{(timeEntry.Description ?? "N/A")}</td>
                                 <td>{timeEntry.HoursSpent:F2}</td>
