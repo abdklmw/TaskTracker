@@ -1,10 +1,10 @@
 ﻿@using TaskTracker.Models.TimeEntries
-@model IEnumerable<TimeEntry>
+@model RunningTimerViewModel
 <h2>Running timer(s)</h2>
-@if (Model != null && Model.Any())
+@if (Model != null && Model.TimeEntries.Any())
 {
     <div class="row">
-        @foreach (var timeEntry in Model)
+        @foreach (var timeEntry in Model.TimeEntries)
         {
             var startLocal = timeEntry.StartDateTime.AddMinutes(ViewBag.TimezoneOffset ?? 0);
             <div class="col">
@@ -30,9 +30,16 @@
                                         <img src="/images/icons/Clock/clock-twelve.svg" alt="Clock" class="clock-icon-animated" width="20" height="20" />
                                     </button>
                                 </form>
+                                <button class="btn btn-primary edit-btn" data-id="@timeEntry.TimeEntryID">Edit</button>
+                            </div>
+                            @{
+                                int timezoneOffset = Model.TimezoneOffset;
+                                var timeentryRowViewModel = new TaskTracker.Models.TimeEntries.TimeEntryRowViewModel(timeEntry, 1, timezoneOffset);
+                            }
+                            <div class="col-12">
+                                @await Html.PartialAsync("/Views/timeentries/_EditFormRow.cshtml", timeentryRowViewModel)
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>

@@ -11,7 +11,7 @@
 
 @await Html.PartialAsync("~/Views/TimeEntries/_CreateForm.cshtml")
 
-@await Html.PartialAsync("~/Views/TimeEntries/_RunningTimers.cshtml", Model)
+@await Html.PartialAsync("~/Views/TimeEntries/_RunningTimers.cshtml", new RunningTimerViewModel { TimeEntries = Model, TimezoneOffset = timezoneOffset })
 
 @section Scripts {
     <script>
