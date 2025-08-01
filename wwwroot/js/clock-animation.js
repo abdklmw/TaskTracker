@@ -23,7 +23,7 @@ function animateClock(element) {
     setInterval(() => {
         index = (index + 1) % clockIcons.length;
         element.src = clockIcons[index];
-    }, 100);
+    }, 300);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
