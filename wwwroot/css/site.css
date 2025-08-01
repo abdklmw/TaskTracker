@@ -101,3 +101,8 @@ abbr[title] {
     padding-top: 0.5em; /* Additional padding for spacing */
     border-top: 1px solid #dee2e6; /* Gray horizontal line above delete link */
 }
+
+.field-title {
+    font-weight: bold;
+    margin-right: 0.5em;
+}

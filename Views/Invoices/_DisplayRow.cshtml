@@ -10,19 +10,25 @@
 <div id="display-row-@Model.InvoiceID" class="display-mode card mb-2 invoice-display-row">
     <div class="avenir-light card-body position-relative">
         <div class="row">
-            <div class="col-md-4">@Model.Status</div>
+            <div class="col-md-4">
+                <span class="field-title">@Html.DisplayNameFor(model => model.Status):</span>
+                @Model.Status
+            </div>
             <div class="col-md-4">$@Model.TotalAmount.ToString("N2")</div>
             <div class="col-md-4">
+                <span class="field-title">@Html.DisplayNameFor(model => model.InvoiceDate):</span>
                 <abbr title="Invoice date">
                     @Model.InvoiceDate.ToString("d")
                 </abbr>
             </div>
             <div class="col-md-4">
+                <span class="field-title">@Html.DisplayNameFor(model => model.InvoiceSentDate):</span>
                 <abbr title="Sent date">
                     @(Model.InvoiceSentDate.HasValue? Model.InvoiceSentDate.Value.ToString("d") : "-")
                 </abbr>
             </div>
             <div class="col-md-4">
+                <span class="field-title">@Html.DisplayNameFor(model => model.PaidDate):</span>
                 <abbr title="Paid date">
                     @(Model.PaidDate.HasValue? Model.PaidDate.Value.ToString("d") : "-")
                 </abbr>
