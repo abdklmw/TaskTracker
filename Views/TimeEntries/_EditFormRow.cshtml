@@ -17,7 +17,7 @@
 }
 
 <div id="edit-row-@TimeEntry.TimeEntryID" class="edit-mode mb-3 @(Model.Parity)-row" style="display:none;">
-    <form id="edit-form-@TimeEntry.TimeEntryID" asp-action="Edit" asp-route-id="@TimeEntry.TimeEntryID" method="post">
+    <form id="edit-form-@TimeEntry.TimeEntryID" asp-controller="TimeEntries" asp-action="Edit" asp-route-id="@TimeEntry.TimeEntryID" method="post">
         <input type="hidden" asp-for="@TimeEntry.TimeEntryID" name="TimeEntryID" />
         <input type="hidden" asp-for="@TimeEntry.UserId" name="UserId" />
         <div class="card">
