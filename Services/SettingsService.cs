@@ -58,7 +58,13 @@ namespace TaskTracker.Services
                     existingSettings.SmtpPort = settings.SmtpPort;
                     existingSettings.SmtpSenderEmail = settings.SmtpSenderEmail;
                     existingSettings.SmtpUsername = settings.SmtpUsername;
-                    existingSettings.SmtpPassword = settings.SmtpPassword;
+
+                    // Only update SMTP password if a new value is provided
+                    if (!string.IsNullOrWhiteSpace(settings.SmtpPassword))
+                    {
+                        existingSettings.SmtpPassword = settings.SmtpPassword;
+                    }
+
                     existingSettings.InvoiceTemplate = settings.InvoiceTemplate;
                     existingSettings.SingletonGuard = settings.SingletonGuard;
                     _context.Update(existingSettings);
