@@ -357,10 +357,13 @@ namespace TaskTracker.Services
                 // Ensure page is within valid range
                 page = page < 1 ? 1 : page > totalPages ? totalPages : page;
 
+                // Ensure skippages is not negative
+                int skipPages = page > 0 ? (page - 1) * recordLimit : 0;
+
                 // Retrieve paginated invoices
                 var invoices = await query
                     .OrderByDescending(i => i.InvoiceDate)
-                    .Skip((page - 1) * recordLimit)
+                    .Skip(skipPages)
                     .Take(recordLimit)
                     .ToListAsync();
 
