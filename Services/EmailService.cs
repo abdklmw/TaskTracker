@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO; // Added for File operations
 using System.Net.Mail;
 using System.Net;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace TaskTracker.Services
 {
     public interface IEmailService
     {
-        Task SendEmailAsync(string toEmail, string subject, string body, Client client, byte[] attachment = null, string attachmentFileName = null);
+        Task SendEmailAsync(string toEmail, string subject, string body, Client client, byte[]? attachment = null, string? attachmentFileName = null);
     }
 
     public class EmailService : IEmailService
@@ -27,25 +28,64 @@ namespace TaskTracker.Services
         // <summary>
         // Sends an email with the specified parameters.
         // </summary>
-        public async Task SendEmailAsync(string toEmail, string subject, string body, Client client, byte[] attachment = null, string attachmentFileName = null)
+        public async Task SendEmailAsync(string toEmail, string subject, string body, Client client, byte[]? attachment = null, string? attachmentFileName = null)
         {
+            string? tempFilePath = null;
+            Attachment? attachmentItem = null;
+
             try
             {
                 var settings = await _context.Settings.FirstOrDefaultAsync();
-                if (settings == null || string.IsNullOrWhiteSpace(settings.SmtpServer) || !settings.SmtpPort.HasValue || string.IsNullOrWhiteSpace(settings.SmtpSenderEmail))
+
+                // Enhanced validation for Amazon SES
+                if (settings == null)
                 {
-                    _logger.LogWarning("SMTP settings are not configured.");
-                    throw new InvalidOperationException("SMTP settings are not configured.");
+                    _logger.LogWarning("No settings found in database.");
+                    throw new InvalidOperationException("No settings found in database.");
                 }
+
+                if (string.IsNullOrWhiteSpace(settings.SmtpServer))
+                {
+                    _logger.LogWarning("SMTP Server is not configured.");
+                    throw new InvalidOperationException("SMTP Server is not configured.");
+                }
+
+                if (!settings.SmtpPort.HasValue)
+                {
+                    _logger.LogWarning("SMTP Port is not configured.");
+                    throw new InvalidOperationException("SMTP Port is not configured.");
+                }
+
+                if (string.IsNullOrWhiteSpace(settings.SmtpSenderEmail))
+                {
+                    _logger.LogWarning("Sender email is not configured.");
+                    throw new InvalidOperationException("Sender email is not configured.");
+                }
+
+                // For Amazon SES, credentials are REQUIRED
+                if (string.IsNullOrWhiteSpace(settings.SmtpUsername))
+                {
+                    _logger.LogWarning("SMTP Username is not configured.");
+                    throw new InvalidOperationException("SMTP Username is not configured.");
+                }
+
+                if (string.IsNullOrWhiteSpace(settings.SmtpPassword))
+                {
+                    _logger.LogWarning("SMTP Password is not configured.");
+                    throw new InvalidOperationException("SMTP Password is not configured.");
+                }
+
+                // Log configuration for debugging (without password)
+                _logger.LogInformation("Attempting to send email with SMTP config - Server: {Server}, Port: {Port}, Sender: {Sender}, Username: {Username}",
+                    settings.SmtpServer, settings.SmtpPort.Value, settings.SmtpSenderEmail, settings.SmtpUsername);
 
                 using var smtpClient = new SmtpClient(settings.SmtpServer, settings.SmtpPort.Value)
                 {
-                    Credentials = string.IsNullOrWhiteSpace(settings.SmtpUsername) || string.IsNullOrWhiteSpace(settings.SmtpPassword)
-                        ? null
-                        : new NetworkCredential(settings.SmtpUsername, settings.SmtpPassword),
+                    Credentials = new NetworkCredential(settings.SmtpUsername, settings.SmtpPassword),
                     EnableSsl = true,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
+                    UseDefaultCredentials = false,
+                    Timeout = 30000 // 30 second timeout
                 };
 
                 using var mailMessage = new MailMessage
@@ -116,36 +156,122 @@ namespace TaskTracker.Services
                     }
                 }
 
-                MemoryStream stream = null;
+                // Replace the attachment section with this corrected version
                 if (attachment != null && !string.IsNullOrWhiteSpace(attachmentFileName))
                 {
-                    stream = new MemoryStream(attachment);
-                    mailMessage.Attachments.Add(new Attachment(stream, attachmentFileName, "application/pdf"));
-                }
-
-                try
-                {
-                    await smtpClient.SendMailAsync(mailMessage);
-                    _logger.LogInformation("Email sent successfully to {ToEmail} with subject {Subject}.", toEmail, subject);
-                }
-                finally
-                {
-                    if (stream != null)
+                    try
                     {
-                        stream.Dispose();
+                        // ✅ Fix: Use the actual attachment filename with a temporary path
+                        tempFilePath = Path.Combine(Path.GetTempPath(), attachmentFileName);
+
+                        // Ensure the filename is safe for the filesystem
+                        var safeFileName = MakeSafeFileName(attachmentFileName);
+                        if (string.IsNullOrWhiteSpace(safeFileName))
+                        {
+                            throw new ArgumentException("Invalid attachment filename");
+                        }
+
+                        tempFilePath = Path.Combine(Path.GetTempPath(), safeFileName);
+
+                        // Write the attachment bytes to the temporary file
+                        await File.WriteAllBytesAsync(tempFilePath, attachment);
+
+                        // Create attachment from the temporary file with the original filename
+                        attachmentItem = new Attachment(tempFilePath, "application/pdf");
+
+                        // ✅ Important: Set the display name to the original filename
+                        attachmentItem.Name = attachmentFileName;
+
+                        mailMessage.Attachments.Add(attachmentItem);
+
+                        _logger.LogDebug("Created temporary attachment file: {TempFile} for display name: {FileName}",
+                            tempFilePath, attachmentFileName);
+                    }
+                    catch (Exception attachEx)
+                    {
+                        _logger.LogError(attachEx, "Failed to create attachment {FileName}", attachmentFileName);
+                        throw new InvalidOperationException($"Failed to create attachment '{attachmentFileName}': {attachEx.Message}", attachEx);
                     }
                 }
+
+                // Send the email
+                await smtpClient.SendMailAsync(mailMessage);
+                _logger.LogInformation("Email sent successfully to {ToEmail} with subject {Subject}.", toEmail, subject);
             }
             catch (SmtpException ex)
             {
-                _logger.LogError(ex, "SMTP error sending email to {ToEmail} with subject {Subject}.", toEmail, subject);
-                throw new InvalidOperationException("Failed to send email due to SMTP server configuration. Please verify SMTP settings.", ex);
+                _logger.LogError(ex, "SMTP error sending email to {ToEmail} with subject {Subject}. StatusCode: {StatusCode}",
+                    toEmail, subject, ex.StatusCode);
+                throw new InvalidOperationException($"Failed to send email due to SMTP server error ({ex.StatusCode}): {ex.Message}. Please verify SMTP settings.", ex);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending email to {ToEmail} with subject {Subject}.", toEmail, subject);
                 throw;
             }
+            finally
+            {
+                // Clean up temporary file and attachment
+                try
+                {
+                    if (attachmentItem != null)
+                    {
+                        attachmentItem.Dispose();
+                    }
+                }
+                catch (Exception disposeEx)
+                {
+                    _logger.LogWarning(disposeEx, "Error disposing attachment");
+                }
+
+                if (!string.IsNullOrWhiteSpace(tempFilePath) && File.Exists(tempFilePath))
+                {
+                    try
+                    {
+                        File.Delete(tempFilePath);
+                        _logger.LogDebug("Cleaned up temporary file: {TempFile}", tempFilePath);
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        _logger.LogWarning(cleanupEx, "Failed to delete temporary file: {TempFile}", tempFilePath);
+                    }
+                }
+            }
+        }/// <summary>
+         /// Creates a safe filename by removing or replacing invalid characters.
+         /// </summary>
+        private string? MakeSafeFileName(string? fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return null;
+
+            // Remove or replace invalid filename characters
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var safeName = fileName;
+
+            foreach (char invalidChar in invalidChars)
+            {
+                safeName = safeName.Replace(invalidChar, '_');
+            }
+
+            // Remove leading/trailing dots and spaces
+            safeName = safeName.TrimStart('.', ' ');
+            safeName = safeName.TrimEnd('.', ' ');
+
+            // Ensure it has an extension if it doesn't
+            if (!safeName.Contains('.'))
+            {
+                safeName += ".pdf"; // Default to PDF since that's what we're using
+            }
+
+            // Limit length to prevent filesystem issues
+            if (safeName.Length > 255)
+            {
+                var extension = Path.GetExtension(safeName);
+                safeName = safeName.Substring(0, 255 - extension.Length) + extension;
+            }
+
+            return safeName;
         }
     }
 }
