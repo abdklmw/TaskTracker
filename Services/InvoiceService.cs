@@ -627,10 +627,11 @@ namespace TaskTracker.Services
                     {
                         var product = expense.Product;
                         var expenseCharge = (product?.UnitPrice ?? 0) * expense.Quantity;
+                        var description = product?.Description ?? product?.Name ?? "N/A";
                         expensesTable += @$"
                             <tr>
                                 <td>{expense.ProductInvoiceDate}</td>
-                                <td>{(product?.Description ?? "N/A")}</td>
+                                <td>{description}</td>
                                 <td>{expense.Quantity}</td>
                                 <td>${(product?.UnitPrice ?? 0):N2}</td>
                                 <td>${(expenseCharge):N2}</td>
