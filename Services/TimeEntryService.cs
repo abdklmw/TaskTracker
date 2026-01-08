@@ -46,6 +46,8 @@ namespace TaskTracker.Services
         {
             IQueryable<TimeEntry> query = _context.TimeEntries
                 .Where(t => t.UserId == userId)
+                .OrderBy(t => t.Client.Name)
+                .ThenByDescending(t => t.StartDateTime)
                 .Include(t => t.Client)
                 .Include(t => t.Project);
 
@@ -122,9 +124,9 @@ namespace TaskTracker.Services
             }
 
             // Sort the query
-            query = query
-                .OrderBy(t => t.Client)
-                .ThenByDescending(t => t.StartDateTime);
+            //query = query
+            //    .OrderBy(t => t.Client.Name)
+            //    .ThenByDescending(t => t.StartDateTime);
 
             int totalRecords = await query.CountAsync();
             int totalPages = totalRecords > 0 ? (int)Math.Ceiling((double)totalRecords / (recordLimit == -1 ? 200 : recordLimit)) : 1;
