@@ -402,9 +402,9 @@ namespace TaskTracker.Services
                     timeEntry.PaidDate = null;
                 }
 
-                var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
+                var productIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
                 var expenses = await _context.Expenses
-                    .Where(e => expenseIds.Contains(e.ExpenseID))
+                    .Where(e => productIds.Contains(e.ProductID) && e.InvoicedDate.HasValue)
                     .ToListAsync();
 
                 foreach (var expense in expenses)
@@ -456,9 +456,9 @@ namespace TaskTracker.Services
                     timeEntry.InvoiceSent = DateTime.Today;
                 }
 
-                var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
+                var productIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
                 var expenses = await _context.Expenses
-                    .Where(e => expenseIds.Contains(e.ExpenseID))
+                    .Where(e => productIds.Contains(e.ProductID) && e.InvoicedDate.HasValue)
                     .ToListAsync();
 
                 foreach (var expense in expenses)
@@ -503,9 +503,9 @@ namespace TaskTracker.Services
                     timeEntry.PaidDate = DateTime.Today;
                 }
 
-                var expenseIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
+                var productIds = invoice.InvoiceExpenses.Select(ie => ie.ProductID).ToList();
                 var expenses = await _context.Expenses
-                    .Where(e => expenseIds.Contains(e.ExpenseID))
+                    .Where(e => productIds.Contains(e.ProductID) && e.InvoicedDate.HasValue)
                     .ToListAsync();
 
                 foreach (var expense in expenses)
