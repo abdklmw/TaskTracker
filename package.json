@@ -20,6 +20,7 @@
   "homepage": "https://github.com/abdklmw/TaskTracker#readme",
   "description": "",
   "devDependencies": {
+    "eslint": "^9.39.2",
     "gulp": "^5.0.0",
     "gulp-clean-css": "^4.3.0",
     "gulp-concat": "^2.6.1",

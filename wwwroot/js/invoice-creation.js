@@ -5,6 +5,7 @@
             $("#time-entries-list").empty();
             $("#expenses-list").empty();
             $("#invoice-total").val("$0.00");
+            $("#invoice-total-bottom").text("$0.00");
             $("#create-form").hide();
             return;
         }
@@ -61,6 +62,7 @@
             $("#time-entries-list").html("<p>Error loading time entries.</p>");
             $("#expenses-list").html("<p>Error loading expenses.</p>");
             $("#invoice-total").val("$0.00");
+            $("#invoice-total-bottom").text("$0.00");
         });
     });
 
@@ -88,6 +90,8 @@
             var amount = parseFloat($(this).data("amount")) || 0;
             total += amount;
         });
-        $("#invoice-total").val("$" + total.toFixed(2));
+        var formattedTotal = "$" + total.toFixed(2);
+        $("#invoice-total").val(formattedTotal);
+        $("#invoice-total-bottom").text(formattedTotal);
     }
 });

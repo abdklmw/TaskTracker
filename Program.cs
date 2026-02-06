@@ -86,6 +86,23 @@ builder.Services.AddDataProtection();
 
 var app = builder.Build();
 
+// Apply pending migrations at startup
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        app.Logger.LogInformation("Applying pending migrations...");
+        dbContext.Database.Migrate();
+        app.Logger.LogInformation("Migrations completed successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "An error occurred while migrating the database");
+        throw;
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

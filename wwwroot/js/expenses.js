@@ -51,10 +51,9 @@
         const isExpenseValid =
             clientSelect?.value && clientSelect.value !== '0' &&
             descriptionInput?.value.trim() &&
-            unitAmountInput?.value && parseFloat(unitAmountInput.value) >= 0 &&
+            unitAmountInput?.value && parseFloat(unitAmountInput.value) !== 0 &&
             quantityInput?.value && parseInt(quantityInput.value) >= 1 &&
-            totalAmountInput?.value && parseFloat(totalAmountInput.value) >= 0;
-
+            totalAmountInput?.value && parseFloat(totalAmountInput.value) !== 0;
         if (submitButton) {
             submitButton.disabled = !isExpenseValid;
         }

@@ -16,6 +16,9 @@ namespace TaskTracker.Models.Invoice
         public int ProductID { get; set; }
         [Required]
         public DateOnly ProductInvoiceDate { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string Description { get; set; }
         [Description("Recurring charge")]
         public bool IsRecurring { get; set; } = false;
         private string _recurringFrequency = FrequencyMap["Yearly"];
@@ -45,12 +48,17 @@ namespace TaskTracker.Models.Invoice
         }
         [Required]
         [Column(TypeName = "decimal(18,2)")]
+        public decimal UnitAmount { get; set; }
+
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
         public int Quantity { get; set; }
+        
         public decimal TotalAmount
         {
             get
             {
-                return Quantity * Product.UnitPrice;
+                return Quantity * UnitAmount;
             }
         }
         public virtual Product.Product? Product { get; set; }

@@ -130,7 +130,9 @@ namespace TaskTracker.Services
                         InvoiceID = invoice.InvoiceID,
                         ProductID = expense.ProductID,
                         ProductInvoiceDate = DateOnly.FromDateTime(DateTime.Today),
-                        Quantity = expense.Quantity
+                        Quantity = expense.Quantity,
+                        UnitAmount = expense.UnitAmount,
+                        Description = expense.Description
                     });
                 }
 
@@ -571,6 +573,7 @@ namespace TaskTracker.Services
                 if (invoice.InvoiceTimeEntries.Any())
                 {
                     timeEntriesTable = @"
+                        Time Entries
                         <table>
                             <tr>
                                 <th>Date</th>
@@ -601,7 +604,7 @@ namespace TaskTracker.Services
                     }
                     timeEntriesTable += @$"
                         <tr>
-                            <td colspan='3'><b>Sub total</b></td>
+                            <td colspan='3'><b>Time Entries Sub total</b></td>
                             <td>{hoursTotal:F2}</td>
                             <td>-</td>
                             <td>${(timeEntriesSubtotal):N2}</td>
@@ -615,6 +618,7 @@ namespace TaskTracker.Services
                 if (invoice.InvoiceExpenses.Any())
                 {
                     expensesTable = @"
+                        Expenses
                         <table>
                             <tr>
                                 <th>Date</th>
@@ -625,22 +629,21 @@ namespace TaskTracker.Services
                             </tr>";
                     foreach (var expense in invoice.InvoiceExpenses)
                     {
-                        var product = expense.Product;
-                        var expenseCharge = (product?.UnitPrice ?? 0) * expense.Quantity;
-                        var description = product?.Description ?? product?.Name ?? "N/A";
+                        var expenseCharge = expense.UnitAmount * expense.Quantity;
+                        var description = expense.Description ?? "N/A";
                         expensesTable += @$"
                             <tr>
                                 <td>{expense.ProductInvoiceDate}</td>
                                 <td>{description}</td>
                                 <td>{expense.Quantity}</td>
-                                <td>${(product?.UnitPrice ?? 0):N2}</td>
+                                <td>${(expense.UnitAmount):N2}</td>
                                 <td>${(expenseCharge):N2}</td>
                             </tr>";
                         expensesSubtotal += expenseCharge;
                     }
                     expensesTable += @$"
                             <tr>
-                                <td colspan='4'><b>Sub total</b></td>
+                                <td colspan='4'><b>Expenses Sub total</b></td>
                                 <td>${(expensesSubtotal):N2}</td>
                             </tr>";
                     expensesTable += "</table>";
@@ -655,7 +658,7 @@ namespace TaskTracker.Services
                     .Replace("{{InvoiceID}}", invoiceId.ToString())
                     .Replace("{{AccountsReceivableName}}", invoice.Client?.AccountsReceivableName ?? "")
                     .Replace("{{ClientName}}", invoice.Client?.Name ?? "")
-                    .Replace("{{InvoiceDate}}", invoice.InvoiceDate.ToString("M dd, yyyy"))
+                    .Replace("{{InvoiceDate}}", invoice.InvoiceDate.ToString("MMM dd, yyyy"))
                     .Replace("{{TotalAmount}}", invoice.TotalAmount.ToString("N2"))
                     .Replace("{{Status}}", invoice.Status.ToString() ?? "")
                     .Replace("{{TimeEntriesTable}}", timeEntriesTable)
