@@ -52,7 +52,7 @@ namespace TaskTracker.Models.Invoice
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public int Quantity { get; set; }
+        public decimal Quantity { get; set; }
         
         public decimal TotalAmount
         {

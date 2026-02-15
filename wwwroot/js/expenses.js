@@ -62,11 +62,11 @@
     // Handle input events for both create and edit expense forms using event delegation
     document.addEventListener('input', function (event) {
         const target = event.target;
-        const form = target.closest('form[action="/Expenses/Create"], form[action^="/Expenses/Edit"]');
+        const form = target.closest('form[action*="/Expenses/Create"], form[action*="/Expenses/Edit"]');
 
         if (!form) return; // Exit if not a relevant form
 
-        const formType = form.matches('[action="/Expenses/Create"]') ? 'create' : 'edit';
+        const formType = form.getAttribute('action').includes('/Expenses/Create') ? 'create' : 'edit';
 
         // Handle unit-amount-input or quantity-input changes
         if (target.classList.contains('unit-amount-input') || target.classList.contains('quantity-input')) {
@@ -84,7 +84,7 @@
     });
 
     // Initialize expense forms
-    const expenseCreateForm = document.querySelector('#create-form form[action="/Expenses/Create"]');
+    const expenseCreateForm = document.querySelector('#create-form form[action*="/Expenses/Create"]');
     if (expenseCreateForm) {
         calculateTotalAmount(expenseCreateForm);
         validateExpenseForm(expenseCreateForm, 'create');
@@ -92,7 +92,7 @@
         console.warn('Create form not found on DOMContentLoaded');
     }
 
-    document.querySelectorAll('form[action^="/Expenses/Edit"]').forEach(form => {
+    document.querySelectorAll('form[action*="/Expenses/Edit"]').forEach(form => {
         calculateTotalAmount(form);
         validateExpenseForm(form, 'edit');
     });

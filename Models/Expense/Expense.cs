@@ -20,8 +20,9 @@ namespace TaskTracker.Models.Expense
         public decimal UnitAmount { get; set; }
 
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
-        public int Quantity { get; set; } = 1;
+        [Range(0.01, 999999.99, ErrorMessage = "Quantity must be greater than 0")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Quantity { get; set; } = 1;
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]

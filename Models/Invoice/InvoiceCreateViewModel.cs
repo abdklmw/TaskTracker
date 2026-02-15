@@ -35,7 +35,7 @@ namespace TaskTracker.Models.Invoice
         public int ExpenseID { get; set; }
         public string Description { get; set; }
         public decimal UnitAmount { get; set; }
-        public int Quantity { get; set; }
+        public decimal Quantity { get; set; }
         public decimal TotalAmount { get; set; }
         public bool IsSelected { get; set; }
     }
