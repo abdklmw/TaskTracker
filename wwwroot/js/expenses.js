@@ -7,7 +7,7 @@
         const totalAmountInput = form.querySelector('.total-amount-input');
         if (unitAmountInput && quantityInput && totalAmountInput) {
             const unitAmount = parseFloat(unitAmountInput.value) || 0;
-            const quantity = parseInt(quantityInput.value) || 1;
+            const quantity = parseFloat(quantityInput.value) || 1;
             const totalAmount = unitAmount * quantity;
             totalAmountInput.value = totalAmount.toFixed(2);
         }
