@@ -82,6 +82,12 @@ namespace TaskTracker.Controllers
                 }
             }
 
+            int globalClientId = HttpContext.Session.GetInt32("GlobalClientId") ?? 0;
+            if (globalClientId != 0)
+            {
+                clientFilter = globalClientId;
+            }
+
             var validLimits = new[] { 5, 10, 20, 50, 100, 200, -1 };
             if (!validLimits.Contains(recordLimit))
             {
@@ -157,11 +163,12 @@ namespace TaskTracker.Controllers
             projectDropdown.RemoveAt(0);
             viewModel.ProjectFilterOptions = new MultiSelectList(projectDropdown, "Value", "Text", viewModel.SelectedProjectIDs);
 
+            int createClientId = globalClientId != 0 ? globalClientId : 0;
             viewModel.ClientList = new SelectList(
-                await _clientService.GetClientDropdownAsync(0),
+                await _clientService.GetClientDropdownAsync(createClientId),
                 "Value",
                 "Text",
-                0);
+                createClientId);
             viewModel.ProjectList = new SelectList(
                 await _projectService.GetProjectDropdownAsync(0),
                 "Value",

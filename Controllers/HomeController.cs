@@ -82,9 +82,10 @@ namespace TaskTracker.Controllers
 					ViewBag.TimezoneOffset = 0; // Fallback to UTC
 				}
 
-				// Populate ClientID dropdown
-				var clientList = await _clientService.GetClientDropdownAsync(0);
-				ViewBag.ClientID = new SelectList(clientList, "Value", "Text", 0);
+				// Populate ClientID dropdown (pre-select global client if set)
+				int globalClientId = HttpContext.Session.GetInt32("GlobalClientId") ?? 0;
+				var clientList = await _clientService.GetClientDropdownAsync(globalClientId);
+				ViewBag.ClientID = new SelectList(clientList, "Value", "Text", globalClientId);
 
 				// Populate ProjectID dropdown
 				var projectList = await _projectService.GetProjectDropdownAsync(0);

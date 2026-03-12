@@ -98,6 +98,21 @@ namespace TaskTracker.Services
                     totalAmount += expense.TotalAmount;
                 }
 
+                // Check for duplicate product + unit amount combinations
+                var duplicateGroups = expenses
+                    .GroupBy(e => new { e.ProductID, e.UnitAmount })
+                    .Where(g => g.Count() > 1)
+                    .ToList();
+
+                if (duplicateGroups.Any())
+                {
+                    var productNames = duplicateGroups
+                        .Select(g => $"'{g.First().Product?.Name ?? $"Product #{g.Key.ProductID}"}' at ${g.Key.UnitAmount:N2}")
+                        .ToList();
+                    string productList = string.Join(", ", productNames);
+                    return (false, $"Duplicate expenses found for {productList}. Please update the quantity on the existing expense instead of adding a second entry for the same product at the same cost.");
+                }
+
                 var invoice = new Invoice
                 {
                     ClientID = model.ClientID,

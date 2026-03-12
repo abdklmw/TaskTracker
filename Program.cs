@@ -33,6 +33,8 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build()));
+    // Add global client selector filter (supports DI)
+    options.Filters.Add<TaskTracker.Filters.GlobalClientFilter>();
 });
 
 // Configure authentication to ensure login path and allow anonymous access to Identity pages
@@ -84,6 +86,18 @@ builder.Services.AddScoped<IUserService, UserService>();
 // Add Data Protection Configuration
 builder.Services.AddDataProtection();
 
+// Add Session support for global client selector
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromDays(1);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Register GlobalClientFilter for DI
+builder.Services.AddScoped<TaskTracker.Filters.GlobalClientFilter>();
+
 var app = builder.Build();
 
 // Apply pending migrations at startup
@@ -119,6 +133,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 
 // Replace the app.UseEndpoints block with top-level route registrations
 app.MapControllerRoute(

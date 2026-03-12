@@ -13,6 +13,7 @@
         @if (User != null && User.Identity != null && User.Identity.IsAuthenticated)
         {
             @:window.userTimezoneOffset = @(await UserService.GetUserTimezoneOffsetAsync(User.FindFirst(ClaimTypes.NameIdentifier)?.Value));
+            @:window.AppSettings.GlobalClientId = @(ViewData["GlobalClientId"] ?? 0);
         }
     </script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -39,6 +40,24 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Invoices" asp-action="Index">Invoices</a>
+                            </li>
+                            <li class="nav-item d-flex align-items-center ms-2">
+                                <form asp-controller="ClientSelector" asp-action="SetClient" method="post"
+                                      class="d-flex align-items-center" id="global-client-form">
+                                    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                    <select name="globalClientId" class="form-select form-select-sm" id="global-client-select"
+                                            onchange="this.form.submit()" style="min-width: 160px;">
+                                        <option value="0">All Clients</option>
+                                        @if (ViewData["GlobalClientDropdown"] is List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> clients)
+                                        {
+                                            int currentGlobalId = (int)(ViewData["GlobalClientId"] ?? 0);
+                                            foreach (var client in clients.Where(c => c.Value != "0"))
+                                            {
+                                                <option value="@client.Value" selected="@(client.Value == currentGlobalId.ToString())">@client.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </form>
                             </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-dark" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

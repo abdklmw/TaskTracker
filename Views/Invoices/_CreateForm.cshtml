@@ -3,12 +3,26 @@
 <div id="create-form" style="display:none; margin-bottom: 20px;">
     <form asp-action="Create" method="post" class="card p-4">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        @{
+            int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
+        }
         <div class="row g-3">
-            <div class="col-md-4">
-                <label asp-for="ClientID" class="form-label">Client</label>
-                <select asp-for="ClientID" class="form-control" id="client-select" asp-items="Model.Clients"></select>
-                <span asp-validation-for="ClientID" class="text-danger"></span>
-            </div>
+            @if (globalClientId != 0)
+            {
+                <div class="col-md-4">
+                    <label class="form-label">Client</label>
+                    <input type="text" class="form-control" value="@ViewData["GlobalClientName"]" readonly />
+                    <input type="hidden" name="ClientID" id="client-select" value="@globalClientId" />
+                </div>
+            }
+            else
+            {
+                <div class="col-md-4">
+                    <label asp-for="ClientID" class="form-label">Client</label>
+                    <select asp-for="ClientID" class="form-control" id="client-select" asp-items="Model.Clients"></select>
+                    <span asp-validation-for="ClientID" class="text-danger"></span>
+                </div>
+            }
             <div class="col-md-4">
                 <label asp-for="Status" class="form-label">Status</label>
                 <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<InvoiceStatus>()"></select>

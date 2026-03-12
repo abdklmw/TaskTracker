@@ -10,12 +10,26 @@
     <form asp-action="Create" method="post" class="card p-4">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="row g-3">
-            <div class="col-md-4">
-                <label asp-for="ClientID" class="form-label">Client</label>
-                <select asp-for="ClientID" class="form-control" asp-items="@ViewBag.ClientList">
-                </select>
-                <span asp-validation-for="ClientID" class="text-danger"></span>
-            </div>
+            @{
+                int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
+            }
+            @if (globalClientId != 0)
+            {
+                <div class="col-md-4">
+                    <label class="form-label">Client</label>
+                    <input type="text" class="form-control" value="@ViewData["GlobalClientName"]" readonly />
+                    <input type="hidden" name="ClientID" value="@globalClientId" />
+                </div>
+            }
+            else
+            {
+                <div class="col-md-4">
+                    <label asp-for="ClientID" class="form-label">Client</label>
+                    <select asp-for="ClientID" class="form-control" asp-items="@ViewBag.ClientList">
+                    </select>
+                    <span asp-validation-for="ClientID" class="text-danger"></span>
+                </div>
+            }
             <div class="col-md-4">
                 <label class="form-label">Product</label>
                 <select class="form-control product-select"

@@ -47,6 +47,12 @@ namespace TaskTracker.Controllers
             decimal? totalAmountMin = null,
             decimal? totalAmountMax = null)
         {
+            int globalClientId = HttpContext.Session.GetInt32("GlobalClientId") ?? 0;
+            if (globalClientId != 0)
+            {
+                clientFilter = globalClientId;
+            }
+
             var (invoices, totalRecords, totalPages) = await _invoiceService.GetInvoicesAsync(
                 page, recordLimit, clientFilter, statusFilter,
                 paidDateStart, paidDateEnd, invoiceDateStart, invoiceDateEnd,
@@ -98,10 +104,11 @@ namespace TaskTracker.Controllers
 
             var createModel = new InvoiceCreateViewModel
             {
-                Clients = await _clientService.GetClientDropdownAsync(0)
+                ClientID = globalClientId,
+                Clients = await _clientService.GetClientDropdownAsync(globalClientId)
             };
             ViewBag.CreateModel = createModel;
-            ViewData["ClientID"] = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text");
+            ViewData["ClientID"] = new SelectList(await _clientService.GetClientDropdownAsync(globalClientId), "Value", "Text", globalClientId);
 
             return View(viewModel);
         }

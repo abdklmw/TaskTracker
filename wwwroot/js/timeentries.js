@@ -86,7 +86,7 @@
     function validateTimeEntryCreateForm() {
         const form = document.getElementById('create-time-entry-form');
         if (form) {
-            const clientSelect = form.querySelector('select[name="ClientID"]');
+            const clientSelect = form.querySelector('select[name="ClientID"]') || form.querySelector('input[type="hidden"][name="ClientID"]');
             const projectSelect = form.querySelector('select[name="ProjectID"]');
             const startInput = form.querySelector('input[name="StartDateTime"]');
             const endInput = form.querySelector('input[name="EndDateTime"]');
@@ -95,9 +95,11 @@
             const createButton = form.querySelector('.create-btn');
             const startTimerButton = form.querySelector('.start-timer-btn');
 
+            const isClientValid = clientSelect && clientSelect.value && clientSelect.value !== '0';
+
             // Validate Create button: all fields must be filled
             const isCreateValid =
-                clientSelect.value && clientSelect.value !== '0' &&
+                isClientValid &&
                 projectSelect.value && projectSelect.value !== '0' &&
                 startInput.value &&
                 endInput.value &&
@@ -108,7 +110,7 @@
 
             // Validate Start Timer button: ClientID, ProjectID, and Description required
             const isStartTimerValid =
-                clientSelect.value && clientSelect.value !== '0' &&
+                isClientValid &&
                 projectSelect.value && projectSelect.value !== '0' &&
                 descriptionInput.value.trim();
 

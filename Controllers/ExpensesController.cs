@@ -28,6 +28,12 @@ namespace TaskTracker.Controllers
 
         public async Task<IActionResult> Index(int page = 1, int recordLimit = 10, int clientFilter = 0)
         {
+            int globalClientId = HttpContext.Session.GetInt32("GlobalClientId") ?? 0;
+            if (globalClientId != 0)
+            {
+                clientFilter = globalClientId;
+            }
+
             _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}", page, recordLimit, clientFilter);
 
             var (expenses, totalRecords, totalPages) = await _expenseService.GetExpensesAsync(page, recordLimit, clientFilter);
@@ -56,7 +62,8 @@ namespace TaskTracker.Controllers
             }, "Value", "Text", recordLimit.ToString())
             };
 
-            ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(0), "Value", "Text", 0);
+            int createClientId = globalClientId != 0 ? globalClientId : 0;
+            ViewBag.ClientList = new SelectList(await _clientService.GetClientDropdownAsync(createClientId), "Value", "Text", createClientId);
             ViewBag.ProductList = await _productService.GetProductDropdownAsync();
 
             return View(viewModel);

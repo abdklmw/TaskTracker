@@ -5,11 +5,25 @@
 <div id="create-form" style="@divStyle">
     <form id="create-time-entry-form" asp-controller="TimeEntries" asp-action="Create" method="post">
         <div class="row g-3">
-            <div class="col-12 col-md-6 col-lg-4">
-                <label class="form-label">Client</label>
-                <select name="ClientID" class="form-control" asp-items="@ViewBag.ClientID" required></select>
-                <span asp-validation-for="@(new TaskTracker.Models.TimeEntries.TimeEntry().ClientID)" class="text-danger"></span>
-            </div>
+            @{
+                int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
+            }
+            @if (globalClientId != 0)
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="form-label">Client</label>
+                    <input type="text" class="form-control" value="@ViewData["GlobalClientName"]" readonly />
+                    <input type="hidden" name="ClientID" value="@globalClientId" />
+                </div>
+            }
+            else
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="form-label">Client</label>
+                    <select name="ClientID" class="form-control" asp-items="@ViewBag.ClientID" required></select>
+                    <span asp-validation-for="@(new TaskTracker.Models.TimeEntries.TimeEntry().ClientID)" class="text-danger"></span>
+                </div>
+            }
             <div class="col-12 col-md-6 col-lg-4">
                 <label class="form-label">Project</label>
                 <select name="ProjectID" class="form-control" asp-items="@ViewBag.ProjectID" required></select>

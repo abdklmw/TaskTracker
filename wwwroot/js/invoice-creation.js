@@ -1,7 +1,6 @@
-﻿$(document).ready(function () {
-    $("#client-select").change(function () {
-        var clientId = $(this).val();
-        if (clientId == 0) {
+$(document).ready(function () {
+    function loadUnpaidItems(clientId) {
+        if (!clientId || clientId == 0) {
             $("#time-entries-list").empty();
             $("#expenses-list").empty();
             $("#invoice-total").val("$0.00");
@@ -64,7 +63,19 @@
             $("#invoice-total").val("$0.00");
             $("#invoice-total-bottom").text("$0.00");
         });
+    }
+
+    // When client dropdown exists (no global client), listen for changes
+    $("#client-select").filter("select").change(function () {
+        loadUnpaidItems($(this).val());
     });
+
+    // When global client is set (hidden input), auto-load on "Create New" click
+    if (window.AppSettings.GlobalClientId && window.AppSettings.GlobalClientId !== 0) {
+        $("#create-new-btn").on("click", function () {
+            loadUnpaidItems(window.AppSettings.GlobalClientId);
+        });
+    }
 
     $("#select-all-time-entries").change(function () {
         $(".time-entry-checkbox").prop("checked", $(this).is(":checked"));

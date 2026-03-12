@@ -54,9 +54,14 @@ namespace TaskTracker.Data
             modelBuilder.Entity<InvoiceTimeEntry>()
                 .HasKey(ite => new { ite.InvoiceID, ite.TimeEntryID });
 
-            // Configure InvoiceProduct composite key
+            // Configure InvoiceExpense primary key (surrogate)
             modelBuilder.Entity<InvoiceExpense>()
-                .HasKey(ip => new { ip.InvoiceID, ip.ProductID });
+                .HasKey(ie => ie.InvoiceExpenseID);
+
+            // Allow same product at different costs, but prevent duplicate product+cost on same invoice
+            modelBuilder.Entity<InvoiceExpense>()
+                .HasIndex(ie => new { ie.InvoiceID, ie.ProductID, ie.UnitAmount })
+                .IsUnique();
 
             // Invoice relationships
             modelBuilder.Entity<Invoice>()

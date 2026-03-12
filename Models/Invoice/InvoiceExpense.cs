@@ -6,6 +6,10 @@ namespace TaskTracker.Models.Invoice
 {
     public class InvoiceExpense : InvoiceItemBase
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int InvoiceExpenseID { get; set; }
+
         private static readonly Dictionary<string, string> FrequencyMap = new()
         {
             { "Monthly", "AddMonths" },

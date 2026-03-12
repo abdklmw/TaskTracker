@@ -11,10 +11,21 @@
     <div class="col-12">
         <form asp-action="Index" method="get">
             <div class="filter-form-container">
+                @{
+                    int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
+                }
                 <div class="filter-group">
                     <label for="clientFilter" class="form-label">Filter by Client</label>
-                    <select id="clientFilter" name="clientFilter" class="form-select" asp-items="@Model.ClientFilterOptions">
-                    </select>
+                    @if (globalClientId != 0)
+                    {
+                        <input type="text" class="form-control" value="@ViewData["GlobalClientName"]" readonly />
+                        <input type="hidden" name="clientFilter" value="@globalClientId" />
+                    }
+                    else
+                    {
+                        <select id="clientFilter" name="clientFilter" class="form-select" asp-items="@Model.ClientFilterOptions">
+                        </select>
+                    }
                 </div>
             </div>
             <div class="filter-actions">
