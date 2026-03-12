@@ -14,6 +14,7 @@
         {
             @:window.userTimezoneOffset = @(await UserService.GetUserTimezoneOffsetAsync(User.FindFirst(ClaimTypes.NameIdentifier)?.Value));
             @:window.AppSettings.GlobalClientId = @(ViewData["GlobalClientId"] ?? 0);
+            @:window.AppSettings.CurrentPage = '@(ViewContext.RouteData.Values["controller"]?.ToString()?.ToLower())';
         }
     </script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
