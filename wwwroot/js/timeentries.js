@@ -118,12 +118,15 @@
         }
     }
 
-    // Attach input listeners to time entry create form
+    // Attach input/change listeners to time entry create form
     const createTimeEntryForm = document.getElementById('create-time-entry-form');
     if (createTimeEntryForm) {
         const inputs = createTimeEntryForm.querySelectorAll('select, input, textarea');
         inputs.forEach(input => {
             input.addEventListener('input', validateTimeEntryCreateForm);
+            if (input.tagName === 'SELECT') {
+                input.addEventListener('change', validateTimeEntryCreateForm);
+            }
         });
         // Initial validation
         validateTimeEntryCreateForm();

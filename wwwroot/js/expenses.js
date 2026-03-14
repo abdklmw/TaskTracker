@@ -61,8 +61,8 @@
         }
     }
 
-    // Handle input events for both create and edit expense forms using event delegation
-    document.addEventListener('input', function (event) {
+    // Handle input/change events for both create and edit expense forms using event delegation
+    function handleExpenseFormEvent(event) {
         const target = event.target;
         const form = target.closest('form[action*="/Expenses/Create"], form[action*="/Expenses/Edit"]');
 
@@ -83,7 +83,9 @@
         ) {
             validateExpenseForm(form, formType);
         }
-    });
+    }
+    document.addEventListener('input', handleExpenseFormEvent);
+    document.addEventListener('change', handleExpenseFormEvent);
 
     // Initialize expense forms
     const expenseCreateForm = document.querySelector('#create-form form[action*="/Expenses/Create"]');

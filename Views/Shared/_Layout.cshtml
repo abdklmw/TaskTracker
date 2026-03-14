@@ -45,7 +45,7 @@
                             <li class="nav-item d-flex align-items-center ms-2">
                                 <form asp-controller="ClientSelector" asp-action="SetClient" method="post"
                                       class="d-flex align-items-center" id="global-client-form">
-                                    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                    <input type="hidden" name="returnUrl" value="@(Context.Request.PathBase)@(Context.Request.Path)@(Context.Request.QueryString)" />
                                     <select name="globalClientId" class="form-select form-select-sm" id="global-client-select"
                                             onchange="this.form.submit()" style="min-width: 160px;">
                                         <option value="0">All Clients</option>
