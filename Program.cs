@@ -42,7 +42,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Identity/Account/Login";
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    options.ExpireTimeSpan = TimeSpan.FromDays(365);
+    options.SlidingExpiration = true;
 });
 
 // Allow anonymous access to Identity pages
@@ -83,8 +84,11 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 // Register UserService
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Add Data Protection Configuration
-builder.Services.AddDataProtection();
+// Add Data Protection Configuration — persist keys to the database so they survive
+// IIS app pool recycles without needing file system write access
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<AppDbContext>()
+    .SetApplicationName("TaskTracker");
 
 // Add Session support for global client selector
 builder.Services.AddDistributedMemoryCache();

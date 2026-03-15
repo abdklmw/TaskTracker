@@ -82,7 +82,7 @@ namespace TaskTracker.Areas.Identity.Pages.Account
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
             [Display(Name = "Remember me?")]
-            public bool RememberMe { get; set; }
+            public bool RememberMe { get; set; } = true;
         }
 
         public async Task OnGetAsync(string returnUrl = null)

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Models;
 using TaskTracker.Models.Client;
@@ -10,7 +11,7 @@ using TaskTracker.Models.TimeEntries;
 
 namespace TaskTracker.Data
 {
-    public class AppDbContext : IdentityDbContext<ApplicationUser>
+    public class AppDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
@@ -26,6 +27,7 @@ namespace TaskTracker.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<InvoiceExpense> InvoiceExpenses { get; set; }
         public DbSet<Settings> Settings { get; set; }
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
