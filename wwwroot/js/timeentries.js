@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     // Calculate HoursSpent based on StartDateTime and EndDateTime
     function calculateHoursSpent(startInput, endInput, hoursInput) {
         if (startInput.value && endInput.value) {
@@ -37,9 +37,42 @@
         }
     });
 
-    // Handle Start Timer button click
+    // Validate time entry form — returns list of missing fields
+    function getTimeEntryMissingFields(requireAllFields) {
+        const form = document.getElementById('create-time-entry-form');
+        if (!form) return ['Form not found'];
+
+        const missing = [];
+        const clientSelect = form.querySelector('select[name="ClientID"]') || form.querySelector('input[type="hidden"][name="ClientID"]');
+        const projectSelect = form.querySelector('select[name="ProjectID"]');
+        const descriptionInput = form.querySelector('textarea[name="Description"]');
+
+        if (!clientSelect || !clientSelect.value || clientSelect.value === '0') missing.push('Client');
+        if (!projectSelect || !projectSelect.value || projectSelect.value === '0') missing.push('Project');
+        if (!descriptionInput || !descriptionInput.value.trim()) missing.push('Description');
+
+        if (requireAllFields) {
+            const startInput = form.querySelector('input[name="StartDateTime"]');
+            const endInput = form.querySelector('input[name="EndDateTime"]');
+            const hoursInput = form.querySelector('input[name="HoursSpent"]');
+            if (!startInput || !startInput.value) missing.push('Start Date/Time');
+            if (!endInput || !endInput.value) missing.push('End Date/Time');
+            if (!hoursInput || !hoursInput.value) missing.push('Hours Spent');
+        }
+
+        return missing;
+    }
+
+    // Handle Start Timer button click — validate then submit
     $('.start-timer-btn').click(function (e) {
-        e.preventDefault(); // Prevent default button behavior
+        e.preventDefault();
+
+        const missing = getTimeEntryMissingFields(false);
+        if (missing.length > 0) {
+            alert('Please fill in the following fields: ' + missing.join(', '));
+            return;
+        }
+
         const form = document.getElementById('create-time-entry-form');
         const startInput = document.querySelector('#create-form input[name="StartDateTime"]');
         const actionInput = document.getElementById('form-action');
@@ -50,9 +83,21 @@
             if (actionInput) {
                 actionInput.value = 'StartTimer'; // Set action for controller
             }
-            form.submit(); // Submit the form
+            form.submit();
         } catch (error) {
             console.error('Error submitting Start Timer form:', error);
+        }
+    });
+
+    // Handle Create button click — validate then submit
+    $('.create-btn').click(function (e) {
+        const form = document.getElementById('create-time-entry-form');
+        if (!form || !form.contains(this)) return; // Only handle time entry create form
+
+        const missing = getTimeEntryMissingFields(true);
+        if (missing.length > 0) {
+            e.preventDefault();
+            alert('Please fill in the following fields: ' + missing.join(', '));
         }
     });
 
@@ -81,55 +126,5 @@
     // Initial update and refresh every minute
     updateHoursSpent();
     setInterval(updateHoursSpent, 60 * 1000); // Update every minute
-
-    // Enable/disable Create and Start Timer buttons based on form input
-    function validateTimeEntryCreateForm() {
-        const form = document.getElementById('create-time-entry-form');
-        if (form) {
-            const clientSelect = form.querySelector('select[name="ClientID"]') || form.querySelector('input[type="hidden"][name="ClientID"]');
-            const projectSelect = form.querySelector('select[name="ProjectID"]');
-            const startInput = form.querySelector('input[name="StartDateTime"]');
-            const endInput = form.querySelector('input[name="EndDateTime"]');
-            const hoursInput = form.querySelector('input[name="HoursSpent"]');
-            const descriptionInput = form.querySelector('textarea[name="Description"]');
-            const createButton = form.querySelector('.create-btn');
-            const startTimerButton = form.querySelector('.start-timer-btn');
-
-            const isClientValid = clientSelect && clientSelect.value && clientSelect.value !== '0';
-
-            // Validate Create button: all fields must be filled
-            const isCreateValid =
-                isClientValid &&
-                projectSelect.value && projectSelect.value !== '0' &&
-                startInput.value &&
-                endInput.value &&
-                hoursInput.value &&
-                descriptionInput.value.trim();
-
-            createButton.disabled = !isCreateValid;
-
-            // Validate Start Timer button: ClientID, ProjectID, and Description required
-            const isStartTimerValid =
-                isClientValid &&
-                projectSelect.value && projectSelect.value !== '0' &&
-                descriptionInput.value.trim();
-
-            startTimerButton.disabled = !isStartTimerValid;
-        }
-    }
-
-    // Attach input/change listeners to time entry create form
-    const createTimeEntryForm = document.getElementById('create-time-entry-form');
-    if (createTimeEntryForm) {
-        const inputs = createTimeEntryForm.querySelectorAll('select, input, textarea');
-        inputs.forEach(input => {
-            input.addEventListener('input', validateTimeEntryCreateForm);
-            if (input.tagName === 'SELECT') {
-                input.addEventListener('change', validateTimeEntryCreateForm);
-            }
-        });
-        // Initial validation
-        validateTimeEntryCreateForm();
-    }
 
 });

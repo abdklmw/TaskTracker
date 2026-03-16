@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
 
     // Calculate TotalAmount as UnitAmount * Quantity for expense forms
     function calculateTotalAmount(form) {
@@ -35,69 +35,78 @@
         }
 
         calculateTotalAmount(form);
-        validateExpenseForm(form, form.closest('#create-form') ? 'create' : 'edit');
     };
 
-    // Consolidated validation function for expense create and edit forms
-    function validateExpenseForm(form, formType) {
+    // Auto-calculate total on unit amount or quantity input
+    document.addEventListener('input', function (event) {
+        const target = event.target;
+        const form = target.closest('form[action*="/Expenses/Create"], form[action*="/Expenses/Edit"]');
+        if (!form) return;
+
+        if (target.classList.contains('unit-amount-input') || target.classList.contains('quantity-input')) {
+            calculateTotalAmount(form);
+        }
+    });
+
+    // Validate expense form — returns list of missing fields
+    function getExpenseMissingFields(form, formType) {
         const isCreateForm = formType === 'create';
+        const missing = [];
+
         const clientSelect = isCreateForm
             ? (form.querySelector('select[name="ClientID"]') || form.querySelector('input[type="hidden"][name="ClientID"]'))
             : (form.querySelector('select[name="Expense.ClientID"]') || form.querySelector('input[type="hidden"][name="Expense.ClientID"]'));
+        const productSelect = form.querySelector('.product-select');
         const descriptionInput = form.querySelector('.description-input');
         const unitAmountInput = form.querySelector('.unit-amount-input');
         const quantityInput = form.querySelector('.quantity-input');
-        const totalAmountInput = form.querySelector('.total-amount-input');
-        const submitButton = form.querySelector(isCreateForm ? '.create-btn' : '.save-btn');
 
-        const isExpenseValid =
-            clientSelect?.value && clientSelect.value !== '0' &&
-            descriptionInput?.value.trim() &&
-            unitAmountInput?.value && parseFloat(unitAmountInput.value) !== 0 &&
-            quantityInput?.value && parseInt(quantityInput.value) >= 1 &&
-            totalAmountInput?.value && parseFloat(totalAmountInput.value) !== 0;
-        if (submitButton) {
-            submitButton.disabled = !isExpenseValid;
-        }
+        if (!clientSelect || !clientSelect.value || clientSelect.value === '0') missing.push('Client');
+        if (isCreateForm && (!productSelect || !productSelect.value)) missing.push('Product');
+        if (!descriptionInput || !descriptionInput.value.trim()) missing.push('Description');
+        if (!unitAmountInput || !unitAmountInput.value || parseFloat(unitAmountInput.value) === 0) missing.push('Unit Amount');
+        if (!quantityInput || !quantityInput.value || parseInt(quantityInput.value) < 1) missing.push('Quantity');
+
+        return missing;
     }
 
-    // Handle input/change events for both create and edit expense forms using event delegation
-    function handleExpenseFormEvent(event) {
-        const target = event.target;
-        const form = target.closest('form[action*="/Expenses/Create"], form[action*="/Expenses/Edit"]');
+    // Validate on Create button click
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('.create-btn');
+        if (!button) return;
 
-        if (!form) return; // Exit if not a relevant form
+        const form = button.closest('form[action*="/Expenses/Create"]');
+        if (!form) return;
 
-        const formType = form.getAttribute('action').includes('/Expenses/Create') ? 'create' : 'edit';
-
-        // Handle unit-amount-input or quantity-input changes
-        if (target.classList.contains('unit-amount-input') || target.classList.contains('quantity-input')) {
-            calculateTotalAmount(form);
-            validateExpenseForm(form, formType);
+        const missing = getExpenseMissingFields(form, 'create');
+        if (missing.length > 0) {
+            event.preventDefault();
+            alert('Please fill in the following fields: ' + missing.join(', '));
         }
-        // Handle additional inputs: product-select, description-input, or ClientID select
-        else if (
-            target.classList.contains('product-select') ||
-            target.classList.contains('description-input') ||
-            target.matches('select[name="ClientID"]')
-        ) {
-            validateExpenseForm(form, formType);
-        }
-    }
-    document.addEventListener('input', handleExpenseFormEvent);
-    document.addEventListener('change', handleExpenseFormEvent);
+    });
 
-    // Initialize expense forms
+    // Validate on Save button click (edit forms)
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('.save-btn');
+        if (!button) return;
+
+        const form = button.closest('form[action*="/Expenses/Edit"]');
+        if (!form) return;
+
+        const missing = getExpenseMissingFields(form, 'edit');
+        if (missing.length > 0) {
+            event.preventDefault();
+            alert('Please fill in the following fields: ' + missing.join(', '));
+        }
+    });
+
+    // Initialize total amounts on page load
     const expenseCreateForm = document.querySelector('#create-form form[action*="/Expenses/Create"]');
     if (expenseCreateForm) {
         calculateTotalAmount(expenseCreateForm);
-        validateExpenseForm(expenseCreateForm, 'create');
-    } else {
-        console.warn('Create form not found on DOMContentLoaded');
     }
 
     document.querySelectorAll('form[action*="/Expenses/Edit"]').forEach(form => {
         calculateTotalAmount(form);
-        validateExpenseForm(form, 'edit');
     });
 });
