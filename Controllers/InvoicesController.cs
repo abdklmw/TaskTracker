@@ -18,24 +18,27 @@ namespace TaskTracker.Controllers
         private readonly ILogger<InvoiceService> _logger;
         private readonly ClientService _clientService;
         private readonly IEmailService _emailService;
+        private readonly IUserPreferenceService _preferenceService;
 
         public InvoicesController(
             IInvoiceService invoiceService,
             UserManager<ApplicationUser> userManager,
             ILogger<InvoiceService> logger,
             ClientService clientService,
-            IEmailService emailService)
+            IEmailService emailService,
+            IUserPreferenceService preferenceService)
         {
             _invoiceService = invoiceService;
             _userManager = userManager;
             _logger = logger;
             _clientService = clientService;
             _emailService = emailService;
+            _preferenceService = preferenceService;
         }
 
         public async Task<IActionResult> Index(
             int page = 1,
-            int recordLimit = 10,
+            int recordLimit = 0,
             int clientFilter = 0,
             InvoiceStatus? statusFilter = null,
             DateTime? paidDateStart = null,
@@ -47,10 +50,23 @@ namespace TaskTracker.Controllers
             decimal? totalAmountMin = null,
             decimal? totalAmountMax = null)
         {
-            int globalClientId = HttpContext.Session.GetInt32("GlobalClientId") ?? 0;
+            int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
             if (globalClientId != 0)
             {
                 clientFilter = globalClientId;
+            }
+
+            // Use DB-stored record limit when not explicitly provided in the query string
+            string userId = _userManager.GetUserId(User) ?? "";
+            if (recordLimit > 0 && !string.IsNullOrEmpty(userId))
+            {
+                // User chose a new limit — persist it
+                await _preferenceService.SetRecordLimitAsync(userId, "invoices", recordLimit);
+            }
+            else
+            {
+                // No explicit limit — use saved preference
+                recordLimit = (int)(ViewData["UserInvoicesRecordLimit"] ?? 10);
             }
 
             var (invoices, totalRecords, totalPages) = await _invoiceService.GetInvoicesAsync(

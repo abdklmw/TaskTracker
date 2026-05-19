@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using TaskTracker.Data;
 using TaskTracker.Models;
@@ -13,25 +14,41 @@ namespace TaskTracker.Controllers
         private readonly ClientService _clientService;
         private readonly ILogger<ExpensesController> _logger;
         private readonly ProductService _productService;
+        private readonly IUserPreferenceService _preferenceService;
 
         public ExpensesController(
             ExpenseService expenseService,
             ClientService clientService,
             ProductService productService,
-            ILogger<ExpensesController> logger)
+            ILogger<ExpensesController> logger,
+            IUserPreferenceService preferenceService)
         {
             _expenseService = expenseService;
             _clientService = clientService;
             _productService = productService;
             _logger = logger;
+            _preferenceService = preferenceService;
         }
 
-        public async Task<IActionResult> Index(int page = 1, int recordLimit = 10, int clientFilter = 0)
+        public async Task<IActionResult> Index(int page = 1, int recordLimit = 0, int clientFilter = 0)
         {
-            int globalClientId = HttpContext.Session.GetInt32("GlobalClientId") ?? 0;
+            int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
             if (globalClientId != 0)
             {
                 clientFilter = globalClientId;
+            }
+
+            // Use DB-stored record limit when not explicitly provided in the query string
+            string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            if (recordLimit > 0 && !string.IsNullOrEmpty(userId))
+            {
+                // User chose a new limit — persist it
+                await _preferenceService.SetRecordLimitAsync(userId, "expenses", recordLimit);
+            }
+            else
+            {
+                // No explicit limit — use saved preference
+                recordLimit = (int)(ViewData["UserExpensesRecordLimit"] ?? 10);
             }
 
             _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}", page, recordLimit, clientFilter);

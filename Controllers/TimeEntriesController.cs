@@ -16,6 +16,7 @@ namespace TaskTracker.Controllers
         private readonly SetupService _setupService;
         private readonly ProjectService _projectService;
         private readonly ClientService _clientService;
+        private readonly IUserPreferenceService _preferenceService;
 
         public TimeEntriesController(
             TimeEntryService timeEntryService,
@@ -23,7 +24,8 @@ namespace TaskTracker.Controllers
             ILogger<TimeEntriesController> logger,
             SetupService setupService,
             ProjectService projectService,
-            ClientService clientService)
+            ClientService clientService,
+            IUserPreferenceService preferenceService)
         {
             _timeEntryService = timeEntryService;
             _userManager = userManager;
@@ -31,10 +33,11 @@ namespace TaskTracker.Controllers
             _setupService = setupService;
             _projectService = projectService;
             _clientService = clientService;
+            _preferenceService = preferenceService;
         }
 
         public async Task<IActionResult> Index(
-            int recordLimit = 10,
+            int recordLimit = 0,
             int page = 1,
             int clientFilter = 0,
             int[] projectFilter = null,
@@ -82,10 +85,22 @@ namespace TaskTracker.Controllers
                 }
             }
 
-            int globalClientId = HttpContext.Session.GetInt32("GlobalClientId") ?? 0;
+            int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
             if (globalClientId != 0)
             {
                 clientFilter = globalClientId;
+            }
+
+            // Use DB-stored record limit when not explicitly provided in the query string
+            if (recordLimit > 0 || recordLimit == -1)
+            {
+                // User chose a new limit — persist it
+                await _preferenceService.SetRecordLimitAsync(userId, "timeentries", recordLimit);
+            }
+            else
+            {
+                // No explicit limit — use saved preference
+                recordLimit = (int)(ViewData["UserTimeEntriesRecordLimit"] ?? 10);
             }
 
             var validLimits = new[] { 5, 10, 20, 50, 100, 200, -1 };

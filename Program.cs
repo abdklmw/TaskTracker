@@ -84,20 +84,14 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 // Register UserService
 builder.Services.AddScoped<IUserService, UserService>();
 
+// Register UserPreferenceService
+builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
+
 // Add Data Protection Configuration — persist keys to the database so they survive
 // IIS app pool recycles without needing file system write access
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("TaskTracker");
-
-// Add Session support for global client selector
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromDays(1);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
 
 // Register GlobalClientFilter for DI
 builder.Services.AddScoped<TaskTracker.Filters.GlobalClientFilter>();
@@ -137,7 +131,6 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
 
 // Replace the app.UseEndpoints block with top-level route registrations
 app.MapControllerRoute(

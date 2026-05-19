@@ -83,7 +83,7 @@ namespace TaskTracker.Controllers
 				}
 
 				// Populate ClientID dropdown (pre-select global client if set)
-				int globalClientId = HttpContext.Session.GetInt32("GlobalClientId") ?? 0;
+				int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
 				var clientList = await _clientService.GetClientDropdownAsync(globalClientId);
 				ViewBag.ClientID = new SelectList(clientList, "Value", "Text", globalClientId);
 
