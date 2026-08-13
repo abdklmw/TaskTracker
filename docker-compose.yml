@@ -11,8 +11,9 @@ services:
       - ./data/log:/app/data/log
     restart: unless-stopped
     networks:
-      - whitent-umbraco_whitent-net
+      - whitent-net
 
 networks:
-  whitent-umbraco_whitent-net:
+  whitent-net:
     external: true
+    name: whitent-umbraco_whitent-net
