@@ -3,10 +3,16 @@ services:
     build: .
     container_name: tasktracker
     ports:
-      - "5055:8080"          # Host:Container  (change 5055 if you want)
+      - "5055:8080"          # useful for local testing
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Server=host.docker.internal;Database=TaskTracker;User Id=tasktracker_app;Password=${DB_PASSWORD};MultipleActiveResultSets=true;TrustServerCertificate=true
     volumes:
-      - ./data/log:/app/data/log          # Persist Serilog files on the host
+      - ./data/log:/app/data/log
     restart: unless-stopped
+    networks:
+      - whitent-net
+
+networks:
+  whitent-net:
+    external: true
