@@ -276,7 +276,7 @@ namespace TaskTracker.Controllers
 
             var viewModel = new TimeEntriesIndexViewModel
             {
-                TimeEntries = (await _timeEntryService.GetTimeEntriesAsync(userId, 10, 1, 0, null, null, null, null, null, null, null, false, false, false)).TimeEntries,
+                TimeEntries = (await _timeEntryService.GetTimeEntriesAsync(userId, 10, 1, 0, null, null, null, null, null, null, null, null, null, false, false, false, false)).TimeEntries,
                 RecordLimit = 10,
                 RecordLimitOptions = new SelectList(new[]
                 {
@@ -295,7 +295,7 @@ namespace TaskTracker.Controllers
                 ReturnTo = ViewBag.ReturnTo as string ?? "TimeEntries",
                 CurrentPage = 1,
                 TotalPages = 1,
-                TotalRecords = (await _timeEntryService.GetTimeEntriesAsync(userId, -1, 1, 0, null, null, null, null, null, null, null, false, false, false)).TotalRecords
+                TotalRecords = (await _timeEntryService.GetTimeEntriesAsync(userId, -1, 1, 0, null, null, null, null, null, null, null, null, null, false, false, false, false)).TotalRecords
             };
 
             ViewBag.ClientID = viewModel.ClientList;
@@ -354,7 +354,7 @@ namespace TaskTracker.Controllers
 
             var viewModel = new TimeEntriesIndexViewModel
             {
-                TimeEntries = (await _timeEntryService.GetTimeEntriesAsync(userId, 10, 1, 0, null, null, null, null, null, null, null, false, false, false)).TimeEntries,
+                TimeEntries = (await _timeEntryService.GetTimeEntriesAsync(userId, 10, 1, 0, null, null, null, null, null, null, null, null, null, false, false, false, false)).TimeEntries,
                 RecordLimit = 10,
                 RecordLimitOptions = new SelectList(new[]
                 {
@@ -373,7 +373,7 @@ namespace TaskTracker.Controllers
                 ReturnTo = "TimeEntries",
                 CurrentPage = 1,
                 TotalPages = 1,
-                TotalRecords = (await _timeEntryService.GetTimeEntriesAsync(userId, -1, 1, 0, null, null, null, null, null, null, null, false, false, false)).TotalRecords
+                TotalRecords = (await _timeEntryService.GetTimeEntriesAsync(userId, -1, 1, 0, null, null, null, null, null, null, null, null, null, false, false, false, false)).TotalRecords
             };
 
             ViewBag.ClientID = viewModel.ClientList;
