@@ -40,9 +40,12 @@ namespace TaskTracker.Services
             DateTime? paidDateEnd,
             DateTime? invoiceSentDateStart,
             DateTime? invoiceSentDateEnd,
+            DateTime? completedDateStart,
+            DateTime? completedDateEnd,
             bool invoicedDateAny,
             bool paidDateAny,
-            bool invoiceSentDateAny)
+            bool invoiceSentDateAny,
+            bool completedDateAny)
         {
             IQueryable<TimeEntry> query = _context.TimeEntries
                 .Where(t => t.UserId == userId)
@@ -57,7 +60,8 @@ namespace TaskTracker.Services
                               invoicedDateStart.HasValue || invoicedDateEnd.HasValue ||
                               paidDateStart.HasValue || paidDateEnd.HasValue ||
                               invoiceSentDateStart.HasValue || invoiceSentDateEnd.HasValue ||
-                              invoicedDateAny || paidDateAny || invoiceSentDateAny;
+                              completedDateStart.HasValue || completedDateEnd.HasValue ||
+                              invoicedDateAny || paidDateAny || invoiceSentDateAny || completedDateAny;
 
             if (!hasFilters)
             {
@@ -120,6 +124,22 @@ namespace TaskTracker.Services
                 if (invoiceSentDateEnd.HasValue)
                 {
                     query = query.Where(t => t.InvoiceSent <= invoiceSentDateEnd.Value);
+                }
+            }
+
+            if (completedDateAny)
+            {
+                query = query.Where(t => t.EndDateTime != null);
+            }
+            else
+            {
+                if (completedDateStart.HasValue)
+                {
+                    query = query.Where(t => t.EndDateTime >= completedDateStart.Value);
+                }
+                if (completedDateEnd.HasValue)
+                {
+                    query = query.Where(t => t.EndDateTime <= completedDateEnd.Value.AddDays(1).AddTicks(-1));
                 }
             }
 

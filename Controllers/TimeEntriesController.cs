@@ -47,9 +47,12 @@ namespace TaskTracker.Controllers
             DateTime? paidDateEnd = null,
             DateTime? invoiceSentDateStart = null,
             DateTime? invoiceSentDateEnd = null,
+            DateTime? completedDateStart = null,
+            DateTime? completedDateEnd = null,
             bool invoicedDateAny = false,
             bool paidDateAny = false,
-            bool invoiceSentDateAny = false)
+            bool invoiceSentDateAny = false,
+            bool completedDateAny = false)
         {
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId))
@@ -113,7 +116,8 @@ namespace TaskTracker.Controllers
                 userId, recordLimit, page, clientFilter, projectFilter,
                 invoicedDateStart, invoicedDateEnd, paidDateStart, paidDateEnd,
                 invoiceSentDateStart, invoiceSentDateEnd,
-                invoicedDateAny, paidDateAny, invoiceSentDateAny);
+                completedDateStart, completedDateEnd,
+                invoicedDateAny, paidDateAny, invoiceSentDateAny, completedDateAny);
 
             var viewModel = new TimeEntriesIndexViewModel
             {
@@ -133,9 +137,12 @@ namespace TaskTracker.Controllers
                 PaidDateEnd = paidDateEnd,
                 InvoiceSentDateStart = invoiceSentDateStart,
                 InvoiceSentDateEnd = invoiceSentDateEnd,
+                CompletedDateStart = completedDateStart,
+                CompletedDateEnd = completedDateEnd,
                 InvoicedDateAny = invoicedDateAny,
                 PaidDateAny = paidDateAny,
                 InvoiceSentDateAny = invoiceSentDateAny,
+                CompletedDateAny = completedDateAny,
                 RouteValues = new Dictionary<string, string>
                 {
                     { "recordLimit", recordLimit.ToString() },
@@ -146,9 +153,12 @@ namespace TaskTracker.Controllers
                     { "paidDateEnd", paidDateEnd?.ToString("yyyy-MM-dd") ?? "" },
                     { "invoiceSentDateStart", invoiceSentDateStart?.ToString("yyyy-MM-dd") ?? "" },
                     { "invoiceSentDateEnd", invoiceSentDateEnd?.ToString("yyyy-MM-dd") ?? "" },
+                    { "completedDateStart", completedDateStart?.ToString("yyyy-MM-dd") ?? "" },
+                    { "completedDateEnd", completedDateEnd?.ToString("yyyy-MM-dd") ?? "" },
                     { "invoicedDateAny", invoicedDateAny.ToString().ToLower() },
                     { "paidDateAny", paidDateAny.ToString().ToLower() },
-                    { "invoiceSentDateAny", invoiceSentDateAny.ToString().ToLower() }
+                    { "invoiceSentDateAny", invoiceSentDateAny.ToString().ToLower() },
+                    { "completedDateAny", completedDateAny.ToString().ToLower() }
                 }
             };
 

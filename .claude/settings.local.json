@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build)",
+      "Bash(npx gulp)",
+      "Bash(npx gulp js)",
+      "Bash(dotnet build --no-restore)",
+      "Bash(git add Views/Shared/_Layout.cshtml gulpfile.js wwwroot/js/user-preferences.js wwwroot/js/site.min.js)",
+      "Bash(git add Views/Shared/_Layout.cshtml gulpfile.js wwwroot/js/user-preferences.js)",
+      "Bash(git add -f wwwroot/js/site.min.js)",
+      "Bash(git commit:*)",
+      "Bash(xargs grep -l \"location\\\\|Redirect\\\\|/Invoices\\\\|/TimeEntries\\\\|/Expenses\\\\|/Clients\\\\|/Projects\")",
+      "Bash(git add Views/Shared/_Layout.cshtml wwwroot/js/expenses.js wwwroot/js/timeentries.js)",
+      "Bash(xargs grep -l \"AddDefaultIdentity\\\\|SignInOptions\\\\|IdentityOptions\")",
+      "Bash(xargs grep -l \"CookieAuthenticationOptions\\\\|IAppBuilder\\\\|OWIN\")",
+      "Bash(dotnet add C:ProjectsTaskTrackerTaskTracker.csproj package Microsoft.AspNetCore.DataProtection.EntityFrameworkCore)",
+      "Bash(dotnet add package Microsoft.AspNetCore.DataProtection.EntityFrameworkCore)",
+      "Bash(dotnet add package Microsoft.AspNetCore.DataProtection.EntityFrameworkCore --version 8.*)",
+      "Bash(dotnet ef migrations add AddDataProtectionKeys)",
+      "Bash(dotnet publish -c Release -o C:ProjectsTaskTrackerpublish)",
+      "Bash(findstr /c:\"PersistKeysToDbContext\" C:ProjectsTaskTrackerpublishTaskTracker.deps.json)",
+      "Bash(git add Areas/Identity/Pages/Account/Login.cshtml.cs Data/AppDbContext.cs Migrations/AppDbContextModelSnapshot.cs Migrations/20260314203030_AddDataProtectionKeys.Designer.cs Migrations/20260314203030_AddDataProtectionKeys.cs Program.cs TaskTracker.csproj)",
+      "Bash(git add Views/TimeEntries/_CreateForm.cshtml wwwroot/js/expenses.js wwwroot/js/timeentries.js)",
+      "Bash(dotnet ef migrations add AddUserPreferences)"
+    ]
+  }
+}

@@ -14,11 +14,15 @@
     }
 
     // Initialize date input states based on checkbox
+    toggleDateInputs('#completedDateAny', '#completedDateStart', '#completedDateEnd');
     toggleDateInputs('#invoicedDateAny', '#invoicedDateStart', '#invoicedDateEnd');
     toggleDateInputs('#invoiceSentDateAny', '#invoiceSentDateStart', '#invoiceSentDateEnd');
     toggleDateInputs('#paidDateAny', '#paidDateStart', '#paidDateEnd');
 
     // Bind checkbox change events
+    $('#completedDateAny').change(function () {
+        toggleDateInputs('#completedDateAny', '#completedDateStart', '#completedDateEnd');
+    });
     $('#invoicedDateAny').change(function () {
         toggleDateInputs('#invoicedDateAny', '#invoicedDateStart', '#invoicedDateEnd');
     });

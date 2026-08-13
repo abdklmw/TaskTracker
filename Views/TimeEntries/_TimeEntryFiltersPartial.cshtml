@@ -6,7 +6,8 @@
                      Model.InvoicedDateStart.HasValue || Model.InvoicedDateEnd.HasValue ||
                      Model.PaidDateStart.HasValue || Model.PaidDateEnd.HasValue ||
                      Model.InvoiceSentDateStart.HasValue || Model.InvoiceSentDateEnd.HasValue ||
-                     Model.InvoicedDateAny || Model.PaidDateAny || Model.InvoiceSentDateAny;
+                     Model.CompletedDateStart.HasValue || Model.CompletedDateEnd.HasValue ||
+                     Model.InvoicedDateAny || Model.PaidDateAny || Model.InvoiceSentDateAny || Model.CompletedDateAny;
     var showFilterForm = hasFilters;
 }
 
@@ -37,6 +38,14 @@
                 </div>
             </div>
             <div class="filter-form-container row g-3">
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Completed Date - <input type="checkbox" id="completedDateAny" name="completedDateAny" value="true" @(Model.CompletedDateAny ? "checked" : "") /> any</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="completedDateStart" name="completedDateStart" class="form-control" type="date" value="@(Model.CompletedDateStart?.ToString("yyyy-MM-dd"))" />
+                        <span>-</span>
+                        <input id="completedDateEnd" name="completedDateEnd" class="form-control" type="date" value="@(Model.CompletedDateEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
                 <div class="filter-group col-md-3">
                     <label class="form-label">Invoiced Date - <input type="checkbox" id="invoicedDateAny" name="invoicedDateAny" value="true" @(Model.InvoicedDateAny ? "checked" : "") /> any</label>
                     <div class="d-flex align-items-center gap-2">
