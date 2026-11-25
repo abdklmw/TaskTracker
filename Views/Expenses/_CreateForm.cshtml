@@ -48,6 +48,11 @@
                 </select>
             </div>
             <div class="col-md-4">
+                <label asp-for="ExpenseDate" class="form-label">Expense Date</label>
+                <input asp-for="ExpenseDate" class="form-control" type="date" value="@(Model.ExpenseDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+                <span asp-validation-for="ExpenseDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
                 <label asp-for="Description" class="form-label">Description</label>
                 <textarea asp-for="Description" class="form-control description-input" rows="4" placeholder="Expense Description"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>

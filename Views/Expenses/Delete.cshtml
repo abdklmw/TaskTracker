@@ -32,6 +32,12 @@ else
             @Html.DisplayFor(model => model.Description)
         </dd>
         <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.ExpenseDate)
+        </dt>
+        <dd class="col-sm-10">
+            @(Model.ExpenseDate.HasValue ? Model.ExpenseDate.Value.ToString("d") : "")
+        </dd>
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.UnitAmount)
         </dt>
         <dd class="col-sm-10">

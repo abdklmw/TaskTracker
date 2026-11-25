@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Expenses";
-    var hasFilters = Model.SelectedClientID != 0 || !string.Equals(Model.Status, "Unbilled", StringComparison.OrdinalIgnoreCase);
+    var hasFilters = Model.HasFilters;
     var showFilterForm = hasFilters;
 }
 
@@ -11,7 +11,7 @@
 @await Html.PartialAsync("~/Views/Shared/_AlertsPartial.cshtml")
 
 <!-- Create form partial, hidden by default -->
-@await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Expense.Expense())
+@await Html.PartialAsync("_CreateForm", new TaskTracker.Models.Expense.Expense { ExpenseDate = DateTime.Today })
 
 <!-- Header with Create New button -->
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -31,9 +31,13 @@
         {
             <p>Showing @Model.Expenses.Count() of @Model.TotalRecords records (@Model.Status)</p>
         }
+        else if (Model.SelectedClientID != 0 && Model.ClientExpenseCount == 0)
+        {
+            <p>@(string.IsNullOrWhiteSpace(Model.ClientName) ? "This client" : Model.ClientName) has no expenses.</p>
+        }
         else if (hasFilters)
         {
-            <p>No expenses match the selected filter.</p>
+            <p>No expenses match the selected filters.</p>
         }
         else
         {
@@ -42,7 +46,7 @@
     </div>
     <div class="controls-container">
         <button id="show-filter-btn" class="filter-btn" style="display: @(showFilterForm ? "none" : "inline-block");">
-            <img src="~/images/icons/filter.svg" alt="Show Filter" class="filter-icon" />
+            <img src="~/images/icons/filter.svg" alt="Show Filters" class="filter-icon" />
         </button>
         <form asp-action="Index" method="get" class="records-per-page-form">
             <label for="recordLimit" class="form-label">Records per page</label>
@@ -50,6 +54,22 @@
             <input type="hidden" name="page" value="1" />
             <input type="hidden" name="clientFilter" value="@Model.SelectedClientID" />
             <input type="hidden" name="status" value="@Model.Status" />
+            @foreach (var productId in Model.SelectedProductIDs)
+            {
+                <input type="hidden" name="productFilter" value="@productId" />
+            }
+            <input type="hidden" name="expenseDateStart" value="@(Model.ExpenseDateStart?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="expenseDateEnd" value="@(Model.ExpenseDateEnd?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="invoicedDateStart" value="@(Model.InvoicedDateStart?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="invoicedDateEnd" value="@(Model.InvoicedDateEnd?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="paidDateStart" value="@(Model.PaidDateStart?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="paidDateEnd" value="@(Model.PaidDateEnd?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="invoiceSentDateStart" value="@(Model.InvoiceSentDateStart?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="invoiceSentDateEnd" value="@(Model.InvoiceSentDateEnd?.ToString("yyyy-MM-dd"))" />
+            @if (Model.ExpenseDateAny) { <input type="hidden" name="expenseDateAny" value="true" /> }
+            @if (Model.InvoicedDateAny) { <input type="hidden" name="invoicedDateAny" value="true" /> }
+            @if (Model.PaidDateAny) { <input type="hidden" name="paidDateAny" value="true" /> }
+            @if (Model.InvoiceSentDateAny) { <input type="hidden" name="invoiceSentDateAny" value="true" /> }
         </form>
     </div>
 </div>
