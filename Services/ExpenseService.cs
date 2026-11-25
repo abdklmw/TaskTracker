@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models.Expense;
 using System.Threading.Tasks;
@@ -16,12 +16,36 @@ namespace TaskTracker.Services
             _context = context;
         }
 
-        public async Task<(List<Expense> Expenses, int TotalRecords, int TotalPages)> GetExpensesAsync(int page, int recordLimit, int clientFilter)
+        public static string NormalizeStatus(string? status)
         {
+            return status?.Trim().ToLowerInvariant() switch
+            {
+                "invoiced" => "Invoiced",
+                "paid" => "Paid",
+                "all" => "All",
+                _ => "Unbilled"
+            };
+        }
+
+        public async Task<(List<Expense> Expenses, int TotalRecords, int TotalPages)> GetExpensesAsync(
+            int page,
+            int recordLimit,
+            int clientFilter,
+            string status = "Unbilled")
+        {
+            status = NormalizeStatus(status);
+
             var query = _context.Expenses
-                .Where(e => e.InvoicedDate == null)
                 .Include(e => e.Client)
                 .AsQueryable();
+
+            query = status switch
+            {
+                "Invoiced" => query.Where(e => e.InvoicedDate != null && e.PaidDate == null),
+                "Paid" => query.Where(e => e.PaidDate != null),
+                "All" => query,
+                _ => query.Where(e => e.InvoicedDate == null)
+            };
 
             if (clientFilter != 0)
             {
@@ -38,8 +62,11 @@ namespace TaskTracker.Services
             int totalPages = (int)Math.Ceiling((double)totalRecords / recordLimit);
             page = page < 1 ? 1 : page > totalPages ? totalPages : page;
 
-            var expenses = await query
-                .OrderByDescending(e => e.InvoicedDate)
+            IOrderedQueryable<Expense> orderedQuery = status == "Unbilled"
+                ? query.OrderByDescending(e => e.ExpenseID)
+                : query.OrderByDescending(e => e.InvoicedDate).ThenByDescending(e => e.ExpenseID);
+
+            var expenses = await orderedQuery
                 .Skip((page - 1) * recordLimit)
                 .Take(recordLimit)
                 .ToListAsync();
@@ -63,9 +90,26 @@ namespace TaskTracker.Services
 
         public async Task<(bool Success, string? ErrorMessage)> UpdateExpenseAsync(Expense expense)
         {
+            var existing = await _context.Expenses.FirstOrDefaultAsync(e => e.ExpenseID == expense.ExpenseID);
+            if (existing == null)
+            {
+                return (false, "Expense not found.");
+            }
+
+            if (existing.InvoicedDate.HasValue)
+            {
+                return (false, "This expense has been invoiced and cannot be edited.");
+            }
+
+            existing.ClientID = expense.ClientID;
+            existing.ProductID = expense.ProductID;
+            existing.Description = expense.Description;
+            existing.UnitAmount = expense.UnitAmount;
+            existing.Quantity = expense.Quantity;
+            existing.TotalAmount = expense.TotalAmount;
+
             try
             {
-                _context.Update(expense);
                 await _context.SaveChangesAsync();
                 return (true, null);
             }
@@ -86,6 +130,12 @@ namespace TaskTracker.Services
             {
                 return (false, "Expense not found.");
             }
+
+            if (expense.InvoicedDate.HasValue)
+            {
+                return (false, "This expense has been invoiced and cannot be deleted.");
+            }
+
             _context.Expenses.Remove(expense);
             await _context.SaveChangesAsync();
             return (true, null);

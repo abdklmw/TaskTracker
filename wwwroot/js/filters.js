@@ -1,4 +1,4 @@
-﻿$(document).ready(function () {
+$(document).ready(function () {
     // Show filter form
     $('.filter-btn').on('click', function (e) {
         console.log('Show filter button clicked'); // Debug
@@ -38,9 +38,18 @@
         console.log('Clear filter button clicked'); // Debug
         var $form = $(this).closest('form');
 
-        // Clear select elements (set to no selection for multi-select, first option for single select)
+        // Clear select elements (set to no selection for multi-select, default option for single select)
         $form.find('select[multiple]').val([]); // Clear multi-select (projectFilter)
-        $form.find('select:not([multiple])').val('0'); // Set single select (clientFilter) to "Select Client"
+        $form.find('select:not([multiple])').each(function () {
+            var $select = $(this);
+            if ($select.attr('name') === 'status') {
+                $select.val('Unbilled');
+            } else if ($select.find('option[value="0"]').length > 0) {
+                $select.val('0');
+            } else {
+                $select.prop('selectedIndex', 0);
+            }
+        });
 
         // Clear date, number, and checkbox inputs
         $form.find('input[type="date"], input[type="number"]').val('');
