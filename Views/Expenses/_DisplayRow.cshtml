@@ -6,18 +6,32 @@
         return;
     }
     var expense = Model.Expense;
+    var isInvoiced = expense.InvoicedDate.HasValue;
+    var statusText = expense.PaidDate.HasValue
+        ? "Paid"
+        : (expense.InvoiceSent.HasValue
+            ? "Invoice Sent"
+            : (expense.InvoicedDate.HasValue ? "Invoiced" : "Unbilled"));
+    var statusBadgeClass = expense.PaidDate.HasValue
+        ? "bg-success"
+        : (expense.InvoiceSent.HasValue
+            ? "bg-info text-dark"
+            : (expense.InvoicedDate.HasValue ? "bg-primary" : "bg-secondary"));
 }
 <!-- Display row for an expense -->
 <div id="display-row-@expense.ExpenseID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body position-relative">
-        <div class="row">
-            <div class="col-md-5" data-field="Description">@expense.Description</div>
+        <div class="row align-items-center pe-4">
+            <div class="col-md-4" data-field="Description">@expense.Description</div>
+            <div class="col-md-2" data-field="Status">
+                <span class="badge @statusBadgeClass">@statusText</span>
+            </div>
             <div class="col-md-2" data-field="UnitAmount">
                 <abbr title="Unit amount">
                     $@expense.UnitAmount.ToString("N2")
                 </abbr>
             </div>
-            <div class="col-md-2" data-field="Quantity">
+            <div class="col-md-1" data-field="Quantity">
                 <abbr title="Quantity">
                     @expense.Quantity
                 </abbr>
@@ -28,20 +42,40 @@
                 </abbr>
             </div>
         </div>
-        <div class="dropdown-container position-absolute top-0 end-0 mt-2 me-2">
-            <div class="dropdown d-inline-block">
-                <button class="btn btn-primary dropdown-toggle dropdown-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions">
-                    <img src="~/images/icons/action-menu.svg" alt="Dropdown" class="dropdown-icon" />
-                </button>
-                <ul class="dropdown-menu">
-                    <li>
-                        <button class="dropdown-item edit-btn" data-id="@expense.ExpenseID">Edit</button>
-                    </li>
-                    <li>
-                        <a class="dropdown-item delete-action-link" asp-action="Delete" asp-route-id="@expense.ExpenseID">Delete</a>
-                    </li>
-                </ul>
+        @if (expense.InvoicedDate.HasValue || expense.InvoiceSent.HasValue || expense.PaidDate.HasValue)
+        {
+            <div class="mt-2 small text-muted">
+                @if (expense.InvoicedDate.HasValue)
+                {
+                    <span class="me-3"><strong>Invoiced:</strong> @expense.InvoicedDate.Value.ToString("d")</span>
+                }
+                @if (expense.InvoiceSent.HasValue)
+                {
+                    <span class="me-3"><strong>Sent:</strong> @expense.InvoiceSent.Value.ToString("d")</span>
+                }
+                @if (expense.PaidDate.HasValue)
+                {
+                    <span><strong>Paid:</strong> @expense.PaidDate.Value.ToString("d")</span>
+                }
             </div>
-        </div>
+        }
+        @if (!isInvoiced)
+        {
+            <div class="dropdown-container position-absolute top-0 end-0 mt-2 me-2">
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-primary dropdown-toggle dropdown-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions">
+                        <img src="~/images/icons/action-menu.svg" alt="Dropdown" class="dropdown-icon" />
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <button class="dropdown-item edit-btn" data-id="@expense.ExpenseID">Edit</button>
+                        </li>
+                        <li>
+                            <a class="dropdown-item delete-action-link" asp-action="Delete" asp-route-id="@expense.ExpenseID">Delete</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        }
     </div>
 </div>

@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    var hasFilters = Model.SelectedClientID != 0;
+    var hasFilters = Model.SelectedClientID != 0 || !string.Equals(Model.Status, "Unbilled", StringComparison.OrdinalIgnoreCase);
     var showFilterForm = hasFilters;
 }
 
@@ -26,6 +26,11 @@
                         <select id="clientFilter" name="clientFilter" class="form-select" asp-items="@Model.ClientFilterOptions">
                         </select>
                     }
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select id="statusFilter" name="status" class="form-select" asp-items="@Model.StatusFilterOptions">
+                    </select>
                 </div>
             </div>
             <div class="filter-actions">

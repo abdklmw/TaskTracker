@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using TaskTracker.Data;
@@ -30,8 +30,10 @@ namespace TaskTracker.Controllers
             _preferenceService = preferenceService;
         }
 
-        public async Task<IActionResult> Index(int page = 1, int recordLimit = 0, int clientFilter = 0)
+        public async Task<IActionResult> Index(int page = 1, int recordLimit = 0, int clientFilter = 0, string status = "Unbilled")
         {
+            status = ExpenseService.NormalizeStatus(status);
+
             int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
             if (globalClientId != 0)
             {
@@ -51,9 +53,9 @@ namespace TaskTracker.Controllers
                 recordLimit = (int)(ViewData["UserExpensesRecordLimit"] ?? 10);
             }
 
-            _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}", page, recordLimit, clientFilter);
+            _logger.LogInformation("Index called with page={Page}, recordLimit={RecordLimit}, clientFilter={ClientFilter}, status={Status}", page, recordLimit, clientFilter, status);
 
-            var (expenses, totalRecords, totalPages) = await _expenseService.GetExpensesAsync(page, recordLimit, clientFilter);
+            var (expenses, totalRecords, totalPages) = await _expenseService.GetExpensesAsync(page, recordLimit, clientFilter, status);
 
             var viewModel = new ExpenseIndexViewModel
             {
@@ -63,20 +65,29 @@ namespace TaskTracker.Controllers
                 TotalRecords = totalRecords,
                 RecordLimit = recordLimit,
                 SelectedClientID = clientFilter,
+                Status = status,
                 RouteValues = new Dictionary<string, string>
-            {
-                { "recordLimit", recordLimit.ToString() },
-                { "clientFilter", clientFilter.ToString() }
-            },
+                {
+                    { "recordLimit", recordLimit.ToString() },
+                    { "clientFilter", clientFilter.ToString() },
+                    { "status", status }
+                },
                 ClientFilterOptions = await _clientService.GetClientDropdownAsync(clientFilter),
+                StatusFilterOptions = new SelectList(new[]
+                {
+                    new { Value = "Unbilled", Text = "Unbilled" },
+                    new { Value = "Invoiced", Text = "Invoiced" },
+                    new { Value = "Paid", Text = "Paid" },
+                    new { Value = "All", Text = "All" }
+                }, "Value", "Text", status),
                 RecordLimitOptions = new SelectList(new[]
                 {
-                new { Value = "5", Text = "5" },
-                new { Value = "10", Text = "10" },
-                new { Value = "25", Text = "25" },
-                new { Value = "50", Text = "50" },
-                new { Value = "100", Text = "100" }
-            }, "Value", "Text", recordLimit.ToString())
+                    new { Value = "5", Text = "5" },
+                    new { Value = "10", Text = "10" },
+                    new { Value = "25", Text = "25" },
+                    new { Value = "50", Text = "50" },
+                    new { Value = "100", Text = "100" }
+                }, "Value", "Text", recordLimit.ToString())
             };
 
             int createClientId = globalClientId != 0 ? globalClientId : 0;
@@ -88,7 +99,7 @@ namespace TaskTracker.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClientID,Description,UnitAmount,Quantity,TotalAmount,ExpenseDateTime,ProductID")] Expense expense)
+        public async Task<IActionResult> Create([Bind("ClientID,Description,UnitAmount,Quantity,TotalAmount,ProductID")] Expense expense)
         {
             if (ModelState.IsValid)
             {
@@ -114,7 +125,7 @@ namespace TaskTracker.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ExpenseID,ClientID,Description,UnitAmount,Quantity,TotalAmount,ExpenseDateTime,ProductID")] Expense expense)
+        public async Task<IActionResult> Edit(int id, [Bind("ExpenseID,ClientID,Description,UnitAmount,Quantity,TotalAmount,ProductID")] Expense expense)
         {
             if (id != expense.ExpenseID)
             {
@@ -173,7 +184,7 @@ namespace TaskTracker.Controllers
             }
             else
             {
-                _logger.LogWarning("Expense {ExpenseID} not found", id);
+                _logger.LogWarning("Expense {ExpenseID} delete rejected or not found: {Error}", id, error);
                 TempData["ErrorMessage"] = error;
             }
             return RedirectToAction(nameof(Index));

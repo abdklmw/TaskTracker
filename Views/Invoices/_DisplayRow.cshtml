@@ -1,4 +1,4 @@
-﻿@using TaskTracker.Models.Invoice
+@using TaskTracker.Models.Invoice
 @model Invoice
 @{
     if (Model.Client == null)
@@ -40,6 +40,13 @@
                     <img src="~/images/icons/action-menu.svg" alt="Dropdown" class="dropdown-icon" />
                 </button>
                 <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" asp-action="Details" asp-route-id="@Model.InvoiceID">View invoice</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-action="Pdf" asp-route-id="@Model.InvoiceID" target="_blank" rel="noopener">Preview PDF</a>
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
                     <li>
                         <button class="dropdown-item edit-btn" data-Id="@Model.InvoiceID">Edit</button>
                     </li>

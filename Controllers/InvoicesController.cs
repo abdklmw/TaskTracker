@@ -160,7 +160,109 @@ namespace TaskTracker.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Edit(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var invoice = await _invoiceService.GetInvoiceWithItemsAsync(id.Value);
+            if (invoice == null)
+            {
+                return NotFound();
+            }
+
+            int timezoneOffset = 0;
+            var user = await _userManager.GetUserAsync(User);
+            if (!string.IsNullOrEmpty(user?.TimeZoneId))
+            {
+                try
+                {
+                    var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+                    timezoneOffset = (int)userTimeZone.GetUtcOffset(DateTime.UtcNow).TotalMinutes;
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    _logger.LogWarning("Invalid TimeZoneId {TimeZoneId} for user {UserId}", user.TimeZoneId, user.Id);
+                }
+            }
+
+            var timeEntryItems = new List<InvoiceDetailsTimeEntryItem>();
+            decimal hoursTotal = 0m;
+            decimal timeEntriesSubtotal = 0m;
+
+            foreach (var entry in invoice.InvoiceTimeEntries.OrderBy(ite => ite.TimeEntry?.StartDateTime))
+            {
+                var te = entry.TimeEntry;
+                if (te == null) continue;
+
+                var rate = te.HourlyRate ?? te.Project?.Rate ?? invoice.Client?.DefaultRate ?? 0m;
+                var hours = te.HoursSpent ?? 0m;
+                var lineTotal = hours * rate;
+
+                hoursTotal += hours;
+                timeEntriesSubtotal += lineTotal;
+
+                timeEntryItems.Add(new InvoiceDetailsTimeEntryItem
+                {
+                    TimeEntryID = te.TimeEntryID,
+                    Date = DateOnly.FromDateTime(te.StartDateTime.AddMinutes(timezoneOffset)),
+                    ProjectName = te.Project?.Name ?? "N/A",
+                    Description = string.IsNullOrWhiteSpace(te.Description) ? "N/A" : te.Description,
+                    Hours = hours,
+                    Rate = rate,
+                    LineTotal = lineTotal
+                });
+            }
+
+            var expenseItems = new List<InvoiceDetailsExpenseItem>();
+            decimal expensesSubtotal = 0m;
+
+            foreach (var exp in invoice.InvoiceExpenses.OrderBy(ie => ie.InvoiceExpenseID))
+            {
+                var lineTotal = exp.UnitAmount * exp.Quantity;
+                expensesSubtotal += lineTotal;
+
+                var description = !string.IsNullOrWhiteSpace(exp.Description)
+                    ? exp.Description
+                    : exp.Product?.Description ?? exp.Product?.Name ?? "N/A";
+
+                expenseItems.Add(new InvoiceDetailsExpenseItem
+                {
+                    InvoiceExpenseID = exp.InvoiceExpenseID,
+                    Date = exp.ProductInvoiceDate,
+                    Description = description,
+                    Quantity = exp.Quantity,
+                    UnitAmount = exp.UnitAmount,
+                    LineTotal = lineTotal
+                });
+            }
+
+            var viewModel = new InvoiceDetailsViewModel
+            {
+                InvoiceID = invoice.InvoiceID,
+                InvoiceNumber = $"{invoice.InvoiceDate:yyyyMMdd}.{invoice.InvoiceID}",
+                ClientID = invoice.ClientID,
+                ClientName = invoice.Client?.Name ?? "Unknown Client",
+                Status = invoice.Status,
+                InvoiceDate = invoice.InvoiceDate,
+                InvoiceSentDate = invoice.InvoiceSentDate,
+                PaidDate = invoice.PaidDate,
+                StoredTotalAmount = invoice.TotalAmount,
+                TimeEntriesHoursTotal = hoursTotal,
+                TimeEntriesSubtotal = timeEntriesSubtotal,
+                ExpensesSubtotal = expensesSubtotal,
+                TimeEntries = timeEntryItems,
+                Expenses = expenseItems
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Pdf(int? id)
         {
             if (id == null)
             {
@@ -173,8 +275,26 @@ namespace TaskTracker.Controllers
                 return NotFound();
             }
 
-            ViewData["ClientID"] = new SelectList(await _clientService.GetClientDropdownAsync(invoice.ClientID), "Value", "Text", invoice.ClientID);
-            return View(invoice);
+            var userId = _userManager.GetUserId(User) ?? "";
+            var pdfBytes = await _invoiceService.GenerateInvoicePdfAsync(id.Value, userId);
+            if (pdfBytes == null || pdfBytes.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Failed to generate invoice PDF.";
+                return RedirectToAction(nameof(Details), new { id = id.Value });
+            }
+
+            Response.Headers.ContentDisposition = $"inline; filename=\"Invoice_{invoice.InvoiceDate:yyyyMMdd}.{invoice.InvoiceID}.pdf\"";
+            return File(pdfBytes, "application/pdf");
+        }
+
+        public IActionResult Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            return RedirectToAction(nameof(Details), new { id = id.Value });
         }
 
         [HttpPost]

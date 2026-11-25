@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Expenses";
-    var hasFilters = Model.SelectedClientID != 0;
+    var hasFilters = Model.SelectedClientID != 0 || !string.Equals(Model.Status, "Unbilled", StringComparison.OrdinalIgnoreCase);
     var showFilterForm = hasFilters;
 }
 
@@ -29,11 +29,15 @@
     <div>
         @if (Model.TotalRecords > 0)
         {
-            <p>Showing @Model.Expenses.Count() of @Model.TotalRecords records</p>
+            <p>Showing @Model.Expenses.Count() of @Model.TotalRecords records (@Model.Status)</p>
+        }
+        else if (hasFilters)
+        {
+            <p>No expenses match the selected filter.</p>
         }
         else
         {
-            <p>No expenses match the selected filter.</p>
+            <p>No unbilled expenses found.</p>
         }
     </div>
     <div class="controls-container">
@@ -45,6 +49,7 @@
             <select id="recordLimit" name="recordLimit" class="form-select" asp-items="@Model.RecordLimitOptions" onchange="this.form.submit()"></select>
             <input type="hidden" name="page" value="1" />
             <input type="hidden" name="clientFilter" value="@Model.SelectedClientID" />
+            <input type="hidden" name="status" value="@Model.Status" />
         </form>
     </div>
 </div>
@@ -56,10 +61,9 @@
 @{
     if (Model.TotalRecords > 0)
     {
-
         var groupedExpenses = Model.Expenses
             .Where(e => e.Client != null)
-            .GroupBy(e => e.Client.Name ?? "No Client")
+            .GroupBy(e => e.Client!.Name ?? "No Client")
             .OrderBy(g => g.Key);
         var index = 1;
 
@@ -74,7 +78,10 @@
                 {
                     var expenseRowViewModel = new TaskTracker.Models.Expense.ExpenseRowViewModel(expense, index);
                     @await Html.PartialAsync("_DisplayRow", expenseRowViewModel)
-                    @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
+                    @if (!expense.InvoicedDate.HasValue)
+                    {
+                        @await Html.PartialAsync("_EditFormRow", expenseRowViewModel)
+                    }
                     index++;
                 }
             </div>
