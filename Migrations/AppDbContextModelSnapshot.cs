@@ -316,6 +316,9 @@ namespace TaskTracker.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("ExpenseDate")
+                        .HasColumnType("date");
+
                     b.Property<DateTime?>("InvoiceSent")
                         .HasColumnType("date");
 

@@ -22,7 +22,12 @@
 <div id="display-row-@expense.ExpenseID" class="display-mode card mb-2 @(Model.Parity)-row">
     <div class="card-body position-relative">
         <div class="row align-items-center pe-4">
-            <div class="col-md-4" data-field="Description">@expense.Description</div>
+            <div class="col-md-3" data-field="Description">@expense.Description</div>
+            <div class="col-md-2" data-field="ExpenseDate">
+                <abbr title="Expense date">
+                    @(expense.ExpenseDate.HasValue ? expense.ExpenseDate.Value.ToString("d") : "—")
+                </abbr>
+            </div>
             <div class="col-md-2" data-field="Status">
                 <span class="badge @statusBadgeClass">@statusText</span>
             </div>

@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    var hasFilters = Model.SelectedClientID != 0 || !string.Equals(Model.Status, "Unbilled", StringComparison.OrdinalIgnoreCase);
+    var hasFilters = Model.HasFilters;
     var showFilterForm = hasFilters;
 }
 
@@ -10,11 +10,11 @@
 <div id="filter-form" class="row mb-3" style="display: @(showFilterForm ? "block" : "none");">
     <div class="col-12">
         <form asp-action="Index" method="get">
-            <div class="filter-form-container">
+            <div class="filter-form-container row g-3">
                 @{
                     int globalClientId = (int)(ViewData["GlobalClientId"] ?? 0);
                 }
-                <div class="filter-group">
+                <div class="filter-group col-md-3">
                     <label for="clientFilter" class="form-label">Filter by Client</label>
                     @if (globalClientId != 0)
                     {
@@ -27,18 +27,56 @@
                         </select>
                     }
                 </div>
-                <div class="filter-group">
+                <div class="filter-group col-md-3">
+                    <label for="productFilter" class="form-label">Filter by Products</label>
+                    <select id="productFilter" name="productFilter" class="form-select" multiple asp-items="@Model.ProductFilterOptions"></select>
+                </div>
+                <div class="filter-group col-md-3">
                     <label for="statusFilter" class="form-label">Status</label>
-                    <select id="statusFilter" name="status" class="form-select" asp-items="@Model.StatusFilterOptions">
+                    <select id="statusFilter" name="status" class="form-select" asp-items="@Model.StatusFilterOptions" onchange="this.form.submit()">
                     </select>
                 </div>
             </div>
-            <div class="filter-actions">
-                <button type="submit" class="btn btn-primary">Apply Filter</button>
+            <div class="filter-form-container row g-3">
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Expense Date - <input type="checkbox" id="expenseDateAny" name="expenseDateAny" value="true" @(Model.ExpenseDateAny ? "checked" : "") /> any</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="expenseDateStart" name="expenseDateStart" class="form-control" type="date" value="@(Model.ExpenseDateStart?.ToString("yyyy-MM-dd"))" />
+                        <span>-</span>
+                        <input id="expenseDateEnd" name="expenseDateEnd" class="form-control" type="date" value="@(Model.ExpenseDateEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Invoiced Date - <input type="checkbox" id="invoicedDateAny" name="invoicedDateAny" value="true" @(Model.InvoicedDateAny ? "checked" : "") /> any</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="invoicedDateStart" name="invoicedDateStart" class="form-control" type="date" value="@(Model.InvoicedDateStart?.ToString("yyyy-MM-dd"))" />
+                        <span>-</span>
+                        <input id="invoicedDateEnd" name="invoicedDateEnd" class="form-control" type="date" value="@(Model.InvoicedDateEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Sent Date - <input type="checkbox" id="invoiceSentDateAny" name="invoiceSentDateAny" value="true" @(Model.InvoiceSentDateAny ? "checked" : "") /> any</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="invoiceSentDateStart" name="invoiceSentDateStart" class="form-control" type="date" value="@(Model.InvoiceSentDateStart?.ToString("yyyy-MM-dd"))" />
+                        <span>-</span>
+                        <input id="invoiceSentDateEnd" name="invoiceSentDateEnd" class="form-control" type="date" value="@(Model.InvoiceSentDateEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+                <div class="filter-group col-md-3">
+                    <label class="form-label">Paid Date - <input type="checkbox" id="paidDateAny" name="paidDateAny" value="true" @(Model.PaidDateAny ? "checked" : "") /> any</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input id="paidDateStart" name="paidDateStart" class="form-control" type="date" value="@(Model.PaidDateStart?.ToString("yyyy-MM-dd"))" />
+                        <span>-</span>
+                        <input id="paidDateEnd" name="paidDateEnd" class="form-control" type="date" value="@(Model.PaidDateEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+            </div>
+            <div class="filter-actions mt-3">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
                 @if (hasFilters)
                 {
                     <button type="button" id="clear-filter-btn" class="clear-filter-btn">
-                        <img src="~/images/icons/filter-xmark.svg" alt="Clear Filter" class="filter-icon" />
+                        <img src="~/images/icons/filter-xmark.svg" alt="Clear Filters" class="filter-icon" />
                     </button>
                 }
             </div>

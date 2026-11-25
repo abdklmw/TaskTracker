@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.Models.Product;
 using System.Threading.Tasks;
@@ -79,6 +80,24 @@ namespace TaskTracker.Services
                     UnitPrice = p.UnitPrice
                 })
                 .ToListAsync<object>();
+        }
+
+        public async Task<List<SelectListItem>> GetProductFilterDropdownAsync(IEnumerable<int>? selectedProductIds = null)
+        {
+            var selected = selectedProductIds?.Where(id => id != 0).ToHashSet() ?? new HashSet<int>();
+            var products = await _context.Products
+                .OrderBy(p => p.ProductSku)
+                .Select(p => new { p.ProductID, p.ProductSku, p.Name })
+                .ToListAsync();
+
+            return products
+                .Select(p => new SelectListItem
+                {
+                    Value = p.ProductID.ToString(),
+                    Text = string.IsNullOrWhiteSpace(p.Name) ? p.ProductSku : $"{p.ProductSku} - {p.Name}",
+                    Selected = selected.Contains(p.ProductID)
+                })
+                .ToList();
         }
     }
 }

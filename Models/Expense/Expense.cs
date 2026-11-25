@@ -28,6 +28,10 @@ namespace TaskTracker.Models.Expense
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
 
+        [Display(Name = "Expense Date")]
+        [Column(TypeName = "date")]
+        public DateTime? ExpenseDate { get; set; }
+
         [Column(TypeName = "date")]
         public DateTime? InvoicedDate { get; set; }
 
