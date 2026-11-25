@@ -20,6 +20,7 @@ namespace TaskTracker.Services
         Task<(List<TimeEntryViewModel> TimeEntries, List<ExpenseViewModel> Expenses)> GetUnpaidItemsAsync(int clientId);
         Task<(bool Success, string? ErrorMessage)> CreateInvoiceAsync(InvoiceCreateViewModel model);
         Task<Invoice?> GetInvoiceByIdAsync(int id);
+        Task<Invoice?> GetInvoiceWithItemsAsync(int id);
         Task<(bool Success, string? ErrorMessage)> UpdateInvoiceAsync(Invoice invoice);
         Task<(bool Success, string? ErrorMessage)> DeleteInvoiceAsync(int id);
         Task<(bool Success, string? ErrorMessage, byte[]? PdfBytes)> SendInvoiceAsync(int id, string userId);
@@ -246,6 +247,17 @@ namespace TaskTracker.Services
         {
             return await _context.Invoices
                 .Include(i => i.Client)
+                .FirstOrDefaultAsync(i => i.InvoiceID == id);
+        }
+
+        public async Task<Invoice?> GetInvoiceWithItemsAsync(int id)
+        {
+            return await _context.Invoices
+                .AsNoTracking()
+                .Include(i => i.Client)
+                .Include(i => i.InvoiceTimeEntries).ThenInclude(ite => ite.TimeEntry).ThenInclude(te => te.Project)
+                .Include(i => i.InvoiceExpenses).ThenInclude(ie => ie.Product)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(i => i.InvoiceID == id);
         }
 
@@ -544,11 +556,7 @@ namespace TaskTracker.Services
         {
             try
             {
-                var invoice = await _context.Invoices
-                    .Include(i => i.Client)
-                    .Include(i => i.InvoiceTimeEntries).ThenInclude(ite => ite.TimeEntry).ThenInclude(te => te.Project)
-                    .Include(i => i.InvoiceExpenses).ThenInclude(ie => ie.Product)
-                    .FirstOrDefaultAsync(i => i.InvoiceID == invoiceId);
+                var invoice = await GetInvoiceWithItemsAsync(invoiceId);
 
                 if (invoice == null)
                 {
@@ -645,7 +653,9 @@ namespace TaskTracker.Services
                     foreach (var expense in invoice.InvoiceExpenses)
                     {
                         var expenseCharge = expense.UnitAmount * expense.Quantity;
-                        var description = expense.Description ?? "N/A";
+                        var description = !string.IsNullOrWhiteSpace(expense.Description)
+                            ? expense.Description
+                            : expense.Product?.Description ?? expense.Product?.Name ?? "N/A";
                         expensesTable += @$"
                             <tr>
                                 <td>{expense.ProductInvoiceDate}</td>
